@@ -58,6 +58,19 @@
         }
         @keyframes scan { 0% { bottom: 100%; } 100% { bottom: -100px; } }
 
+        /* --- Glitch Effect --- */
+        .glitch-active {
+            animation: glitch-anim 0.2s linear infinite;
+        }
+        @keyframes glitch-anim {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 1px) }
+            40% { transform: translate(-1px, -1px) }
+            60% { transform: translate(2px, 1px) }
+            80% { transform: translate(1px, -1px) }
+            100% { transform: translate(0) }
+        }
+
         #notification-container { position: fixed; top: 20px; right: 50%; transform: translateX(50%); z-index: 1001; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .system-notification {
             background: rgba(3, 7, 18, 0.9); border: 1px solid var(--accent-cyan); color: var(--accent-cyan);
@@ -111,6 +124,7 @@
 
         #chat-container {
             flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth;
+            transition: all 0.3s;
         }
         #news-container {
             flex: 1; overflow-y: auto; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth;
@@ -120,6 +134,27 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
+
+        /* --- Drag & Drop Highlights --- */
+        .dropzone-active #chat-container {
+            box-shadow: inset 0 0 40px rgba(0, 238, 255, 0.1);
+            background: rgba(0, 238, 255, 0.02);
+            border: 2px dashed rgba(0, 238, 255, 0.3);
+            border-radius: 8px;
+            margin: 10px;
+        }
+        .dropzone-active #input-area {
+            border-top: 2px dashed var(--accent-cyan);
+            background: rgba(0, 238, 255, 0.05);
+        }
+        .drag-ghost {
+            position: fixed;
+            pointer-events: none !important;
+            z-index: 9999;
+            opacity: 0.9;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 25px var(--accent-cyan);
+            transform-origin: center;
+        }
 
         /* --- Sidebar --- */
         #sidebar { width: 260px; background: rgba(3, 7, 18, 0.4); display: flex; flex-direction: column; padding: 20px; gap: 15px; overflow-y: auto; }
@@ -164,7 +199,26 @@
             animation: alertPulse 1.5s infinite alternate;
             font-weight: 700;
         }
+        .message-wrapper .message.system-alert {
+            background: rgba(57, 255, 20, 0.1) !important;
+            border: 1px dashed var(--accent-gold) !important;
+            color: var(--accent-gold) !important;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
         @keyframes alertPulse { from { box-shadow: var(--glow-magenta); } to { box-shadow: 0 0 30px rgba(255, 0, 234, 0.4); } }
+
+        /* Forwarded Dispatch Message Block */
+        .dispatch-forward {
+            margin-top: 2px;
+            width: 100%;
+            min-width: 250px;
+            animation: none;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+            border-top: 1px solid var(--glass-border);
+            border-right: 1px solid var(--glass-border);
+            border-bottom: 1px solid var(--glass-border);
+        }
 
         .media-attachment { max-width: 100%; border-radius: 4px; margin-top: 10px; display: block; border: 1px solid var(--glass-border); cursor: pointer; }
 
@@ -187,7 +241,10 @@
             clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
             animation: xcardIn 0.35s forwards; flex-shrink: 0;
             transition: background 0.2s, border-color 0.2s;
+            cursor: grab;
+            touch-action: none; /* FIX: Prevents mobile native scroll when dragging elements */
         }
+        .xeno-card:active { cursor: grabbing; }
         @keyframes xcardIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
         .xeno-card:hover { background: rgba(12, 0, 36, 0.95); border-left-color: var(--accent-cyan); }
         .xeno-card.first-card { border-left-color: var(--accent-gold); border-color: rgba(57, 255, 20, 0.2); }
@@ -203,7 +260,7 @@
         .xc-source-name { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .xc-time { font-family: var(--font-ui); font-size: 9px; color: var(--text-muted); letter-spacing: 1px; flex-shrink: 0; }
 
-        .xc-card-body { padding: 12px 16px 10px; }
+        .xc-card-body { padding: 12px 16px 10px; pointer-events: none; }
         .xc-first-badge {
             display: inline-block; background: rgba(57, 255, 20, 0.08); color: var(--accent-gold);
             font-family: var(--font-ui); font-size: 8px; letter-spacing: 2.5px; padding: 2px 10px;
@@ -212,6 +269,7 @@
         .xc-headline {
             font-family: var(--font-ui); font-size: 12px; font-weight: 700; color: var(--text-main);
             line-height: 1.4; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;
+            pointer-events: auto;
         }
         .xc-headline a { color: inherit; text-decoration: none; transition: color 0.2s; }
         .xc-headline a:hover { color: var(--accent-cyan); text-shadow: 0 0 6px rgba(0,238,255,0.4); }
@@ -226,11 +284,12 @@
         .xc-read-link {
             font-family: var(--font-ui); font-size: 8px; color: var(--accent-cyan); letter-spacing: 1.5px;
             text-decoration: none; text-transform: uppercase; opacity: 0; transition: opacity 0.2s;
+            pointer-events: auto;
         }
         .xeno-card:hover .xc-read-link { opacity: 1; }
         .xc-read-link:hover { text-shadow: 0 0 8px var(--accent-cyan); }
 
-        /* --- Xeno Signal-Intercept animation (replaces chat typing bubble) --- */
+        /* --- Xeno Signal-Intercept animation --- */
         .xeno-intercepting {
             display: flex; align-items: center; gap: 12px; padding: 10px 14px;
             background: rgba(8, 0, 28, 0.6); border: 1px solid rgba(255,0,234,0.15);
@@ -264,7 +323,7 @@
         /* --- Input Areas --- */
         #input-area {
             padding: 16px 24px; background: rgba(3, 7, 18, 0.8); border-top: 1px solid var(--glass-border);
-            display: flex; gap: 12px; align-items: flex-end;
+            display: flex; gap: 12px; align-items: flex-end; transition: all 0.3s;
         }
 
         /* --- Xeno-Comm Control Panel --- */
@@ -383,7 +442,7 @@
                 <input type="file" id="file-input" multiple accept="image/*,video/*" style="display:none">
                 <div id="input-wrapper">
                     <div id="file-preview-area" style="display:none;"></div>
-                    <textarea id="chat-input" placeholder="Input sequence... (/alert for tactical)" rows="1"></textarea>
+                    <textarea id="chat-input" placeholder="Input sequence... (/help for commands)" rows="1"></textarea>
                 </div>
                 <button class="btn" id="send-btn" style="height:48px;">Transmit</button>
             </div>
@@ -406,9 +465,6 @@
                     <span class="ticker-item">Universal translator active</span>
                     <span class="ticker-item">Stand by for telepathic dump</span>
                     <span class="ticker-item">Reactor core stabilized</span>
-                    <span class="ticker-item">Signals incoming from Sector 7G</span>
-                    <span class="ticker-item">Universal translator active</span>
-                    <span class="ticker-item">Stand by for telepathic dump</span>
                 </div>
             </div>
             <div id="news-container">
@@ -441,6 +497,42 @@
 </div>
 
 <script>
+// ============================================================
+// AUDIO ENGINE (Web Audio API)
+// ============================================================
+let audioCtx = null; // FIX: Defer initialization to avoid Autoplay Policy violations
+
+function initAudio() {
+    if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playTone(freq, type, duration, vol = 0.1) {
+    if (!audioCtx) return; // FIX: Silent fallback if audio context isn't initialized yet
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    
+    gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+
+function sfxAlert() { playTone(880, 'square', 0.15, 0.1); setTimeout(() => playTone(1100, 'square', 0.2, 0.1), 100); }
+function sfxMessage() { playTone(440, 'sine', 0.1, 0.05); }
+function sfxLogin() { playTone(220, 'sawtooth', 0.3, 0.1); setTimeout(() => playTone(440, 'sine', 0.4, 0.1), 200); }
+
 // ============================================================
 // HELPERS
 // ============================================================
@@ -525,7 +617,10 @@ function connectPusher(config) {
     presenceChannel.bind('pusher:member_removed', () => renderUserList(presenceChannel.members));
 
     presenceChannel.bind('chat-message', (data) => {
-        if (data.user?.id !== currentUser.id) renderMessage(data);
+        if (data.user?.id !== currentUser.id) {
+            renderMessage(data);
+            if(data.isAlert) sfxAlert(); else sfxMessage();
+        }
     });
 
     presenceChannel.bind('typing', (data) => {
@@ -571,11 +666,13 @@ window.addEventListener('DOMContentLoaded', async () => {
             } catch (e) { localStorage.removeItem('futureChatUser'); }
         }
     } catch (e) {
-        showNotification('Config fetch failed — chat offline', 'error');
+        showNotification('Config fetch failed — Running in Local Mode', 'error');
     }
 });
 
 function enterChat() {
+    initAudio(); // FIX: Explicitly grant audio context on intentional user action
+    sfxLogin();
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'flex';
 }
@@ -606,7 +703,7 @@ const sidebars = {
 };
 let newsStarted = false;
 
-function switchTab(tab) {
+window.switchTab = function(tab) {
     tabButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     Object.entries(views).forEach(([k, el]) => el.classList.toggle('active', k === tab));
     Object.entries(sidebars).forEach(([k, el]) => el.classList.toggle('active', k === tab));
@@ -615,8 +712,8 @@ function switchTab(tab) {
         startNews();
     }
     if (tab === 'news') document.getElementById('news-badge').textContent = '';
-}
-tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+};
+tabButtons.forEach(btn => btn.addEventListener('click', () => window.switchTab(btn.dataset.tab)));
 
 // ============================================================
 // BACKROOM CHAT LOGIC
@@ -647,7 +744,8 @@ function stringToColor(str) {
 function renderMessage(data) {
     const container = document.getElementById('chat-container');
     const isSelf = data.user.id === currentUser.id;
-    const userColor = stringToColor(data.user.name);
+    const isSystem = data.user.id === 'sys';
+    const userColor = isSystem ? 'var(--accent-gold)' : stringToColor(data.user.name);
 
     const wrapper = document.createElement('div');
     wrapper.className = `message-wrapper ${isSelf ? 'self' : 'other'}`;
@@ -666,24 +764,47 @@ function renderMessage(data) {
     header.appendChild(tsSpan);
 
     const bubble = document.createElement('div');
-    bubble.className = `message${data.isAlert ? ' tactical-alert' : ''}`;
-    if (data.text) bubble.appendChild(document.createTextNode(data.text));
+    bubble.className = `message${data.isAlert ? ' tactical-alert' : ''}${isSystem ? ' system-alert' : ''}`;
+    
+    // Check if this is a forwarded dispatch payload
+    if (data.dispatch) {
+        bubble.style.padding = '0';
+        bubble.style.background = 'transparent';
+        bubble.style.border = 'none';
 
-    if (data.files?.length) {
-        data.files.forEach(f => {
-            let media;
-            if (f.type?.startsWith('video/')) {
-                media = document.createElement('video');
-                media.src = f.data;
-                media.controls = true;
-            } else {
-                media = document.createElement('img');
-                media.src = f.data;
-                media.addEventListener('click', () => openLightbox(f.data));
-            }
-            media.className = 'media-attachment';
-            bubble.appendChild(media);
-        });
+        const dCard = document.createElement('div');
+        dCard.className = `xeno-card dispatch-forward`;
+        dCard.innerHTML = `
+            <div class="xc-card-header">
+                <span class="xc-sig">◆ FWD SIGNAL</span>
+                <div class="xc-divider"></div>
+                <span class="xc-source-name">${escapeHtml(data.dispatch.source)}</span>
+            </div>
+            <div class="xc-card-body">
+                <div class="xc-headline">${escapeHtml(data.dispatch.title)}</div>
+                <div class="xc-body" style="font-size: 11px;">${escapeHtml(data.dispatch.content)}</div>
+            </div>
+        `;
+        bubble.appendChild(dCard);
+    } else {
+        if (data.text) bubble.appendChild(document.createTextNode(data.text));
+
+        if (data.files?.length) {
+            data.files.forEach(f => {
+                let media;
+                if (f.type?.startsWith('video/')) {
+                    media = document.createElement('video');
+                    media.src = f.data;
+                    media.controls = true;
+                } else {
+                    media = document.createElement('img');
+                    media.src = f.data;
+                    media.addEventListener('click', () => openLightbox(f.data));
+                }
+                media.className = 'media-attachment';
+                bubble.appendChild(media);
+            });
+        }
     }
 
     wrapper.appendChild(header);
@@ -703,13 +824,71 @@ function openLightbox(src) {
     document.body.appendChild(lb);
 }
 
+// Terminal Command Parser
+function processCommand(text) {
+    const args = text.split(' ');
+    const cmd = args[0].toLowerCase();
+
+    if (cmd === '/clear') {
+        document.getElementById('chat-container').innerHTML = '';
+        return true;
+    }
+    if (cmd === '/ping') {
+        renderMessage({ user: {name: 'SYSTEM', id: 'sys'}, text: 'PONG - Connection stable.', timestamp: new Date().toLocaleTimeString() });
+        return true;
+    }
+    if (cmd === '/glitch') {
+        document.body.classList.toggle('glitch-active');
+        renderMessage({ user: {name: 'SYSTEM', id: 'sys'}, text: 'Visual distortion matrix toggled.', timestamp: new Date().toLocaleTimeString() });
+        return true;
+    }
+    if (cmd === '/theme' && args[1]) {
+        document.documentElement.style.setProperty('--accent-cyan', args[1]);
+        renderMessage({ user: {name: 'SYSTEM', id: 'sys'}, text: `Primary optical accent updated to ${args[1]}`, timestamp: new Date().toLocaleTimeString() });
+        return true;
+    }
+    if (cmd === '/help') {
+        const helpText = `Available Commands:\n/alert [msg] - Broadcast priority signal\n/clear - Purge local terminal buffer\n/ping - Test system response\n/glitch - Toggle visual artifacts\n/theme [hex] - Override primary UI color`;
+        renderMessage({ user: {name: 'SYSTEM', id: 'sys'}, text: helpText, timestamp: new Date().toLocaleTimeString() });
+        return true;
+    }
+    return false;
+}
+
+// Function to handle forwarded dispatches
+function sendDispatch(dispatchData) {
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    const msgData = {
+        id: (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : Math.random().toString(36).slice(2), // FIX: Check for crypto window object before calling it
+        user: currentUser,
+        text: '', 
+        dispatch: dispatchData,
+        timestamp: new Date().toLocaleTimeString()
+    };
+    renderMessage(msgData);
+    postJson('/api/chat/message', msgData);
+    sfxAlert(); // specific chime for data dumps
+}
+
 async function handleSend() {
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    
     const input = document.getElementById('chat-input');
     let text = input.value.trim();
     let isAlert = false;
 
-    if (text.startsWith('/alert ')) { text = text.slice(7); isAlert = true; }
     if (!text && selectedFiles.length === 0) return;
+    
+    // Check for local terminal commands first
+    if (text.startsWith('/') && !text.startsWith('/alert')) {
+        if(processCommand(text)) {
+            input.value = '';
+            autoResize(input);
+            return;
+        }
+    }
+
+    if (text.startsWith('/alert ')) { text = text.slice(7); isAlert = true; }
 
     clearTimeout(typingTimeout);
     postJson('/api/chat/typing-stop', { id: currentUser.id });
@@ -724,7 +903,7 @@ async function handleSend() {
     }));
 
     const msgData = {
-        id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2),
+        id: (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : Math.random().toString(36).slice(2), // FIX: Check for crypto window object
         user: currentUser,
         text,
         files: processedFiles,
@@ -733,7 +912,9 @@ async function handleSend() {
     };
 
     renderMessage(msgData);
+    if(isAlert) sfxAlert(); else sfxMessage();
     postJson('/api/chat/message', msgData);
+    
     input.value = '';
     selectedFiles = [];
     document.getElementById('file-preview-area').style.display = 'none';
@@ -786,6 +967,94 @@ document.getElementById('file-input').addEventListener('change', (e) => {
 
 document.getElementById('sidebar-toggle').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('open');
+});
+
+// ============================================================
+// DRAG AND DROP (CUSTOM POINTER LOGIC)
+// ============================================================
+let dragState = { active: false, element: null, data: null, startX: 0, startY: 0, ghost: null };
+
+document.addEventListener('pointerdown', (e) => {
+    const card = e.target.closest('.xeno-card');
+    // Only capture left click or touch; ignore if clicking a link
+    if (!card || e.button !== 0 || e.target.closest('a')) return;
+
+    dragState.element = card;
+    dragState.startX = e.clientX;
+    dragState.startY = e.clientY;
+    dragState.data = JSON.parse(card.dataset.dispatch || "{}");
+    dragState.active = false;
+});
+
+document.addEventListener('pointermove', (e) => {
+    if (!dragState.element) return;
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+
+    // Start drag execution if moved more than 8 pixels
+    if (!dragState.active && Math.sqrt(dx*dx + dy*dy) > 8) {
+        dragState.active = true;
+        
+        // Build the ghost element
+        const originalRect = dragState.element.getBoundingClientRect();
+        dragState.ghost = dragState.element.cloneNode(true);
+        dragState.ghost.classList.add('drag-ghost');
+        dragState.ghost.style.width = originalRect.width + 'px';
+        document.body.appendChild(dragState.ghost);
+        
+        // Auto-switch to the chat view
+        window.switchTab('chat');
+        document.getElementById('view-chat').classList.add('dropzone-active');
+        
+        if(window.audioCtx && window.audioCtx.state === 'running') playTone(600, 'sine', 0.1, 0.05);
+    }
+
+    if (dragState.active) {
+        e.preventDefault(); // Stop natural scrolling during active drag
+        // Center the floating ghost tightly on the cursor pointer
+        dragState.ghost.style.left = (e.clientX - dragState.ghost.offsetWidth / 2) + 'px';
+        dragState.ghost.style.top = (e.clientY - dragState.ghost.offsetHeight / 2) + 'px';
+        dragState.ghost.style.transform = 'scale(0.9) rotate(3deg)';
+    }
+});
+
+document.addEventListener('pointerup', (e) => {
+    if (!dragState.element) return;
+    if (dragState.active) {
+        const chatView = document.getElementById('view-chat');
+        chatView.classList.remove('dropzone-active');
+        
+        // Assess drop parameters
+        const dropRect = chatView.getBoundingClientRect();
+        const isInside = e.clientX >= dropRect.left && e.clientX <= dropRect.right && 
+                         e.clientY >= dropRect.top && e.clientY <= dropRect.bottom;
+
+        // FIX: Capture reference to ghost before dragState is wiped so the timeout can properly remove it from DOM
+        const ghostRef = dragState.ghost;
+
+        if (isInside && dragState.data.title) {
+            // Animating into the terminal
+            ghostRef.style.transition = 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            ghostRef.style.transform = 'scale(0.1)';
+            ghostRef.style.opacity = '0';
+            
+            const payload = dragState.data;
+            setTimeout(() => {
+                if (ghostRef) ghostRef.remove(); // FIX: Memory leak resolved using captured reference
+                sendDispatch(payload);
+            }, 300);
+        } else {
+            // Drop failed / aborted
+            ghostRef.style.transition = 'all 0.3s ease';
+            ghostRef.style.opacity = '0';
+            ghostRef.style.transform = 'scale(0.8)';
+            setTimeout(() => {
+                if (ghostRef) ghostRef.remove(); // FIX: Memory leak resolved using captured reference
+            }, 300);
+        }
+    }
+    // Object reset immediately, therefore a local reference to ghost was required above
+    dragState = { active: false, element: null, data: null, startX: 0, startY: 0, ghost: null };
 });
 
 // ============================================================
@@ -874,6 +1143,8 @@ function renderNewsMessage(item, isFirst) {
 
     const card = document.createElement('div');
     card.className = 'xeno-card' + (isFirst ? ' first-card' : '');
+    card.dataset.dispatch = JSON.stringify(item); // Embed data for the drag-n-drop ghost
+    
     card.innerHTML = `
         <div class="xc-card-header">
             <span class="xc-sig">◆ SIG-${sigNum}</span>
@@ -893,6 +1164,7 @@ function renderNewsMessage(item, isFirst) {
 
     newsChat.appendChild(card);
     newsScrollDown();
+    sfxMessage(); // Play soft beep for new dispatch
 
     const countEl = document.getElementById('xc-count');
     if (countEl) countEl.textContent = newsIdx + 1;
