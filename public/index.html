@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Backroom Terminal // Xeno-Comm</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Orbitron:wght@500;700;900&family=Fira+Code:wght@300;500&display=swap" rel="stylesheet">
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -351,10 +351,20 @@
 
 <script>
 // ============================================================
+// HELPERS
+// ============================================================
+function getOrCreateUserId() {
+    let id = localStorage.getItem('xenoUserId');
+    if (!id) { id = 'xeno-' + Math.random().toString(36).slice(2, 10); localStorage.setItem('xenoUserId', id); }
+    return id;
+}
+
+// ============================================================
 // SHARED STATE
 // ============================================================
-const socket = io();
-let currentUser = { name: 'User', id: null };
+let pusher = null;
+let presenceChannel = null;
+let currentUser = { name: 'User', id: getOrCreateUserId() };
 let selectedFiles = [];
 let isConnected = false;
 let typingTimeout = null;
@@ -378,44 +388,113 @@ function showNotification(text, type = 'info') {
 }
 
 // ============================================================
-// SOCKET / LOGIN
+// HTTP HELPER
 // ============================================================
-socket.on('connect', () => {
-    isConnected = true;
-    currentUser.id = socket.id;
-    document.getElementById('conn-dot').classList.add('online');
-    document.getElementById('connection-text').innerText = 'ONLINE';
-    if (currentUser.name !== 'User') socket.emit('user joined', currentUser);
-});
+function postJson(url, data) {
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).catch(e => console.warn('POST failed:', url, e));
+}
 
-socket.on('disconnect', () => {
-    isConnected = false;
-    document.getElementById('conn-dot').classList.remove('online');
-    document.getElementById('connection-text').innerText = 'OFFLINE';
-});
+// ============================================================
+// PUSHER / REALTIME SETUP
+// ============================================================
+function connectPusher(config) {
+    if (pusher) { pusher.disconnect(); pusher = null; presenceChannel = null; }
 
-window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('futureChatUser');
-    if (saved) {
+    Pusher.logToConsole = false;
+    pusher = new Pusher(config.pusherKey, {
+        cluster: config.pusherCluster,
+        authEndpoint: '/api/pusher/auth',
+        auth: { params: { user_id: currentUser.id, user_name: currentUser.name } }
+    });
+
+    pusher.connection.bind('connected', async () => {
+        isConnected = true;
+        document.getElementById('conn-dot').classList.add('online');
+        document.getElementById('connection-text').innerText = 'ONLINE';
         try {
-            currentUser = { ...currentUser, ...JSON.parse(saved) };
-            enterChat();
-        } catch (e) { localStorage.removeItem('futureChatUser'); }
+            const h = await fetch('/api/chat/history').then(r => r.json());
+            if (Array.isArray(h)) h.forEach(renderMessage);
+        } catch (e) { /* no history on cold start */ }
+    });
+
+    pusher.connection.bind('disconnected', () => {
+        isConnected = false;
+        document.getElementById('conn-dot').classList.remove('online');
+        document.getElementById('connection-text').innerText = 'OFFLINE';
+    });
+
+    presenceChannel = pusher.subscribe('presence-chat-room');
+
+    presenceChannel.bind('pusher:subscription_succeeded', renderUserList);
+    presenceChannel.bind('pusher:member_added',   () => renderUserList(presenceChannel.members));
+    presenceChannel.bind('pusher:member_removed', () => renderUserList(presenceChannel.members));
+
+    presenceChannel.bind('chat-message', (data) => {
+        if (data.user?.id !== currentUser.id) renderMessage(data);
+    });
+
+    presenceChannel.bind('typing', (data) => {
+        if (data.id !== currentUser.id) { typingUsers.set(data.id, data.name); updateTypingIndicator(); }
+    });
+
+    presenceChannel.bind('typing-stop', (data) => {
+        typingUsers.delete(data.id); updateTypingIndicator();
+    });
+}
+
+function renderUserList(members) {
+    const users = [];
+    members.each(m => users.push({ id: m.id, name: m.info?.name || 'Unknown' }));
+    document.getElementById('online-count').textContent = users.length;
+    const list = document.getElementById('user-list');
+    list.innerHTML = '';
+    users.forEach(u => {
+        const item = document.createElement('div');
+        item.className = 'user-list-item';
+        const dot = document.createElement('div'); dot.className = 'status-dot';
+        const name = document.createElement('span');
+        name.style.color = stringToColor(u.name);
+        name.textContent = u.name;
+        item.appendChild(dot); item.appendChild(name);
+        list.appendChild(item);
+    });
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const config = await fetch('/api/config').then(r => r.json());
+        window._pusherConfig = config;
+        const saved = localStorage.getItem('futureChatUser');
+        if (saved) {
+            try {
+                currentUser = { ...currentUser, ...JSON.parse(saved) };
+                connectPusher(config);
+                enterChat();
+            } catch (e) { localStorage.removeItem('futureChatUser'); }
+        }
+    } catch (e) {
+        showNotification('Config fetch failed — chat offline', 'error');
     }
 });
 
 function enterChat() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-container').style.display = 'flex';
-    if (isConnected) socket.emit('user joined', currentUser);
 }
 
 function doJoin() {
     const val = document.getElementById('username-input').value.trim();
     if (!val) { document.getElementById('login-error').style.display = 'block'; return; }
     currentUser.name = val;
-    currentUser.id = socket.id;
     localStorage.setItem('futureChatUser', JSON.stringify(currentUser));
+    if (window._pusherConfig) connectPusher(window._pusherConfig);
     enterChat();
 }
 
@@ -476,7 +555,7 @@ function stringToColor(str) {
 
 function renderMessage(data) {
     const container = document.getElementById('chat-container');
-    const isSelf = data.user.id === socket.id;
+    const isSelf = data.user.id === currentUser.id;
     const userColor = stringToColor(data.user.name);
 
     const wrapper = document.createElement('div');
@@ -542,7 +621,7 @@ async function handleSend() {
     if (!text && selectedFiles.length === 0) return;
 
     clearTimeout(typingTimeout);
-    socket.emit('typing stop');
+    postJson('/api/chat/typing-stop', { id: currentUser.id });
 
     const processedFiles = await Promise.all(selectedFiles.map(async f => {
         const processed = await processFile(f);
@@ -563,7 +642,7 @@ async function handleSend() {
     };
 
     renderMessage(msgData);
-    socket.emit('chat message', msgData);
+    postJson('/api/chat/message', msgData);
     input.value = '';
     selectedFiles = [];
     document.getElementById('file-preview-area').style.display = 'none';
@@ -596,9 +675,9 @@ document.getElementById('chat-input').addEventListener('keydown', (e) => {
 });
 document.getElementById('chat-input').addEventListener('input', (e) => {
     autoResize(e.target);
-    socket.emit('typing');
+    postJson('/api/chat/typing', { id: currentUser.id, name: currentUser.name });
     clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => socket.emit('typing stop'), 2000);
+    typingTimeout = setTimeout(() => postJson('/api/chat/typing-stop', { id: currentUser.id }), 2000);
 });
 
 document.getElementById('file-input').addEventListener('change', (e) => {
@@ -616,30 +695,6 @@ document.getElementById('file-input').addEventListener('change', (e) => {
 
 document.getElementById('sidebar-toggle').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('open');
-});
-
-socket.on('chat message', (data) => { if (data.user.id !== socket.id) renderMessage(data); });
-socket.on('load history', (h) => h.forEach(renderMessage));
-
-socket.on('typing', (data) => { typingUsers.set(data.id, data.name); updateTypingIndicator(); });
-socket.on('typing stop', (data) => { typingUsers.delete(data.id); updateTypingIndicator(); });
-
-socket.on('user list', (users) => {
-    document.getElementById('online-count').textContent = users.length;
-    const list = document.getElementById('user-list');
-    list.innerHTML = '';
-    users.forEach(u => {
-        const item = document.createElement('div');
-        item.className = 'user-list-item';
-        const dot = document.createElement('div');
-        dot.className = 'status-dot';
-        const name = document.createElement('span');
-        name.style.color = stringToColor(u.name);
-        name.textContent = u.name;
-        item.appendChild(dot);
-        item.appendChild(name);
-        list.appendChild(item);
-    });
 });
 
 // ============================================================
