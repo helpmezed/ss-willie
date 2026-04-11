@@ -1,6 +1,6 @@
 # Xeno-Comm Interstellar Dispatch
 
-A Deep Space-themed live news aggregator. Earth's headlines, intercepted and translated for the galaxy.
+A Deep Space-themed live chat + news aggregator. Earth's headlines, intercepted and translated for the galaxy.
 
 ---
 
@@ -12,17 +12,23 @@ cd ss-willie
 npm install
 ```
 
-### 2. Add your NewsAPI key
-Get a free key at **https://newsapi.org** -> Get API Key
-
-Then create a `.env` file (copy from the example):
+### 2. Add your keys
+Copy the example env file and fill in your values:
 ```bash
 cp .env.example .env
 ```
-Open `.env` and replace `your_key_here` with your actual key:
+Open `.env` and add your keys:
 ```
-NEWS_API_KEY=abc123yourkeyhere
+PUSHER_APP_ID=your_pusher_app_id
+PUSHER_KEY=your_pusher_key
+PUSHER_SECRET=your_pusher_secret
+PUSHER_CLUSTER=your_pusher_cluster
+NEWS_API_KEY=your_newsapi_key
 ```
+
+**Where to get them:**
+- Pusher keys → [dashboard.pusher.com](https://dashboard.pusher.com) → your app → App Keys
+- NewsAPI key → [newsapi.org](https://newsapi.org) → Get API Key
 
 ### 3. Run it locally
 ```bash
@@ -32,37 +38,34 @@ Then open **http://localhost:3000** in your browser.
 
 ---
 
-## Deploy to GitHub + Render
+## Deploy to Vercel
 
-### Step 1 -- Push to GitHub
-1. Create a new repo on [github.com](https://github.com) (name it `ss-willie` or anything you like)
-2. In your project folder, run:
+### Step 1 — Push to GitHub
 ```bash
-git init
 git add .
-git commit -m "Xeno-Comm Interstellar Dispatch launch"
-git branch -M main
-git remote add origin https://github.com/helpmezed/ss-willie.git
-git push -u origin main
+git commit -m "deploy"
+git push origin main
 ```
 
-### Step 2 -- Deploy on Render
-1. Go to **https://render.com** and sign in
-2. Click **"New +"** -> **"Web Service"**
-3. Connect your GitHub repo
-4. Fill in the settings:
-   - **Name**: `ss-willie` (or whatever you like)
-   - **Environment**: `Node`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-   - **Plan**: Free
-5. Click **"Advanced"** -> **"Add Environment Variable"**:
-   - Key: `NEWS_API_KEY`
-   - Value: *(paste your NewsAPI key)*
-6. Click **"Create Web Service"**
+### Step 2 — Connect to Vercel
+1. Go to [vercel.com](https://vercel.com) and sign in
+2. Click **"Add New Project"** and import your GitHub repo
+3. Click **"Deploy"** — the first deploy will fail (no keys yet, that's fine)
 
-Render will build and deploy -- usually takes 1-2 minutes.
-Your live URL will be something like: `https://ss-willie.onrender.com`
+### Step 3 — Add environment variables
+1. Go to your project → **Settings** → **Environment Variables**
+2. Add each of these (make sure **Production** is checked for each):
+
+| Key | Value |
+|-----|-------|
+| `PUSHER_APP_ID` | from Pusher dashboard |
+| `PUSHER_KEY` | from Pusher dashboard |
+| `PUSHER_SECRET` | from Pusher dashboard |
+| `PUSHER_CLUSTER` | from Pusher dashboard (e.g. `us2`) |
+| `NEWS_API_KEY` | from newsapi.org |
+
+### Step 4 — Redeploy
+After saving the env vars, push any commit to trigger a fresh deployment that picks them up.
 
 ---
 
@@ -71,8 +74,9 @@ Your live URL will be something like: `https://ss-willie.onrender.com`
 ss-willie/
 ├── relay.js           <- Interstellar relay server (Node.js / Express)
 ├── package.json
-├── .env.example       <- Copy this to .env and add your key
-├── .gitignore         <- Keeps .env out of GitHub (important!)
+├── vercel.json        <- Vercel deployment config
+├── .env.example       <- Copy this to .env and fill in your keys (never commit .env)
+├── .gitignore         <- Keeps .env out of GitHub
 └── terminal/
     └── index.html     <- The broadcast terminal (the app itself)
 ```
@@ -80,6 +84,6 @@ ss-willie/
 ---
 
 ## Important Notes
-- **Never commit your `.env` file** -- the `.gitignore` protects you
-- On Render's free plan, the server "sleeps" after 15 minutes of inactivity -- first load may take 30 seconds to wake up
-- NewsAPI free tier only allows requests from a server (not a browser directly) -- that's why the Node proxy is needed
+- **Never commit your `.env` file** — `.gitignore` protects you, but double-check
+- Keys must be added under the **Production** environment in Vercel, not just Preview/Development
+- NewsAPI free tier only allows server-side requests — that's why the relay server exists
