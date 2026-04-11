@@ -1312,5 +1312,202 @@ function updateArchive() {
     });
 }
 </script>
+
+<!-- ============================================================
+     SOFT COMPANION BUBBLE
+     ============================================================ -->
+<style>
+  @keyframes bubbleFloat {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-10px); }
+  }
+
+  @keyframes bubbleEntrance {
+    0%   { opacity: 0; transform: scale(0.6) translateY(20px); }
+    60%  { opacity: 1; transform: scale(1.04) translateY(-3px); }
+    100% { opacity: 1; transform: scale(1) translateY(0px); }
+  }
+
+  @keyframes particlePing {
+    0%, 100% { transform: scale(1);   opacity: 1; }
+    50%       { transform: scale(1.8); opacity: 0; }
+  }
+
+  @keyframes particlePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.6); }
+    50%       { box-shadow: 0 0 0 8px rgba(250, 204, 21, 0); }
+  }
+
+  .soft-companion-bubble {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 2000;
+    width: 300px;
+    /* Squircle: all corners very rounded EXCEPT bottom-left (speech anchor) */
+    border-radius: 40px 40px 40px 4px;
+    /* Glassmorphism */
+    background: linear-gradient(
+      135deg,
+      rgba(236, 72, 153, 0.22) 0%,
+      rgba(139, 92, 246, 0.22) 100%
+    );
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    /* Borders */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* Inner ring highlight */
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+      0 20px 50px rgba(236, 72, 153, 0.15);
+    padding: 18px 20px 16px;
+    cursor: default;
+    /* Entrance + float */
+    animation:
+      bubbleEntrance 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+      bubbleFloat 5s ease-in-out 0.55s infinite;
+    transform-origin: bottom left;
+  }
+
+  /* Header row */
+  .scb-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  /* Avatar circle */
+  .scb-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fbbf24 0%, #ec4899 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+  }
+
+  /* Sparkle SVG icon */
+  .scb-avatar svg {
+    width: 16px;
+    height: 16px;
+    color: #fff;
+  }
+
+  /* Name label */
+  .scb-name {
+    font-family: 'Inter', 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(249, 168, 212, 0.95);
+  }
+
+  /* Message text */
+  .scb-message {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: rgba(255, 240, 248, 0.9);
+    margin-bottom: 12px;
+  }
+
+  /* Timestamp pill */
+  .scb-meta {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .scb-timestamp {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(249, 168, 212, 0.6);
+    letter-spacing: 0.05em;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 3px 10px;
+  }
+
+  /* Decorative yellow particle */
+  .scb-particle {
+    position: absolute;
+    bottom: -6px;
+    left: -6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #facc15;
+    animation:
+      particlePulse 2s ease-in-out infinite,
+      particlePing   2s ease-in-out infinite;
+  }
+
+  /* Dismiss button */
+  .scb-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: rgba(249, 168, 212, 0.5);
+    font-size: 16px;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+  .scb-close:hover { color: rgba(249, 168, 212, 1); }
+</style>
+
+<div class="soft-companion-bubble" id="soft-companion">
+  <!-- Decorative corner particle -->
+  <div class="scb-particle"></div>
+
+  <!-- Header -->
+  <div class="scb-header">
+    <div class="scb-avatar">
+      <!-- Sparkle icon (Lucide-style inline SVG) -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3 L13.5 8.5 L19 10 L13.5 11.5 L12 17 L10.5 11.5 L5 10 L10.5 8.5 Z"/>
+        <path d="M5 3 L5.8 5.2 L8 6 L5.8 6.8 L5 9 L4.2 6.8 L2 6 L4.2 5.2 Z" opacity="0.7"/>
+        <path d="M19 15 L19.6 16.9 L21.5 17.5 L19.6 18.1 L19 20 L18.4 18.1 L16.5 17.5 L18.4 16.9 Z" opacity="0.7"/>
+      </svg>
+    </div>
+    <span class="scb-name">Bubbles</span>
+    <button class="scb-close" onclick="document.getElementById('soft-companion').style.display='none'" title="Dismiss">×</button>
+  </div>
+
+  <!-- Message -->
+  <div class="scb-message" id="scb-msg-text">
+    Incoming transmissions detected across all frequencies. Stay tuned to the Xeno-Comm array.
+  </div>
+
+  <!-- Timestamp -->
+  <div class="scb-meta">
+    <span class="scb-timestamp" id="scb-time">just now</span>
+  </div>
+</div>
+
+<script>
+  // Keep the Bubbles timestamp live
+  (function() {
+    const el = document.getElementById('scb-time');
+    if (!el) return;
+    let secs = 0;
+    setInterval(() => {
+      secs++;
+      if (secs < 60) el.textContent = secs === 1 ? 'just now' : secs + 's ago';
+      else if (secs < 3600) el.textContent = Math.floor(secs / 60) + 'm ago';
+      else el.textContent = Math.floor(secs / 3600) + 'h ago';
+    }, 1000);
+  })();
+</script>
 </body>
 </html>

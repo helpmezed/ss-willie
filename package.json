@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build": "echo 'No build step required for this Express project'"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
@@ -14,6 +15,6 @@
     "pusher": "^5.2.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "20.x"
   }
 }
