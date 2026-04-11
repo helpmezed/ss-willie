@@ -128,6 +128,7 @@ app.get('/api/news', async (req, res) => {
   try {
     const response = await fetch(url);
     const data = await response.json();
+    console.log('[news] NewsAPI response:', { status: data?.status, code: data?.code, message: data?.message, articleCount: data?.articles?.length });
     if (data && data.status === 'ok') {
       newsCache.set(cacheKey, { timestamp: Date.now(), data });
     }
