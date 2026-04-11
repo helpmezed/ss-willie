@@ -242,59 +242,46 @@
         .xhb-stat span { color: var(--accent-gold); }
         .xhb-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-magenta); box-shadow: 0 0 8px var(--accent-magenta); animation: pulse 1.5s infinite; flex-shrink: 0; }
 
-        /* --- Xeno-Comm Transmission Cards --- */
+        /* --- Outer-News Transmission Cards --- */
         .xeno-card {
             background: rgba(8, 0, 28, 0.85); border: 1px solid rgba(255, 0, 234, 0.18);
-            border-left: 3px solid var(--accent-magenta);
+            border-top: 2px solid var(--accent-magenta);
             clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-            animation: xcardIn 0.35s forwards; flex-shrink: 0;
+            animation: xcardIn 0.4s both; display: flex; flex-direction: column;
             transition: background 0.2s, border-color 0.2s;
-            cursor: grab;
-            touch-action: none; /* FIX: Prevents mobile native scroll when dragging elements */
         }
-        .xeno-card:active { cursor: grabbing; }
-        @keyframes xcardIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-        .xeno-card:hover { background: rgba(12, 0, 36, 0.95); border-left-color: var(--accent-cyan); }
-        .xeno-card.first-card { border-left-color: var(--accent-gold); border-color: rgba(57, 255, 20, 0.2); }
-        .xeno-card.first-card:hover { border-left-color: var(--accent-gold); }
+        @keyframes xcardIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        .xeno-card:hover { background: rgba(12, 0, 36, 0.95); border-top-color: var(--accent-cyan); }
 
         .xc-card-header {
-            display: flex; align-items: center; gap: 10px;
-            padding: 7px 14px; background: rgba(255, 0, 234, 0.05);
-            border-bottom: 1px solid rgba(255, 0, 234, 0.12);
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            padding: 8px 14px 6px;
         }
-        .xc-sig { font-family: var(--font-ui); font-size: 9px; color: var(--accent-magenta); letter-spacing: 2px; flex-shrink: 0; }
-        .xc-divider { width: 1px; height: 10px; background: rgba(255,0,234,0.3); flex-shrink: 0; }
-        .xc-source-name { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .xc-time { font-family: var(--font-ui); font-size: 9px; color: var(--text-muted); letter-spacing: 1px; flex-shrink: 0; }
+        .xc-source-name {
+            font-family: var(--font-ui); font-size: 9px; font-weight: 700; color: var(--accent-magenta);
+            letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 6px rgba(255,0,234,0.3);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .xc-time { font-family: var(--font-ui); font-size: 8px; color: var(--text-muted); letter-spacing: 1px; flex-shrink: 0; }
 
-        .xc-card-body { padding: 12px 16px 10px; pointer-events: none; }
-        .xc-first-badge {
-            display: inline-block; background: rgba(57, 255, 20, 0.08); color: var(--accent-gold);
-            font-family: var(--font-ui); font-size: 8px; letter-spacing: 2.5px; padding: 2px 10px;
-            border: 1px solid rgba(57, 255, 20, 0.3); margin-bottom: 9px; text-transform: uppercase;
-        }
+        .xc-card-body { padding: 4px 14px 12px; flex: 1; }
         .xc-headline {
-            font-family: var(--font-ui); font-size: 12px; font-weight: 700; color: var(--text-main);
-            line-height: 1.4; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;
-            pointer-events: auto;
+            font-family: var(--font-ui); font-size: 14px; font-weight: 700; color: var(--text-main);
+            line-height: 1.45; margin-bottom: 8px; letter-spacing: 0.01em;
         }
         .xc-headline a { color: inherit; text-decoration: none; transition: color 0.2s; }
         .xc-headline a:hover { color: var(--accent-cyan); text-shadow: 0 0 6px rgba(0,238,255,0.4); }
-        .xc-body { font-family: var(--font-mono); font-size: 12px; line-height: 1.6; color: rgba(226, 232, 240, 0.65); }
+        .xc-body { font-family: var(--font-mono); font-size: 11px; line-height: 1.6; color: rgba(226, 232, 240, 0.6); }
 
         .xc-card-footer {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 7px 16px; border-top: 1px solid rgba(255, 0, 234, 0.1);
+            padding: 8px 14px;
+            border-top: 1px solid rgba(255, 0, 234, 0.1);
+            margin-top: auto;
         }
-        .xc-footer-source { font-family: var(--font-ui); font-size: 8px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
-        .xc-footer-source::before { content: '◈ '; color: var(--accent-magenta); }
         .xc-read-link {
-            font-family: var(--font-ui); font-size: 8px; color: var(--accent-cyan); letter-spacing: 1.5px;
-            text-decoration: none; text-transform: uppercase; opacity: 0; transition: opacity 0.2s;
-            pointer-events: auto;
+            font-family: var(--font-ui); font-size: 9px; color: var(--accent-cyan); letter-spacing: 1.5px;
+            text-decoration: none; text-transform: uppercase; transition: text-shadow 0.2s;
         }
-        .xeno-card:hover .xc-read-link { opacity: 1; }
         .xc-read-link:hover { text-shadow: 0 0 8px var(--accent-cyan); }
 
         /* --- Xeno Signal-Intercept animation --- */
@@ -1127,81 +1114,40 @@ function safeUrl(u) {
     catch { return null; }
 }
 
-function showNewsTyping() {
-    const el = document.createElement('div');
-    el.className = 'xeno-intercepting';
-    el.id = 'news-typing-row';
-    el.innerHTML = `
-        <div class="xi-bars">
-            <div class="xi-bar"></div><div class="xi-bar"></div><div class="xi-bar"></div>
-            <div class="xi-bar"></div><div class="xi-bar"></div>
-        </div>
-        <span class="xi-label">Intercepting Signal...</span>`;
-    newsChat.appendChild(el);
-    newsScrollDown();
-}
+function renderNewsCard(item, idx) {
+    const card = document.createElement('div');
+    card.className = 'xeno-card';
+    card.style.animationDelay = `${idx * 45}ms`;
+    card.dataset.dispatch = JSON.stringify(item);
 
-function hideNewsTyping() { document.getElementById('news-typing-row')?.remove(); }
-
-function renderNewsMessage(item, isFirst) {
-    const sigNum = String(newsIdx + 1).padStart(3, '0');
     const headlineInner = item.url
         ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>`
         : escapeHtml(item.title);
 
-    const card = document.createElement('div');
-    card.className = 'xeno-card' + (isFirst ? ' first-card' : '');
-    card.dataset.dispatch = JSON.stringify(item); // Embed data for the drag-n-drop ghost
-    
     card.innerHTML = `
         <div class="xc-card-header">
-            <span class="xc-sig">◆ SIG-${sigNum}</span>
-            <div class="xc-divider"></div>
             <span class="xc-source-name">${escapeHtml(item.source)}</span>
             <span class="xc-time">${new Date().toLocaleTimeString()}</span>
         </div>
         <div class="xc-card-body">
-            ${isFirst ? '<div class="xc-first-badge">✦ Incoming Transmission ✦</div>' : ''}
             <div class="xc-headline">${headlineInner}</div>
             <div class="xc-body">${escapeHtml(item.content)}</div>
         </div>
-        <div class="xc-card-footer">
-            <span class="xc-footer-source">${escapeHtml(item.source)}</span>
-            ${item.url ? `<a class="xc-read-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Read Transmission →</a>` : ''}
-        </div>`;
+        ${item.url ? `<div class="xc-card-footer"><a class="xc-read-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Read Transmission →</a></div>` : ''}`;
 
     newsChat.appendChild(card);
-    newsScrollDown();
-    sfxMessage(); // Play soft beep for new dispatch
-
-    const countEl = document.getElementById('xc-count');
-    if (countEl) countEl.textContent = newsIdx + 1;
-
-    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
-    if (activeTab !== 'news') {
-        const badge = document.getElementById('news-badge');
-        badge.textContent = parseInt(badge.textContent || '0', 10) + 1;
-    }
-    updateArchive();
 }
 
-function nextNews() {
-    clearTimeout(newsLoopTimer);
-    if (newsIdx >= newsQueue.length) {
-        const end = document.createElement('div');
-        end.className = 'system-msg';
-        end.textContent = '⊱ Signal lost. Awaiting further stellar rotations. ⊰';
-        newsChat.appendChild(end);
-        newsScrollDown();
-        return;
+function renderAllNews() {
+    newsChat.querySelectorAll('.system-msg, .xeno-intercepting').forEach(el => el.remove());
+    newsQueue.forEach((item, i) => renderNewsCard(item, i));
+    const countEl = document.getElementById('xc-count');
+    if (countEl) countEl.textContent = newsQueue.length;
+    updateArchive();
+    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+    if (activeTab !== 'news' && newsQueue.length) {
+        document.getElementById('news-badge').textContent = newsQueue.length;
     }
-    showNewsTyping();
-    newsLoopTimer = setTimeout(() => {
-        hideNewsTyping();
-        renderNewsMessage(newsQueue[newsIdx], newsIdx === 0);
-        newsIdx++;
-        newsLoopTimer = setTimeout(nextNews, 2240);
-    }, 1248 + Math.random() * 960);
 }
 
 async function startNews(q, category) {
@@ -1243,24 +1189,17 @@ async function startNews(q, category) {
         });
     }
 
-    newsQueue.unshift({
-        title: "URGENT DATA DUMP",
-        content: `We've intercepted ${newsQueue.length} signals from the inner planets. De-scrambling now...`,
-        source: "Outer-News Bridge",
-        url: null
-    });
-    nextNews();
+    renderAllNews();
 }
 
 function refreshNews(q, category) {
-    clearTimeout(newsLoopTimer);
-    newsQueue = []; newsIdx = 0;
+    newsQueue = [];
     newsChat.innerHTML = '';
     const countEl = document.getElementById('xc-count');
     if (countEl) countEl.textContent = '0';
     const sys = document.createElement('div');
     sys.className = 'system-msg';
-    sys.textContent = '◈ TUNING THE SINGULARITY DRIVE ◈';
+    sys.textContent = '◈ SCANNING THE OUTER REACHES ◈';
     newsChat.appendChild(sys);
     startNews(q, category);
 }
@@ -1285,11 +1224,6 @@ document.getElementById('cycle-btn').addEventListener('click', () => {
     catIdx = (catIdx + 1) % CATEGORIES.length;
     const cat = CATEGORIES[catIdx];
     categoryLabel.textContent = CAT_LABELS[cat].toUpperCase();
-    const msg = document.createElement('div');
-    msg.className = 'system-msg';
-    msg.textContent = `◈ Channel tuned to: ${CAT_LABELS[cat]} ◈`;
-    newsChat.appendChild(msg);
-    newsScrollDown();
     refreshNews(null, cat === 'general' ? null : cat);
 });
 
@@ -1298,7 +1232,7 @@ function updateArchive() {
     const list = document.getElementById('archive-list');
     const count = document.getElementById('archive-count');
     list.innerHTML = '';
-    const items = newsQueue.slice(1); // skip intro "data dump"
+    const items = newsQueue.slice(0);
     count.textContent = items.length;
     if (!items.length) {
         const empty = document.createElement('div');
