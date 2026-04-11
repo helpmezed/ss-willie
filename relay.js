@@ -4,6 +4,15 @@ const fetch = require('node-fetch');
 const path = require('path');
 require('dotenv').config();
 
+// Startup env check — logs true/false only, never the actual values
+console.log('[relay] env vars present:', {
+  PUSHER_APP_ID:  !!process.env.PUSHER_APP_ID,
+  PUSHER_KEY:     !!process.env.PUSHER_KEY,
+  PUSHER_SECRET:  !!process.env.PUSHER_SECRET,
+  PUSHER_CLUSTER: !!process.env.PUSHER_CLUSTER,
+  NEWS_API_KEY:   !!process.env.NEWS_API_KEY,
+});
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
