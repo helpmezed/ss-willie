@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Backroom Terminal // Xeno-Comm</title>
+    <title>Backroom Terminal // Outer-News</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23030712'/%3E%3Ccircle cx='16' cy='16' r='5' fill='none' stroke='%2300eeff' stroke-width='2'/%3E%3Cline x1='16' y1='4' x2='16' y2='9' stroke='%2300eeff' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='16' y1='23' x2='16' y2='28' stroke='%2300eeff' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='4' y1='16' x2='9' y2='16' stroke='%2300eeff' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='23' y1='16' x2='28' y2='16' stroke='%2300eeff' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%2300eeff'/%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Orbitron:wght@500;700;900&family=Fira+Code:wght@300;500&display=swap" rel="stylesheet">
     <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
@@ -320,7 +320,7 @@
         .ticker-wrap::before, .ticker-wrap::after { content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; }
         .ticker-wrap::before { left: 0; background: linear-gradient(to right, var(--bg-color), transparent); }
         .ticker-wrap::after { right: 0; background: linear-gradient(to left, var(--bg-color), transparent); }
-        .ticker { display: flex; white-space: nowrap; animation: ticker-scroll 40s linear infinite; }
+        .ticker { display: flex; white-space: nowrap; animation: ticker-scroll 64s linear infinite; }
         .ticker-item { color: var(--accent-magenta); font-family: var(--font-ui); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; padding: 0 22px; text-shadow: 0 0 6px rgba(255, 0, 234, 0.4); }
         .ticker-item::before { content: '◆ '; color: var(--accent-cyan); }
         @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
@@ -413,7 +413,7 @@
 <div id="login-screen">
     <div class="login-card">
         <h2 style="font-family:var(--font-ui); color:var(--accent-cyan); margin-bottom:8px;">Initialize Link</h2>
-        <div class="login-subtitle">Backroom // Xeno-Comm</div>
+        <div class="login-subtitle">Backroom // Outer-News</div>
         <div id="login-error" style="color:var(--accent-magenta); display:none; margin-bottom:10px;">Invalid callsign</div>
         <input type="text" id="username-input" class="login-input" placeholder="Enter Callsign" maxlength="20">
         <button class="btn" id="join-btn" style="width:100%">Engage</button>
@@ -432,7 +432,7 @@
             </div>
             <div class="tab-bar">
                 <button class="tab-btn active" data-tab="chat">▣ Backroom</button>
-                <button class="tab-btn" data-tab="news">◈ Xeno-Comm <span class="tab-badge" id="news-badge"></span></button>
+                <button class="tab-btn" data-tab="news">◈ Outer-News <span class="tab-badge" id="news-badge"></span></button>
             </div>
         </header>
 
@@ -456,7 +456,7 @@
         <!-- ==================== NEWS VIEW ==================== -->
         <div class="view" id="view-news">
             <div class="xeno-header-bar">
-                <div class="xhb-station">◈ XENO-COMM // INTERSTELLAR DISPATCH</div>
+                <div class="xhb-station">◈ OUTER-NEWS // INTERSTELLAR DISPATCH</div>
                 <div class="xhb-right">
                     <div class="xhb-stat">STARDATE <span id="date-text">—</span></div>
                     <div class="xhb-stat">SIGNALS <span id="xc-count">0</span></div>
@@ -1197,8 +1197,8 @@ function nextNews() {
         hideNewsTyping();
         renderNewsMessage(newsQueue[newsIdx], newsIdx === 0);
         newsIdx++;
-        newsLoopTimer = setTimeout(nextNews, 1400);
-    }, 780 + Math.random() * 600);
+        newsLoopTimer = setTimeout(nextNews, 2240);
+    }, 1248 + Math.random() * 960);
 }
 
 async function startNews(q, category) {
@@ -1243,7 +1243,7 @@ async function startNews(q, category) {
     newsQueue.unshift({
         title: "URGENT DATA DUMP",
         content: `We've intercepted ${newsQueue.length} signals from the inner planets. De-scrambling now...`,
-        source: "Xeno-Comm Bridge",
+        source: "Outer-News Bridge",
         url: null
     });
     nextNews();
