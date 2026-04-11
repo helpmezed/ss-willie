@@ -121,7 +121,7 @@ app.get('/api/news', async (req, res) => {
     return res.json(newsCache.get(cacheKey).data);
   }
 
-  let url = `https://newsapi.org/v2/top-headlines?language=en&pageSize=30&apiKey=${apiKey}`;
+  let url = `https://newsapi.org/v2/top-headlines?country=us&language=en&pageSize=30&apiKey=${apiKey}`;
   if (q)        url += `&q=${encodeURIComponent(q)}`;
   if (category) url += `&category=${encodeURIComponent(category)}`;
 
