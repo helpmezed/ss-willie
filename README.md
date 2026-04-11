@@ -69,12 +69,12 @@ Your live URL will be something like: `https://ss-willie.onrender.com`
 ## Project Structure
 ```
 ss-willie/
-├── server.js          <- Node.js proxy server
+├── relay.js           <- Interstellar relay server (Node.js / Express)
 ├── package.json
 ├── .env.example       <- Copy this to .env and add your key
 ├── .gitignore         <- Keeps .env out of GitHub (important!)
-└── public/
-    └── index.html     <- The app itself
+└── terminal/
+    └── index.html     <- The broadcast terminal (the app itself)
 ```
 
 ---

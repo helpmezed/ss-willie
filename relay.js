@@ -29,7 +29,7 @@ const newsCache = new Map();
 const CACHE_DURATION = 15 * 60 * 1000;
 
 // Serve static files from /public
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'terminal')));
 
 // Expose public Pusher config to the browser
 app.get('/api/config', (_req, res) => {

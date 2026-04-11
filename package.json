@@ -2,10 +2,10 @@
   "name": "ss-willie-telegraph",
   "version": "1.0.0",
   "description": "S.S. Willie — A Steamboat Willie themed live news telegraph app",
-  "main": "server.js",
+  "main": "relay.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
+    "start": "node relay.js",
+    "dev": "node relay.js",
     "build": "echo 'No build step required for this Express project'"
   },
   "dependencies": {
