@@ -699,7 +699,7 @@ const dateEl = document.getElementById('date-text');
 const header = document.getElementById('header');
 const needle = document.getElementById('gauge-needle');
 
-let queue = [], idx = 0;
+let queue = [], idx = 0, loopTimer = null;
 let fetchAbortController = null;
 let isTyping = false;
 
@@ -759,13 +759,13 @@ function triggerPlasmaFlare() {
   void footer.offsetWidth; // Trigger reflow
   footer.classList.add('plasma-active');
   setTimeout(() => phone.classList.remove('glitch-active'), 300);
-  void footer.offsetWidth;
   needle.style.transform = `translate(-50%, -100%) rotate(${Math.random() * 90 + 30}deg)`;
   setTimeout(() => { needle.style.transform = 'translate(-50%, -100%) rotate(-45deg)'; }, 1000);
 }
 
 function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  if (!s) return "";
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 function safeUrl(u) {
   if (!u) return null;
@@ -794,18 +794,23 @@ function renderMessage(item, isFirst) {
 }
 
 function next() {
+  clearTimeout(loopTimer);
   if(idx>=queue.length) {
-    const end=document.createElement('div');
-    end.className='system-msg';
-    end.textContent="⊱ Signal lost. Awaiting further stellar rotations. ⊰";
-    chat.appendChild(end); scrollDown(); return;
+    // Only show signal lost if we aren't actively loading a new batch
+    if (!header.classList.contains('loading')) {
+      const end=document.createElement('div');
+      end.className='system-msg';
+      end.textContent="⊱ Signal lost. Awaiting further stellar rotations. ⊰";
+      chat.appendChild(end); scrollDown();
+    }
+    return;
   }
   showTyping();
   isTyping = true;
-  setTimeout(()=>{
+  loopTimer = setTimeout(()=>{
     hideTyping(); renderMessage(queue[idx],idx===0); idx++;
     isTyping = false;
-    setTimeout(next,1400);
+    loopTimer = setTimeout(next, 1400);
   }, 780+Math.random()*600);
 }
 
@@ -858,6 +863,7 @@ async function startNews(q, category) {
 
 /* ═══════════════ REFRESH ═══════════════ */
 function refreshNews(q, category) {
+  clearTimeout(loopTimer);
   triggerPlasmaFlare();
   queue=[]; idx=0;
   chat.innerHTML='';

@@ -35,7 +35,7 @@ app.get('/api/news', async (req, res) => {
     const response = await fetch(url);
     const data = await response.json();
     
-    if (data.status === 'ok') {
+    if (data && data.status === 'ok') {
       cache.set(cacheKey, { timestamp: Date.now(), data });
     }
     res.json(data);
@@ -45,6 +45,10 @@ app.get('/api/news', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Xeno-Comm array is broadcasting on port ${PORT}!`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Xeno-Comm array is broadcasting on port ${PORT}!`);
+  });
+}
+
+module.exports = app;

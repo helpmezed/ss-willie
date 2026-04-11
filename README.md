@@ -42,7 +42,7 @@ git init
 git add .
 git commit -m "Xeno-Comm Interstellar Dispatch launch"
 git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/ss-willie.git
+git remote add origin https://github.com/helpmezed/ss-willie.git
 git push -u origin main
 ```
 
