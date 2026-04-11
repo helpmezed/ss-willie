@@ -4,6 +4,6 @@
     { "src": "relay.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "server.js" }
+    { "src": "/(.*)", "dest": "/relay.js" }
   ]
 }
