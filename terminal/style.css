@@ -1,0 +1,85 @@
+:root {
+  --terminal-green: #00ff41;
+  --terminal-bg: #0a0a0c;
+  --dim-green: #008f11;
+  --glow: 0 0 8px rgba(0, 255, 65, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--terminal-bg);
+  color: var(--terminal-green);
+  font-family: 'Courier New', Courier, monospace;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevents double scrollbars on the main window */
+}
+
+header {
+  padding: 1rem;
+  text-align: center;
+  border-bottom: 2px solid var(--terminal-green);
+  box-shadow: var(--glow);
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+/* The main container uses Flexbox to handle responsiveness */
+.broadcast-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Desktop layout: Side-by-side news and chat */
+@media (min-width: 769px) {
+  .broadcast-container {
+    flex-direction: row;
+  }
+  
+  .panel {
+    flex: 1;
+    border-right: 1px solid var(--dim-green);
+  }
+  
+  .panel:last-child {
+    border-right: none;
+  }
+}
+
+/* Mobile layout: Stacked vertically */
+@media (max-width: 768px) {
+  .broadcast-container {
+    flex-direction: column;
+  }
+  
+  .panel {
+    flex: 1;
+    height: 50%; /* Divide screen height between panels */
+    border-bottom: 1px solid var(--dim-green);
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 15px;
+  background: rgba(0, 20, 0, 0.1);
+}
+
+/* Ensure images from NewsAPI don't break the mobile layout */
+img, video, iframe {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--dim-green);
+  margin: 10px 0;
+  filter: brightness(0.8) sepia(1) hue-rotate(70deg) saturate(3); /* Interstellar theme effect */
+}
