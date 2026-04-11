@@ -109,8 +109,11 @@
         .view { flex: 1; display: none; flex-direction: column; min-height: 0; }
         .view.active { display: flex; }
 
-        #chat-container, #news-container {
+        #chat-container {
             flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth;
+        }
+        #news-container {
+            flex: 1; overflow-y: auto; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth;
         }
 
         ::-webkit-scrollbar { width: 4px; }
@@ -165,28 +168,85 @@
 
         .media-attachment { max-width: 100%; border-radius: 4px; margin-top: 10px; display: block; border: 1px solid var(--glass-border); cursor: pointer; }
 
-        /* --- News-specific message styling --- */
-        .news-headline {
-            display: block; font-family: var(--font-ui); font-weight: 700; font-size: 13px;
-            color: var(--accent-gold); text-transform: uppercase; letter-spacing: 0.05em;
-            border-bottom: 1px solid rgba(57, 255, 20, 0.2); padding-bottom: 6px; margin-bottom: 8px; line-height: 1.3;
-            text-shadow: 0 0 6px rgba(57, 255, 20, 0.3);
+        /* --- Xeno-Comm Header Bar --- */
+        .xeno-header-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 9px 18px; background: rgba(20, 0, 40, 0.7);
+            border-bottom: 1px solid rgba(255, 0, 234, 0.25); flex-shrink: 0;
         }
-        .news-headline a { color: inherit; text-decoration: none; }
-        .news-headline a:hover { color: var(--accent-cyan); text-shadow: 0 0 8px var(--accent-cyan); }
-        .news-body { font-family: var(--font-mono); font-size: 13px; line-height: 1.55; color: var(--text-main); }
-        .news-source {
-            display: flex; align-items: center; gap: 6px; margin-top: 10px; padding-top: 6px;
-            border-top: 1px dashed var(--glass-border);
-            font-family: var(--font-ui); font-size: 9px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase;
+        .xhb-station { font-family: var(--font-ui); font-size: 11px; color: var(--accent-magenta); letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px rgba(255,0,234,0.4); }
+        .xhb-right { display: flex; align-items: center; gap: 18px; }
+        .xhb-stat { font-family: var(--font-ui); font-size: 9px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
+        .xhb-stat span { color: var(--accent-gold); }
+        .xhb-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-magenta); box-shadow: 0 0 8px var(--accent-magenta); animation: pulse 1.5s infinite; flex-shrink: 0; }
+
+        /* --- Xeno-Comm Transmission Cards --- */
+        .xeno-card {
+            background: rgba(8, 0, 28, 0.85); border: 1px solid rgba(255, 0, 234, 0.18);
+            border-left: 3px solid var(--accent-magenta);
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+            animation: xcardIn 0.35s forwards; flex-shrink: 0;
+            transition: background 0.2s, border-color 0.2s;
         }
-        .news-source::before { content: '◈'; color: var(--accent-cyan); }
-        .news-badge {
-            display: inline-block; background: rgba(255, 0, 234, 0.15); color: var(--accent-magenta);
-            font-family: var(--font-ui); font-size: 9px; letter-spacing: 1.5px; padding: 3px 8px;
-            border: 1px solid var(--accent-magenta); border-radius: 2px; margin-bottom: 8px;
-            text-transform: uppercase;
+        @keyframes xcardIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        .xeno-card:hover { background: rgba(12, 0, 36, 0.95); border-left-color: var(--accent-cyan); }
+        .xeno-card.first-card { border-left-color: var(--accent-gold); border-color: rgba(57, 255, 20, 0.2); }
+        .xeno-card.first-card:hover { border-left-color: var(--accent-gold); }
+
+        .xc-card-header {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 14px; background: rgba(255, 0, 234, 0.05);
+            border-bottom: 1px solid rgba(255, 0, 234, 0.12);
         }
+        .xc-sig { font-family: var(--font-ui); font-size: 9px; color: var(--accent-magenta); letter-spacing: 2px; flex-shrink: 0; }
+        .xc-divider { width: 1px; height: 10px; background: rgba(255,0,234,0.3); flex-shrink: 0; }
+        .xc-source-name { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .xc-time { font-family: var(--font-ui); font-size: 9px; color: var(--text-muted); letter-spacing: 1px; flex-shrink: 0; }
+
+        .xc-card-body { padding: 12px 16px 10px; }
+        .xc-first-badge {
+            display: inline-block; background: rgba(57, 255, 20, 0.08); color: var(--accent-gold);
+            font-family: var(--font-ui); font-size: 8px; letter-spacing: 2.5px; padding: 2px 10px;
+            border: 1px solid rgba(57, 255, 20, 0.3); margin-bottom: 9px; text-transform: uppercase;
+        }
+        .xc-headline {
+            font-family: var(--font-ui); font-size: 12px; font-weight: 700; color: var(--text-main);
+            line-height: 1.4; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .xc-headline a { color: inherit; text-decoration: none; transition: color 0.2s; }
+        .xc-headline a:hover { color: var(--accent-cyan); text-shadow: 0 0 6px rgba(0,238,255,0.4); }
+        .xc-body { font-family: var(--font-mono); font-size: 12px; line-height: 1.6; color: rgba(226, 232, 240, 0.65); }
+
+        .xc-card-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 7px 16px; border-top: 1px solid rgba(255, 0, 234, 0.1);
+        }
+        .xc-footer-source { font-family: var(--font-ui); font-size: 8px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
+        .xc-footer-source::before { content: '◈ '; color: var(--accent-magenta); }
+        .xc-read-link {
+            font-family: var(--font-ui); font-size: 8px; color: var(--accent-cyan); letter-spacing: 1.5px;
+            text-decoration: none; text-transform: uppercase; opacity: 0; transition: opacity 0.2s;
+        }
+        .xeno-card:hover .xc-read-link { opacity: 1; }
+        .xc-read-link:hover { text-shadow: 0 0 8px var(--accent-cyan); }
+
+        /* --- Xeno Signal-Intercept animation (replaces chat typing bubble) --- */
+        .xeno-intercepting {
+            display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+            background: rgba(8, 0, 28, 0.6); border: 1px solid rgba(255,0,234,0.15);
+            border-left: 3px solid rgba(255,0,234,0.4);
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+            flex-shrink: 0;
+        }
+        .xi-bars { display: flex; align-items: flex-end; gap: 3px; height: 18px; }
+        .xi-bar { width: 3px; background: var(--accent-magenta); border-radius: 1px; animation: xiBar 0.7s ease-in-out infinite; }
+        .xi-bar:nth-child(1) { height: 5px;  animation-delay: 0s; }
+        .xi-bar:nth-child(2) { height: 13px; animation-delay: 0.1s; }
+        .xi-bar:nth-child(3) { height: 9px;  animation-delay: 0.2s; }
+        .xi-bar:nth-child(4) { height: 16px; animation-delay: 0.3s; }
+        .xi-bar:nth-child(5) { height: 7px;  animation-delay: 0.4s; }
+        @keyframes xiBar { 0%,100% { opacity: 0.25; transform: scaleY(0.5); } 50% { opacity: 1; transform: scaleY(1); } }
+        .xi-label { font-family: var(--font-ui); font-size: 9px; color: var(--accent-magenta); letter-spacing: 3px; text-transform: uppercase; opacity: 0.7; animation: pulse 1.2s infinite; }
 
         /* --- Ticker --- */
         .ticker-wrap {
@@ -201,18 +261,38 @@
         .ticker-item::before { content: '◆ '; color: var(--accent-cyan); }
         @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-        /* --- News typing bubble --- */
-        .news-typing { display: inline-flex; gap: 6px; align-items: center; padding: 4px 0; }
-        .news-typing .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-cyan); box-shadow: 0 0 6px var(--accent-cyan); animation: dot-bounce 1.2s infinite; }
-        .news-typing .dot:nth-child(2) { animation-delay: 0.15s; }
-        .news-typing .dot:nth-child(3) { animation-delay: 0.3s; }
-        @keyframes dot-bounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-4px); opacity: 1; } }
-
         /* --- Input Areas --- */
-        #input-area, #news-input-area {
+        #input-area {
             padding: 16px 24px; background: rgba(3, 7, 18, 0.8); border-top: 1px solid var(--glass-border);
             display: flex; gap: 12px; align-items: flex-end;
         }
+
+        /* --- Xeno-Comm Control Panel --- */
+        #news-control-panel {
+            background: rgba(10, 0, 30, 0.95); border-top: 1px solid rgba(255, 0, 234, 0.25);
+            padding: 12px 18px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+        }
+        .ncp-freq-block { display: flex; flex-direction: column; gap: 2px; min-width: 110px; flex-shrink: 0; }
+        .ncp-freq-label { font-family: var(--font-ui); font-size: 7px; color: var(--text-muted); letter-spacing: 2.5px; text-transform: uppercase; }
+        .ncp-freq-value { font-family: var(--font-ui); font-size: 10px; color: var(--accent-magenta); letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 0 8px rgba(255,0,234,0.4); }
+        #news-search {
+            flex: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,0,234,0.25); color: #fff;
+            padding: 9px 14px; outline: none; font-family: var(--font-mono); font-size: 12px;
+            transition: border-color 0.2s; height: 38px;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+        }
+        #news-search:focus { border-color: var(--accent-magenta); box-shadow: 0 0 8px rgba(255,0,234,0.15); }
+        #news-search::placeholder { color: var(--text-muted); }
+        .ncp-btn {
+            font-family: var(--font-ui); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+            background: rgba(255,0,234,0.07); color: var(--accent-magenta);
+            border: 1px solid rgba(255,0,234,0.35); padding: 0 14px; cursor: pointer;
+            transition: all 0.2s; white-space: nowrap; height: 38px; flex-shrink: 0;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+        }
+        .ncp-btn:hover { background: rgba(255,0,234,0.18); box-shadow: var(--glow-magenta); }
+        .ncp-btn.gold { color: var(--accent-gold); border-color: rgba(57,255,20,0.35); background: rgba(57,255,20,0.05); }
+        .ncp-btn.gold:hover { background: rgba(57,255,20,0.15); box-shadow: var(--glow-gold); }
         #input-wrapper { flex: 1; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; transition: border-color 0.3s; }
         #input-wrapper:focus-within { border-color: var(--accent-cyan); box-shadow: 0 0 10px rgba(0, 238, 255, 0.1); }
         #chat-input { width: 100%; background: transparent; border: none; color: #fff; padding: 14px 18px; outline: none; resize: none; min-height: 48px; font-family: var(--font-text); font-size: 15px; }
@@ -238,8 +318,6 @@
         #typing-indicator { display: none; padding: 8px 24px; font-family: var(--font-ui); font-size: 10px; color: var(--accent-cyan); letter-spacing: 2px; border-top: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); }
         #typing-indicator.active { display: block; }
 
-        #category-label { font-family: var(--font-ui); font-size: 9px; color: var(--accent-gold); letter-spacing: 1.5px; text-transform: uppercase; padding: 0 20px 6px; }
-
         #login-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2000; background: var(--bg-color); backdrop-filter: blur(10px); }
         .login-card { text-align: center; background: var(--glass-bg); padding: 40px; border-radius: 8px; border: 1px solid var(--glass-border); max-width: 360px; width: 90%; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
         .login-subtitle { font-family: var(--font-ui); color: var(--text-muted); font-size: 9px; letter-spacing: 3px; margin-bottom: 20px; text-transform: uppercase; }
@@ -253,7 +331,10 @@
             #sidebar { position: fixed; right: 0; top: 0; bottom: 0; z-index: 500; transform: translateX(100%); transition: transform 0.3s; }
             #sidebar.open { transform: translateX(0); box-shadow: -10px 0 40px rgba(0,0,0,0.5); }
             .tab-btn { padding: 8px 12px; font-size: 10px; }
-            #chat-container, #news-container { padding: 16px; }
+            #chat-container { padding: 16px; }
+            #news-container { padding: 10px 12px; }
+            #news-control-panel { padding: 10px 12px; gap: 8px; }
+            .ncp-freq-block { display: none; }
         }
 
         /* News system-msg line */
@@ -310,6 +391,14 @@
 
         <!-- ==================== NEWS VIEW ==================== -->
         <div class="view" id="view-news">
+            <div class="xeno-header-bar">
+                <div class="xhb-station">◈ XENO-COMM // INTERSTELLAR DISPATCH</div>
+                <div class="xhb-right">
+                    <div class="xhb-stat">STARDATE <span id="date-text">—</span></div>
+                    <div class="xhb-stat">SIGNALS <span id="xc-count">0</span></div>
+                    <div class="xhb-pulse"></div>
+                </div>
+            </div>
             <div class="ticker-wrap">
                 <div class="ticker" id="ticker">
                     <span class="ticker-item">Reactor core stabilized</span>
@@ -322,15 +411,17 @@
                     <span class="ticker-item">Stand by for telepathic dump</span>
                 </div>
             </div>
-            <div id="category-label">CHANNEL: ALL FREQUENCIES</div>
             <div id="news-container">
-                <div class="system-msg" id="date-text">Calibrating array...</div>
                 <div class="system-msg">◈ TUNING THE SINGULARITY DRIVE ◈</div>
             </div>
-            <div id="news-input-area">
-                <button class="btn magenta" id="refresh-btn" title="Rescan frequencies" style="height:48px;">🛸 Scan</button>
-                <input type="text" id="news-search" placeholder="Search the galaxy...">
-                <button class="btn gold" id="cycle-btn" title="Next channel" style="height:48px;">🌀 Channel</button>
+            <div id="news-control-panel">
+                <div class="ncp-freq-block">
+                    <div class="ncp-freq-label">Channel</div>
+                    <div class="ncp-freq-value" id="category-label">ALL FREQUENCIES</div>
+                </div>
+                <input type="text" id="news-search" placeholder="Filter transmissions...">
+                <button class="ncp-btn" id="refresh-btn">↺ RESCAN</button>
+                <button class="ncp-btn gold" id="cycle-btn">⟳ NEXT FREQ</button>
             </div>
         </div>
     </div>
@@ -710,7 +801,7 @@ let newsFetchAbortController = null;
 
 (function setStardate() {
     const d = new Date();
-    dateEl.textContent = `STARDATE ${d.getFullYear()}.${d.getMonth()}.${d.getDate()} — XENO COMM`;
+    dateEl.textContent = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
 })();
 
 const dict = {
@@ -760,72 +851,56 @@ function safeUrl(u) {
 }
 
 function showNewsTyping() {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'message-wrapper other';
-    wrapper.id = 'news-typing-row';
-    wrapper.style.setProperty('--user-color', 'var(--accent-magenta)');
-
-    const header = document.createElement('div');
-    header.className = 'user-header';
-    const name = document.createElement('span');
-    name.className = 'username';
-    name.style.color = 'var(--accent-magenta)';
-    name.textContent = '👽 XENO-RELAY';
-    header.appendChild(name);
-
-    const bubble = document.createElement('div');
-    bubble.className = 'message';
-    bubble.innerHTML = `<div class="news-typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
-
-    wrapper.appendChild(header);
-    wrapper.appendChild(bubble);
-    newsChat.appendChild(wrapper);
+    const el = document.createElement('div');
+    el.className = 'xeno-intercepting';
+    el.id = 'news-typing-row';
+    el.innerHTML = `
+        <div class="xi-bars">
+            <div class="xi-bar"></div><div class="xi-bar"></div><div class="xi-bar"></div>
+            <div class="xi-bar"></div><div class="xi-bar"></div>
+        </div>
+        <span class="xi-label">Intercepting Signal...</span>`;
+    newsChat.appendChild(el);
     newsScrollDown();
 }
 
 function hideNewsTyping() { document.getElementById('news-typing-row')?.remove(); }
 
 function renderNewsMessage(item, isFirst) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'message-wrapper other';
-    wrapper.style.setProperty('--user-color', 'var(--accent-magenta)');
-
-    const header = document.createElement('div');
-    header.className = 'user-header';
-    const name = document.createElement('span');
-    name.className = 'username';
-    name.style.color = 'var(--accent-magenta)';
-    name.textContent = '👽 XENO-RELAY';
-    const ts = document.createElement('span');
-    ts.className = 'timestamp';
-    ts.textContent = new Date().toLocaleTimeString();
-    header.appendChild(name);
-    header.appendChild(ts);
-
-    const bubble = document.createElement('div');
-    bubble.className = 'message';
-
-    let html = '';
-    if (isFirst) html += '<span class="news-badge">✦ Incoming Transmission ✦</span>';
+    const sigNum = String(newsIdx + 1).padStart(3, '0');
     const headlineInner = item.url
         ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>`
         : escapeHtml(item.title);
-    html += `<div class="news-headline">${headlineInner}</div>`;
-    html += `<div class="news-body">${escapeHtml(item.content)}</div>`;
-    html += `<div class="news-source">${escapeHtml(item.source)}</div>`;
-    bubble.innerHTML = html;
 
-    wrapper.appendChild(header);
-    wrapper.appendChild(bubble);
-    newsChat.appendChild(wrapper);
+    const card = document.createElement('div');
+    card.className = 'xeno-card' + (isFirst ? ' first-card' : '');
+    card.innerHTML = `
+        <div class="xc-card-header">
+            <span class="xc-sig">◆ SIG-${sigNum}</span>
+            <div class="xc-divider"></div>
+            <span class="xc-source-name">${escapeHtml(item.source)}</span>
+            <span class="xc-time">${new Date().toLocaleTimeString()}</span>
+        </div>
+        <div class="xc-card-body">
+            ${isFirst ? '<div class="xc-first-badge">✦ Incoming Transmission ✦</div>' : ''}
+            <div class="xc-headline">${headlineInner}</div>
+            <div class="xc-body">${escapeHtml(item.content)}</div>
+        </div>
+        <div class="xc-card-footer">
+            <span class="xc-footer-source">${escapeHtml(item.source)}</span>
+            ${item.url ? `<a class="xc-read-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Read Transmission →</a>` : ''}
+        </div>`;
+
+    newsChat.appendChild(card);
     newsScrollDown();
 
-    // If news tab not active, pulse the badge count
+    const countEl = document.getElementById('xc-count');
+    if (countEl) countEl.textContent = newsIdx + 1;
+
     const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
     if (activeTab !== 'news') {
         const badge = document.getElementById('news-badge');
-        const n = parseInt(badge.textContent || '0', 10) + 1;
-        badge.textContent = n;
+        badge.textContent = parseInt(badge.textContent || '0', 10) + 1;
     }
     updateArchive();
 }
@@ -901,11 +976,8 @@ function refreshNews(q, category) {
     clearTimeout(newsLoopTimer);
     newsQueue = []; newsIdx = 0;
     newsChat.innerHTML = '';
-    const d = new Date();
-    const dateLine = document.createElement('div');
-    dateLine.className = 'system-msg';
-    dateLine.textContent = `STARDATE ${d.getFullYear()}.${d.getMonth()}.${d.getDate()} — FREQUENCY SCAN`;
-    newsChat.appendChild(dateLine);
+    const countEl = document.getElementById('xc-count');
+    if (countEl) countEl.textContent = '0';
     const sys = document.createElement('div');
     sys.className = 'system-msg';
     sys.textContent = '◈ TUNING THE SINGULARITY DRIVE ◈';
@@ -932,7 +1004,7 @@ let catIdx = 0;
 document.getElementById('cycle-btn').addEventListener('click', () => {
     catIdx = (catIdx + 1) % CATEGORIES.length;
     const cat = CATEGORIES[catIdx];
-    categoryLabel.textContent = `CHANNEL: ${CAT_LABELS[cat].toUpperCase()}`;
+    categoryLabel.textContent = CAT_LABELS[cat].toUpperCase();
     const msg = document.createElement('div');
     msg.className = 'system-msg';
     msg.textContent = `◈ Channel tuned to: ${CAT_LABELS[cat]} ◈`;
