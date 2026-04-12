@@ -573,8 +573,8 @@
                 this.isActive = true;
 
                 this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(0x010205);
-                this.scene.fog = new THREE.FogExp2(0x010205, 0.018);
+                this.scene.background = null;
+                this.scene.fog = null;
 
                 this.camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 300);
                 this.camera.position.set(0, 0, 26);
@@ -762,13 +762,11 @@
                     radius: 3.5 + Math.random() * 0.5, // collision radius
                     mass: 1 + Math.random() * 0.5,
                     chatReact: null,
-                    velocity: new THREE.Vector3((Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2),
-                    baseMaxSpeed: 1.2 + Math.random() * 0.8,
-                    baseMaxForce: 0.04 + Math.random() * 0.02,
+                    velocity: new THREE.Vector3((Math.random()-0.5)*3, (Math.random()-0.5)*3, (Math.random()-0.5)*2),
                     presentExpires: 0,
-                    wanderTime: Math.random() * 1000,
-                    wanderSpeed: 0.1 + Math.random() * 0.1,
-                    wanderOffsets: { x: 0.5 + Math.random(), y: 0.3 + Math.random(), z: 0.4 + Math.random() },
+                    flyTimer: Math.random() * 1.2,
+                    flyTarget: new THREE.Vector3((Math.random()-0.5)*28, (Math.random()-0.5)*16, (Math.random()-0.5)*10),
+                    isHovering: false,
                     phase: Math.random() * Math.PI * 2
                 };
                 state.addUser(user);
@@ -948,27 +946,39 @@
                     const breathScale = (1 + Math.sin(time * 2 + user.phase) * 0.03) * (1 + chatReactBurst);
                     user.mesh.scale.set(breathScale, breathScale, breathScale);
 
-                    let currentTarget, maxSpeed = user.baseMaxSpeed, maxForce = user.baseMaxForce;
-                    if (user.presentExpires && now < user.presentExpires) {
-                        // Swim toward the front glass when speaking
-                        currentTarget = new THREE.Vector3(
-                            (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 1.5, 5
-                        );
-                        maxSpeed = 1.0; maxForce = 0.06;
-                        const dist = user.mesh.position.distanceTo(currentTarget);
-                        if (dist < 3) maxSpeed = Math.max(0.05, maxSpeed * (dist / 3));
-                    } else {
-                        user.wanderTime += deltaTime * user.wanderSpeed;
-                        const nx = Math.sin(user.wanderTime * user.wanderOffsets.x) * Math.cos(user.wanderTime * 0.5);
-                        const ny = Math.sin(user.wanderTime * user.wanderOffsets.y) * 0.4;
-                        const nz = Math.cos(user.wanderTime * user.wanderOffsets.z) * Math.sin(user.wanderTime * 0.6);
-                        // Full 3D wander — fish swim freely in the tank
-                        currentTarget = new THREE.Vector3(nx, ny, nz * 0.5).multiplyScalar(this.volumeRadius);
+                    // --- FLY BEHAVIOR ---
+                    user.flyTimer -= deltaTime;
+                    if (user.flyTimer <= 0) {
+                        user.isHovering = !user.isHovering;
+                        if (user.isHovering) {
+                            user.flyTimer = 0.1 + Math.random() * 0.35;
+                        } else {
+                            user.flyTimer = 0.3 + Math.random() * 1.6;
+                            user.flyTarget.set(
+                                (Math.random() - 0.5) * this.volumeRadius * 2.2,
+                                (Math.random() - 0.5) * this.volumeRadius * 1.2,
+                                (Math.random() - 0.5) * this.volumeRadius * 0.7
+                            );
+                        }
                     }
 
-                    // Tank glass walls: push back if too close to front or rear
-                    if (user.mesh.position.z > 5)  user.velocity.z -= 0.08;
-                    if (user.mesh.position.z < -5) user.velocity.z += 0.08;
+                    let currentTarget, maxSpeed, maxForce;
+                    if (user.presentExpires && now < user.presentExpires) {
+                        currentTarget = new THREE.Vector3((Math.random()-0.5)*2, (Math.random()-0.5)*1.5, 5);
+                        maxSpeed = 3.5; maxForce = 0.5;
+                    } else if (user.isHovering) {
+                        currentTarget = user.mesh.position.clone().add(
+                            new THREE.Vector3((Math.random()-0.5)*0.2, (Math.random()-0.5)*0.2, (Math.random()-0.5)*0.2)
+                        );
+                        maxSpeed = 0.12; maxForce = 0.08;
+                    } else {
+                        currentTarget = user.flyTarget;
+                        maxSpeed = 2.8 + Math.random() * 1.4; maxForce = 0.4;
+                    }
+
+                    // Soft room boundaries
+                    if (user.mesh.position.z > 6)  user.velocity.z -= 0.1;
+                    if (user.mesh.position.z < -6) user.velocity.z += 0.1;
 
                     const desired = currentTarget.clone().sub(user.mesh.position);
                     if (desired.length() > 0.1) {
@@ -994,8 +1004,8 @@
                         user.velocity.add(user.mesh.position.clone().normalize().multiplyScalar(-0.05));
                     }
 
-                    user.velocity.multiplyScalar(0.94);
-                    user.velocity.clampLength(0, 1.0);
+                    user.velocity.multiplyScalar(user.isHovering ? 0.82 : 0.97);
+                    user.velocity.clampLength(0, user.isHovering ? 0.15 : 3.5);
 
                     user.mesh.position.add(user.velocity.clone().multiplyScalar(timeScale));
                 });
