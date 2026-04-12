@@ -920,6 +920,265 @@
             .outer-news-nav { width: 100%; height: auto; }
             .outer-news-layout { flex-direction: column; }
         }
+
+        /* ==================== AUTH OVERLAY (CYBERPUNK) ==================== */
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700;900&display=swap');
+
+        :root {
+            --cp-cyan: #00f0ff;
+            --cp-yellow: #fcee0a;
+            --cp-red: #ff003c;
+            --font-mono-cp: 'Share Tech Mono', monospace;
+            --font-display-cp: 'Orbitron', sans-serif;
+        }
+
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            background: #040405;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono-cp);
+            transition: opacity 0.5s, visibility 0.5s;
+            overflow: hidden;
+        }
+
+        .auth-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* CRT + vignette overlays */
+        .auth-crt {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%),
+                        linear-gradient(90deg, rgba(255,0,0,0.06), rgba(0,255,0,0.02), rgba(0,0,255,0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .auth-vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none;
+            z-index: 9;
+        }
+
+        /* Boot sequence text */
+        .auth-boot-seq {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--cp-cyan);
+            text-shadow: 0 0 5px var(--cp-cyan);
+            z-index: 15;
+            transition: opacity 0.3s;
+        }
+
+        .auth-boot-line {
+            opacity: 0;
+            animation: authTypeLine 0.1s forwards;
+        }
+
+        @keyframes authTypeLine {
+            to { opacity: 1; }
+        }
+
+        .auth-boot-glitch {
+            animation: authSevereGlitch 0.5s infinite;
+            filter: drop-shadow(2px 0 var(--cp-red)) drop-shadow(-2px 0 var(--cp-yellow));
+        }
+
+        @keyframes authSevereGlitch {
+            0%   { transform: translate(0); clip-path: inset(0 0 0 0); }
+            20%  { transform: translate(-5px, 2px); clip-path: inset(20% 0 80% 0); }
+            40%  { transform: translate(5px, -2px); clip-path: inset(80% 0 5% 0); }
+            60%  { transform: translate(-2px, 5px); clip-path: inset(40% 0 40% 0); }
+            80%  { transform: translate(2px, -5px); clip-path: inset(10% 0 60% 0); }
+            100% { transform: translate(0); clip-path: inset(0 0 0 0); }
+        }
+
+        /* Morphing container */
+        .auth-morph {
+            position: relative;
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .auth-morph.state-hidden  { width: 0; height: 0; opacity: 0; }
+        .auth-morph.state-dot     { width: 4px; height: 4px; background: var(--cp-cyan); box-shadow: 0 0 20px 5px var(--cp-cyan); opacity: 1; }
+        .auth-morph.state-line    { width: 400px; height: 2px; background: var(--cp-cyan); box-shadow: 0 0 15px var(--cp-cyan); opacity: 1; }
+
+        .auth-morph.state-box {
+            width: 400px;
+            height: 480px;
+            background: rgba(9,9,11,0.9);
+            border: 2px solid var(--cp-cyan);
+            box-shadow: 0 0 30px rgba(0,240,255,0.2), inset 0 0 20px rgba(0,240,255,0.1);
+            clip-path: polygon(0 20px, 20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+            opacity: 1;
+        }
+
+        .auth-morph.state-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+            background: var(--cp-yellow);
+            transform: scaleX(0);
+            transform-origin: left;
+            animation: authExpandBar 0.5s ease forwards 4.2s;
+        }
+
+        @keyframes authExpandBar {
+            to { transform: scaleX(1); }
+        }
+
+        /* Card inner content */
+        .auth-card {
+            width: 100%;
+            height: 100%;
+            padding: 36px 40px;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .auth-card.content-visible {
+            animation: authGlitchIn 0.6s forwards;
+            pointer-events: all;
+        }
+
+        @keyframes authGlitchIn {
+            0%   { opacity: 0; transform: scale(0.98); filter: blur(4px); }
+            50%  { opacity: 0.5; filter: blur(0px) drop-shadow(2px 0 var(--cp-red)); }
+            55%  { opacity: 1; transform: translate(2px,0); }
+            60%  { opacity: 0; transform: translate(-2px,0); }
+            65%  { opacity: 1; transform: translate(0,0); filter: none; }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .auth-card h2 {
+            font-family: var(--font-display-cp);
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+
+        .auth-subtitle {
+            font-size: 11px;
+            color: var(--cp-yellow);
+            letter-spacing: 1px;
+            margin-bottom: 32px;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .auth-input-group {
+            margin-bottom: 18px;
+        }
+
+        .auth-input-label {
+            display: block;
+            font-size: 11px;
+            color: rgba(0,240,255,0.7);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .auth-input {
+            width: 100%;
+            background: rgba(0,240,255,0.05);
+            border: 1px solid rgba(0,240,255,0.3);
+            color: #fff;
+            font-family: var(--font-mono-cp);
+            font-size: 15px;
+            padding: 11px 14px;
+            outline: none;
+            border-radius: 0;
+            transition: all 0.2s ease;
+        }
+
+        .auth-input:focus {
+            border-color: var(--cp-cyan);
+            background: rgba(0,240,255,0.1);
+            box-shadow: inset 0 0 10px rgba(0,240,255,0.2);
+        }
+
+        .auth-input::placeholder { color: rgba(0,240,255,0.35); }
+
+        .auth-submit {
+            width: 100%;
+            margin-top: 8px;
+            padding: 14px;
+            background: var(--cp-yellow);
+            color: #09090b;
+            font-family: var(--font-display-cp);
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+            transition: all 0.2s ease;
+        }
+
+        .auth-submit:hover {
+            background: var(--cp-cyan);
+            box-shadow: 0 0 15px var(--cp-cyan);
+        }
+
+        .auth-submit::after {
+            content: '>>';
+            position: absolute;
+            right: 14px;
+            transition: right 0.2s ease;
+        }
+
+        .auth-submit:hover::after { right: 9px; }
+
+        .auth-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(0,240,255,0.5);
+        }
+
+        .auth-toggle {
+            color: var(--cp-cyan);
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 6px;
+            text-shadow: 0 0 8px var(--cp-cyan);
+        }
+
+        .auth-toggle:hover { color: var(--cp-yellow); text-shadow: 0 0 8px var(--cp-yellow); }
+
+        @media (max-width: 500px) {
+            .auth-morph.state-line { width: 90vw; }
+            .auth-morph.state-box  { width: 90vw; height: 500px; }
+        }
     </style>
 </head>
 <body>
@@ -1070,6 +1329,44 @@
         </div>
     </div>
 
+    <!-- AUTHENTICATION OVERLAY -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-vignette"></div>
+        <div class="auth-crt"></div>
+        <div class="auth-boot-seq" id="authBootSeq"></div>
+
+        <div class="auth-morph state-hidden" id="authMorph">
+            <div class="auth-card" id="authCard">
+                <h2 id="authTitle">NCPD_NET</h2>
+                <div class="auth-subtitle">SECURE AUTHENTICATION PROTOCOL v9.4</div>
+
+                <form id="authForm" class="auth-form">
+                    <div id="registerFields" style="display: none;">
+                        <div class="auth-input-group">
+                            <label class="auth-input-label">Neural Path</label>
+                            <input type="email" id="authEmail" class="auth-input" placeholder="email@domain.net" autocomplete="email">
+                        </div>
+                    </div>
+                    <div class="auth-input-group">
+                        <label class="auth-input-label">Operator ID</label>
+                        <input type="text" id="authUsername" class="auth-input" placeholder="Enter designation..." autocomplete="username" required>
+                    </div>
+                    <div class="auth-input-group">
+                        <label class="auth-input-label">Neural Passkey</label>
+                        <input type="password" id="authPassword" class="auth-input" placeholder="••••••••" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" id="authSubmit" class="auth-submit">Link</button>
+                </form>
+
+                <div id="authError" class="auth-error" style="color: var(--cp-red); font-family: var(--font-mono-cp); font-size: 12px; text-align: center; margin-top: 16px;"></div>
+                <div class="auth-footer">
+                    <span id="authToggleText">Awaiting assignment?</span>
+                    <span id="authToggleBtn" class="auth-toggle">Register Entity</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="importmap">
         {
             "imports": {
@@ -1082,6 +1379,100 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ==================== AUTHENTICATION MANAGER ====================
+        class AuthManager {
+            constructor() {
+                this.user = null;
+                this.isRegister = false;
+                this.overlay = document.getElementById('authOverlay');
+                this.form = document.getElementById('authForm');
+                this.title = document.getElementById('authTitle');
+                this.error = document.getElementById('authError');
+                this.toggleBtn = document.getElementById('authToggleBtn');
+                this.toggleText = document.getElementById('authToggleText');
+                this.regFields = document.getElementById('registerFields');
+                
+                this.init();
+            }
+
+            async init() {
+                this.toggleBtn.addEventListener('click', () => this.toggleMode());
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                
+                // Initial session check
+                try {
+                    const res = await fetch('/api/auth/me');
+                    if (res.ok) {
+                        this.user = await res.json();
+                        this.finishAuth();
+                    }
+                } catch (err) {
+                    console.log('No active session');
+                }
+            }
+
+            toggleMode() {
+                this.isRegister = !this.isRegister;
+                this.title.textContent = this.isRegister ? 'New Entity Assignment' : 'Nexus Protocol';
+                this.toggleText.textContent = this.isRegister ? 'System registered?' : 'Awaiting assignment?';
+                this.toggleBtn.textContent = this.isRegister ? 'Access Portal' : 'Register Entity';
+                this.regFields.style.display = this.isRegister ? 'block' : 'none';
+                this.error.textContent = '';
+            }
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                this.error.textContent = '';
+                const username = document.getElementById('authUsername').value;
+                const password = document.getElementById('authPassword').value;
+                const email = document.getElementById('authEmail').value;
+
+                const endpoint = this.isRegister ? '/api/auth/register' : '/api/auth/login';
+                const body = this.isRegister ? { username, password, email } : { username, password };
+
+                try {
+                    const res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        this.user = data;
+                        this.finishAuth();
+                    } else {
+                        this.error.textContent = data.error || 'Protocol Error';
+                    }
+                } catch (err) {
+                    this.error.textContent = 'System Connectivity Error';
+                }
+            }
+
+            finishAuth() {
+                this.overlay.classList.add('hidden');
+                initApp(this.user);
+            }
+        }
+
+        let appInitialized = false;
+        function initApp(userData) {
+            if (appInitialized) return;
+            appInitialized = true;
+
+            // Initialize state and controllers
+            const LOCAL_USER = { id: userData.id, username: userData.username, color: userData.color };
+            window.nexusApp = new ParticleChatNexus();
+            const standardController = new StandardViewController();
+            const outerNewsController = new OuterNewsController();
+
+            window.nexusApp.addUser(LOCAL_USER);
+            BOTS.forEach(bot => window.nexusApp.addUser({ id: bot.id, username: bot.name, color: bot.color }));
+            userCountEl.textContent = `${state.users.size} Entities Linked`;
+            
+            // Start bot simulation
+            startSimulations();
+        }
 
         // ==================== STATE MANAGEMENT ====================
         class NexusState {
@@ -1700,49 +2091,36 @@
             }
         });
 
-        // ==================== INITIALIZATION ====================
-        window.nexusApp = new ParticleChatNexus();
-        const standardController = new StandardViewController();
-        const outerNewsController = new OuterNewsController();
-
         // Setup Users
-        const LOCAL_USER = { id: 'local_user', username: 'You', color: '#00ff88' };
         const BOTS = [
-            { id: 'b1', name: 'Nova', color: '#ff2a6d' },
-            { id: 'b2', name: 'Cipher', color: '#05d9e8' },
-            { id: 'b3', name: 'Aura', color: '#ffd700' },
             { id: 'b4', name: 'Vortex', color: '#ff00ff' },
             { id: 'b5', name: 'Echo', color: '#01ddc6' }
         ];
-
-        window.nexusApp.addUser(LOCAL_USER);
-        BOTS.forEach(bot => window.nexusApp.addUser({ id: bot.id, username: bot.name, color: bot.color }));
-
-        userCountEl.textContent = `${state.users.size} Entities Linked`;
-
         // ==================== BOT SIMULATION ====================
-        const botPhrases = [
-            "Data stream looks clear on this node.",
-            "Syncing telemetry...",
-            "Has anyone mapped the outer bounds yet?",
-            "Packet loss detected. Rerouting.",
-            "This volume is incredibly calm today.",
-            "Drifting toward sector 7.",
-            "Aesthetic parameters accepted.",
-            "Connection stable."
-        ];
+        function startSimulations() {
+            const botPhrases = [
+                "Data stream looks clear on this node.",
+                "Syncing telemetry...",
+                "Has anyone mapped the outer bounds yet?",
+                "Packet loss detected. Rerouting.",
+                "This volume is incredibly calm today.",
+                "Drifting toward sector 7.",
+                "Aesthetic parameters accepted.",
+                "Connection stable."
+            ];
 
-        setInterval(() => {
-            if (Math.random() > 0.5) {
-                const bot = BOTS[Math.floor(Math.random() * BOTS.length)];
-                const phrase = botPhrases[Math.floor(Math.random() * botPhrases.length)];
-                
-                appendChatMessage(bot.name, phrase, 'other', bot.color);
-                if (window.nexusApp) {
-                    window.nexusApp.triggerChat(bot.id, phrase);
+            setInterval(() => {
+                if (Math.random() > 0.5) {
+                    const bot = BOTS[Math.floor(Math.random() * BOTS.length)];
+                    const phrase = botPhrases[Math.floor(Math.random() * botPhrases.length)];
+                    
+                    appendChatMessage(bot.name, phrase, 'other', bot.color);
+                    if (window.nexusApp) {
+                        window.nexusApp.triggerChat(bot.id, phrase);
+                    }
                 }
-            }
-        }, 3500);
+            }, 3500);
+        }
 
         setTimeout(() => {
             appendChatMessage('System', 'Connection established. Welcome to the Nexus.', 'system');
@@ -1812,6 +2190,49 @@
         viewToggle.addEventListener('click', showStandard);
         outerNewsBtn.addEventListener('click', showOuterNews);
         backFromOuter.addEventListener('click', showStandard);
+
+        // Start Auth
+        new AuthManager();
+
+        // ==================== CYBERPUNK BOOT SEQUENCE ====================
+        (function initBootSequence() {
+            const bootLines = [
+                "INIT KERNEL... OK",
+                "MOUNTING NEURAL DRIVES... OK",
+                "CHECKING FIREWALL STATUS... WARNING: BREACH DETECTED",
+                "REROUTING MAINFRAME POWER...",
+                "DECRYPTING PROTOCOLS: [████████░░]",
+                "DECRYPTING PROTOCOLS: [██████████] DONE",
+                "ESTABLISHING SECURE HANDSHAKE...",
+                "ALLOCATING MEMORY BLOCKS...",
+                "SYSTEM READY."
+            ];
+
+            const bootSeq   = document.getElementById('authBootSeq');
+            const morph     = document.getElementById('authMorph');
+            const card      = document.getElementById('authCard');
+
+            // Only run if the overlay is visible (not already authed)
+            if (!bootSeq || !morph || !card) return;
+
+            bootLines.forEach((line, i) => {
+                setTimeout(() => {
+                    const p = document.createElement('div');
+                    p.className = 'auth-boot-line';
+                    p.textContent = '> ' + line;
+                    bootSeq.appendChild(p);
+                }, i * 200);
+            });
+
+            setTimeout(() => { bootSeq.classList.add('auth-boot-glitch'); }, 2200);
+            setTimeout(() => {
+                bootSeq.style.opacity = '0';
+                morph.className = 'auth-morph state-dot';
+            }, 2600);
+            setTimeout(() => { morph.className = 'auth-morph state-line'; }, 3000);
+            setTimeout(() => { morph.className = 'auth-morph state-box'; }, 3600);
+            setTimeout(() => { card.classList.add('content-visible'); }, 4200);
+        })();
     </script>
 </body>
 </html>
