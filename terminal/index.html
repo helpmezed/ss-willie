@@ -913,11 +913,11 @@
                             }
 
                             // Collision reaction visual boost
-                            a.clusterUniforms.baseSize.value *= 1.2;
-                            b.clusterUniforms.baseSize.value *= 1.2;
+                            if (a.particleSystems) a.particleSystems.forEach(p => { p.material.size = p.userData.baseSize * 1.2; });
+                            if (b.particleSystems) b.particleSystems.forEach(p => { p.material.size = p.userData.baseSize * 1.2; });
                             setTimeout(() => {
-                                if (a && a.clusterUniforms) a.clusterUniforms.baseSize.value = a.baseParticleSize;
-                                if (b && b.clusterUniforms) b.clusterUniforms.baseSize.value = b.baseParticleSize;
+                                if (a?.particleSystems) a.particleSystems.forEach(p => { p.material.size = p.userData.baseSize; });
+                                if (b?.particleSystems) b.particleSystems.forEach(p => { p.material.size = p.userData.baseSize; });
                             }, 120);
                         }
                     }
