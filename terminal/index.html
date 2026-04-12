@@ -2,1260 +2,1816 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Backroom Terminal // Outer-News</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23030712'/%3E%3Ccircle cx='16' cy='16' r='5' fill='none' stroke='%2300eeff' stroke-width='2'/%3E%3Cline x1='16' y1='4' x2='16' y2='9' stroke='%2300eeff' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='16' y1='23' x2='16' y2='28' stroke='%2300eeff' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='4' y1='16' x2='9' y2='16' stroke='%2300eeff' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='23' y1='16' x2='28' y2='16' stroke='%2300eeff' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%2300eeff'/%3E%3C/svg%3E">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Orbitron:wght@500;700;900&family=Fira+Code:wght@300;500&display=swap" rel="stylesheet">
-    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ether Nexus | Dual-Mode Chat</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         :root {
-            --bg-color: #030712;
-            --glass-bg: rgba(10, 15, 30, 0.7);
-            --glass-border: rgba(0, 238, 255, 0.2);
-            --accent-cyan: #00eeff;
-            --accent-magenta: #ff00ea;
-            --accent-gold: #39ff14;
-            --bubble-other: rgba(20, 25, 40, 0.8);
-            --bubble-self: rgba(0, 238, 255, 0.1);
-            --text-main: #e2e8f0;
-            --text-muted: #64748b;
-            --font-ui: 'Orbitron', sans-serif;
-            --font-text: 'Inter', sans-serif;
-            --font-mono: 'Fira Code', monospace;
-            --glow-cyan: 0 0 10px rgba(0, 238, 255, 0.5), 0 0 20px rgba(0, 238, 255, 0.2);
-            --glow-magenta: 0 0 10px rgba(255, 0, 234, 0.5), 0 0 20px rgba(255, 0, 234, 0.2);
-            --glow-gold: 0 0 10px rgba(57, 255, 20, 0.5), 0 0 20px rgba(57, 255, 20, 0.2);
+            --primary: #00e5ff;
+            --secondary: #b300ff;
+            --alert: #ff2a6d;
+            --bg-dark: #010205;
+            --bg-glass: rgba(10, 15, 25, 0.85);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --chat-width: 400px;
         }
 
         body {
-            font-family: var(--font-text); background-color: var(--bg-color); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; -webkit-font-smoothing: antialiased;
-            background-image: linear-gradient(rgba(0, 238, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 238, 255, 0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-            animation: gridScroll 20s linear infinite;
+            overflow: hidden;
+            background: var(--bg-dark);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            color: #fff;
         }
 
-        @keyframes gridScroll {
-            from { background-position: 0 0; }
-            to { background-position: 40px 40px; }
-        }
-
-        /* --- CRT Scanline Overlay --- */
-        body::before {
-            content: " "; position: fixed; inset: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 3px, 3px 100%; pointer-events: none; z-index: 1000;
-        }
-        body::after {
-            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://upload.wikimedia.org/wikipedia/commons/7/76/1k_pnt_noise.png');
-            opacity: 0.03; pointer-events: none; z-index: 1001; animation: flicker 0.1s infinite;
-        }
-        @keyframes flicker { 0% { opacity: 0.025; } 50% { opacity: 0.035; } 100% { opacity: 0.025; } }
-
-        .scanline {
-            width: 100%; height: 100px; z-index: 1002; background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 238, 255, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
-            opacity: 0.1; position: fixed; bottom: 100%; pointer-events: none; animation: scan 8s linear infinite;
-        }
-        @keyframes scan { 0% { bottom: 100%; } 100% { bottom: -100px; } }
-
-        /* --- Glitch Effect --- */
-        .glitch-active {
-            animation: glitch-anim 0.2s linear infinite;
-        }
-        @keyframes glitch-anim {
-            0% { transform: translate(0) }
-            20% { transform: translate(-2px, 1px) }
-            40% { transform: translate(-1px, -1px) }
-            60% { transform: translate(2px, 1px) }
-            80% { transform: translate(1px, -1px) }
-            100% { transform: translate(0) }
-        }
-
-        #notification-container { position: fixed; top: 20px; right: 50%; transform: translateX(50%); z-index: 1001; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .system-notification {
-            background: rgba(3, 7, 18, 0.9); border: 1px solid var(--accent-cyan); color: var(--accent-cyan);
-            padding: 12px 20px; border-radius: 4px; font-family: var(--font-ui); font-size: 11px;
-            text-transform: uppercase; animation: slideDown 0.4s forwards;
-            box-shadow: var(--glow-cyan); clip-path: polygon(0% 0%, 100% 0%, 100% 85%, 95% 100%, 0% 100%);
-        }
-        .system-notification.error { border-color: var(--accent-magenta); color: var(--accent-magenta); box-shadow: var(--glow-magenta); }
-        @keyframes slideDown { 0% { transform: translateY(-20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-
-        .conn-status { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-magenta); display: inline-block; margin-right: 8px; box-shadow: 0 0 8px var(--accent-magenta); transition: all 0.3s; }
-        .conn-status.online { background: #4ade80; box-shadow: 0 0 8px #4ade80; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-
-        /* --- Main Layout --- */
-        #app-container { display: none; flex-direction: row; height: 100vh; width: 100%; max-width: 1400px; margin: 0 auto; position: relative; }
-        @media (min-width: 768px) { #app-container { height: 95vh; margin-top: 2.5vh; border-radius: 8px; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.5); } }
-
-        #chat-main { flex: 1; display: flex; flex-direction: column; position: relative; border-right: 1px solid var(--glass-border); min-width: 0; }
-
-        /* --- Header with Tabs --- */
-        #app-header { padding: 14px 20px 0; border-bottom: 1px solid var(--glass-border); background: rgba(3, 7, 18, 0.6); }
-        .header-top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; font-family: var(--font-ui); color: var(--accent-cyan); font-size: 13px; letter-spacing: 1px; }
-        .header-top .title { display: flex; align-items: center; }
-        .header-right-group { display: flex; align-items: center; gap: 12px; }
-        #connection-text { font-size: 11px; color: var(--text-muted); }
-
-        .tab-bar { display: flex; gap: 4px; margin-top: 8px; }
-        .tab-btn {
-            font-family: var(--font-ui); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
-            background: transparent; color: var(--text-muted); border: 1px solid transparent;
-            border-bottom: none; padding: 10px 18px; cursor: pointer; transition: all 0.2s;
-            border-top-left-radius: 4px; border-top-right-radius: 4px;
-            position: relative; top: 1px;
-        }
-        .tab-btn:hover { color: var(--accent-cyan); }
-        .tab-btn.active {
-            color: var(--accent-cyan);
-            background: var(--glass-bg);
-            border-color: var(--glass-border);
-            box-shadow: 0 -2px 10px rgba(0, 238, 255, 0.1);
-        }
-        .tab-btn.active::after {
-            content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--accent-cyan); box-shadow: 0 0 8px var(--accent-cyan);
-        }
-        .tab-btn .tab-badge { font-size: 9px; color: var(--accent-gold); margin-left: 6px; }
-
-        /* --- View containers --- */
-        .view { flex: 1; display: none; flex-direction: column; min-height: 0; }
-        .view.active { display: flex; }
-
-        #chat-container {
-            flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth;
-            transition: all 0.3s;
-        }
-        #news-container {
-            flex: 1; overflow-y: auto; padding: 14px 18px; display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-            grid-auto-rows: max-content;
-            gap: 10px; scroll-behavior: smooth; align-content: start;
-        }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
-
-        /* --- Drag & Drop Highlights --- */
-        .dropzone-active #chat-container {
-            box-shadow: inset 0 0 40px rgba(0, 238, 255, 0.1);
-            background: rgba(0, 238, 255, 0.02);
-            border: 2px dashed rgba(0, 238, 255, 0.3);
-            border-radius: 8px;
-            margin: 10px;
-        }
-        .dropzone-active #input-area {
-            border-top: 2px dashed var(--accent-cyan);
-            background: rgba(0, 238, 255, 0.05);
-        }
-        .drag-ghost {
-            position: fixed;
-            pointer-events: none !important;
-            z-index: 9999;
-            opacity: 0.9;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 25px var(--accent-cyan);
-            transform-origin: center;
-        }
-
-        /* --- Sidebar --- */
-        #sidebar { width: 260px; background: rgba(3, 7, 18, 0.4); display: flex; flex-direction: column; padding: 20px; gap: 15px; overflow-y: auto; }
-        .sidebar-section { display: none; flex-direction: column; gap: 12px; }
-        .sidebar-section.active { display: flex; }
-        .sidebar-title { font-family: var(--font-ui); font-size: 12px; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-        .user-list-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted); padding: 8px; border-radius: 4px; transition: all 0.2s; }
-        .user-list-item:hover { background: rgba(0, 238, 255, 0.05); color: var(--text-main); }
-        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px #4ade80; flex-shrink: 0; }
-
-        .archive-entry {
-            padding: 10px; border: 1px solid var(--glass-border); border-left: 3px solid var(--accent-gold);
-            border-radius: 4px; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2);
-        }
-        .archive-entry:hover { background: rgba(0, 238, 255, 0.05); box-shadow: var(--glow-cyan); }
-        .archive-entry.no-link { cursor: default; }
-        .archive-idx { font-family: var(--font-ui); font-size: 9px; color: var(--accent-cyan); letter-spacing: 1px; }
-        .archive-entry-title { font-family: var(--font-ui); font-size: 11px; color: var(--accent-gold); line-height: 1.4; margin-top: 4px; text-transform: uppercase; }
-        .archive-entry-source { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
-
-        /* --- Messages (shared) --- */
-        @keyframes bubbleEntrance {
-            0%   { opacity: 0; transform: scale(0.6) translateY(20px); }
-            60%  { opacity: 1; transform: scale(1.04) translateY(-3px); }
-            100% { opacity: 1; transform: scale(1) translateY(0px); }
-        }
-        .message-wrapper { display: flex; flex-direction: column; max-width: 85%; animation: bubbleEntrance 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; margin-bottom: 10px; position: relative; }
-        .message-wrapper.self { align-self: flex-end; align-items: flex-end; transform-origin: bottom right; }
-        .message-wrapper.other { align-self: flex-start; transform-origin: bottom left; }
-
-        .user-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-family: var(--font-ui); font-size: 11px; }
-        .self .user-header { display: flex; justify-content: flex-end; }
-        .self .username { display: none; }
-        .username { color: var(--user-color, var(--text-muted)); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
-        .timestamp { margin-left: auto; font-size: 10px; color: var(--text-muted); font-family: var(--font-ui); padding-left: 12px; white-space: nowrap; }
-
-        .message { padding: 14px 18px; border-radius: 4px; backdrop-filter: blur(5px); border: 1px solid var(--glass-border); position: relative; font-size: 15px; line-height: 1.5; word-wrap: break-word; max-width: 100%; }
-        .other .message { border-left: 3px solid var(--user-color, var(--accent-cyan)); background: var(--bubble-other); color: var(--text-main); }
-        .self .message { border-right: 3px solid var(--accent-cyan); background: var(--bubble-self); color: var(--accent-cyan); box-shadow: inset 0 0 15px rgba(0, 238, 255, 0.05); }
-
-        .message-wrapper .message.tactical-alert {
-            background: rgba(255, 0, 234, 0.15) !important;
-            border: 1px solid var(--accent-magenta) !important;
-            border-left: 3px solid var(--accent-magenta) !important;
-            color: var(--accent-magenta) !important;
-            animation: alertPulse 1.5s infinite alternate;
-            font-weight: 700;
-        }
-        .message-wrapper .message.system-alert {
-            background: rgba(57, 255, 20, 0.1) !important;
-            border: 1px dashed var(--accent-gold) !important;
-            color: var(--accent-gold) !important;
-            font-family: var(--font-mono);
-            font-size: 12px;
-        }
-        @keyframes alertPulse { from { box-shadow: var(--glow-magenta); } to { box-shadow: 0 0 30px rgba(255, 0, 234, 0.4); } }
-
-        /* Forwarded Dispatch Message Block */
-        .dispatch-forward {
-            margin-top: 2px;
+        /* ==================== VIEW CONTAINERS ==================== */
+        #nexus-view, #standard-view, #outer-news-view {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            min-width: 250px;
-            animation: none;
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-            border-top: 1px solid var(--glass-border);
-            border-right: 1px solid var(--glass-border);
-            border-bottom: 1px solid var(--glass-border);
+            height: 100vh;
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .media-attachment { max-width: 100%; border-radius: 4px; margin-top: 10px; display: block; border: 1px solid var(--glass-border); cursor: pointer; }
+        #nexus-view {
+            opacity: 1;
+            visibility: visible;
+            z-index: 1;
+        }
 
-        /* --- Xeno-Comm Header Bar --- */
-        .xeno-header-bar {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 9px 18px; background: rgba(20, 0, 40, 0.7);
-            border-bottom: 1px solid rgba(255, 0, 234, 0.25); flex-shrink: 0;
+        #nexus-view.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
         }
-        .xhb-station { font-family: var(--font-ui); font-size: 11px; color: var(--accent-magenta); letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px rgba(255,0,234,0.4); }
-        .xhb-right { display: flex; align-items: center; gap: 18px; }
-        .xhb-stat { font-family: var(--font-ui); font-size: 9px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
-        .xhb-stat span { color: var(--accent-gold); }
-        .xhb-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-magenta); box-shadow: 0 0 8px var(--accent-magenta); animation: pulse 1.5s infinite; flex-shrink: 0; }
 
-        /* --- Outer-News Transmission Cards --- */
-        .xeno-card {
-            background: rgba(8, 0, 28, 0.85); border: 1px solid rgba(255, 0, 234, 0.18);
-            border-top: 2px solid var(--accent-magenta);
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-            animation: xcardIn 0.4s both; display: flex; flex-direction: column;
-            transition: background 0.2s, border-color 0.2s;
+        #standard-view, #outer-news-view {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(30px);
         }
-        @keyframes xcardIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-        .xeno-card:hover { background: rgba(12, 0, 36, 0.95); border-top-color: var(--accent-cyan); }
 
-        .xc-card-header {
-            display: flex; align-items: center; justify-content: space-between; gap: 8px;
-            padding: 8px 14px 6px;
+        #standard-view.active, #outer-news-view.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
         }
-        .xc-source-name {
-            font-family: var(--font-ui); font-size: 9px; font-weight: 700; color: var(--accent-magenta);
-            letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 6px rgba(255,0,234,0.3);
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        }
-        .xc-time { font-family: var(--font-ui); font-size: 8px; color: var(--text-muted); letter-spacing: 1px; flex-shrink: 0; }
 
-        .xc-card-body { padding: 4px 14px 12px; flex: 1; }
-        .xc-headline {
-            font-family: var(--font-ui); font-size: 14px; font-weight: 700; color: var(--text-main);
-            line-height: 1.45; margin-bottom: 8px; letter-spacing: 0.01em;
+        #standard-view {
+            display: flex;
+            background: linear-gradient(135deg, #02040a 0%, #0a0f1a 100%);
         }
-        .xc-headline a { color: inherit; text-decoration: none; transition: color 0.2s; }
-        .xc-headline a:hover { color: var(--accent-cyan); text-shadow: 0 0 6px rgba(0,238,255,0.4); }
-        .xc-body { font-family: var(--font-mono); font-size: 11px; line-height: 1.6; color: rgba(226, 232, 240, 0.6); }
 
-        .xc-card-footer {
-            padding: 8px 14px;
-            border-top: 1px solid rgba(255, 0, 234, 0.1);
-            margin-top: auto;
+        #outer-news-view {
+            display: flex;
+            background: linear-gradient(180deg, #0a0f1a 0%, #050810 100%);
+            z-index: 3;
         }
-        .xc-read-link {
-            font-family: var(--font-ui); font-size: 9px; color: var(--accent-cyan); letter-spacing: 1.5px;
-            text-decoration: none; text-transform: uppercase; transition: text-shadow 0.2s;
-        }
-        .xc-read-link:hover { text-shadow: 0 0 8px var(--accent-cyan); }
 
-        /* --- Xeno Signal-Intercept animation --- */
-        .xeno-intercepting {
-            display: flex; align-items: center; gap: 12px; padding: 10px 14px;
-            background: rgba(8, 0, 28, 0.6); border: 1px solid rgba(255,0,234,0.15);
-            border-left: 3px solid rgba(255,0,234,0.4); grid-column: 1 / -1;
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+        /* ==================== NEXUS VIEW (3D) ==================== */
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            z-index: 1;
+        }
+
+        #speech-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 15;
+            overflow: hidden;
+        }
+
+        .speech-bubble {
+            position: absolute;
+            background: rgba(15, 20, 30, 0.9);
+            color: #f8fafc;
+            padding: 16px 24px;
+            border-radius: 24px;
+            font-weight: 500;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+            pointer-events: none;
+            transform: translate(-50%, calc(-100% - 50px)) scale(0.8);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.2), 0 0 40px rgba(0, 229, 255, 0.15);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(16px) saturate(180%);
+            opacity: 0;
+            transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 300px;
+            text-align: center;
+            word-wrap: break-word;
+            line-height: 1.4;
+            z-index: 100;
+        }
+
+        .speech-bubble.visible {
+            opacity: 1;
+            transform: translate(-50%, calc(-100% - 30px)) scale(1);
+        }
+
+        .speech-username {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            font-weight: 800;
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        /* ==================== STANDARD VIEW (Chat) ==================== */
+        .standard-layout {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .users-sidebar {
+            width: 280px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .sidebar-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #8899aa;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .user-item:hover {
+            background: rgba(255,255,255,0.06);
+            transform: translateX(5px);
+        }
+
+        .user-item.active {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: rgba(0, 229, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+            position: relative;
+        }
+
+        .user-avatar::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 50%;
+            padding: 2px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.5;
+        }
+
+        .user-status {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            border: 2px solid var(--bg-glass);
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .user-role {
+            font-size: 11px;
+            color: #667788;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .chat-toolbar {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .room-title {
+            font-size: 20px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .news-ticker {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .news-item {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.2s;
+        }
+
+        .news-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .news-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
             flex-shrink: 0;
         }
-        .xi-bars { display: flex; align-items: flex-end; gap: 3px; height: 18px; }
-        .xi-bar { width: 3px; background: var(--accent-magenta); border-radius: 1px; animation: xiBar 0.7s ease-in-out infinite; }
-        .xi-bar:nth-child(1) { height: 5px;  animation-delay: 0s; }
-        .xi-bar:nth-child(2) { height: 13px; animation-delay: 0.1s; }
-        .xi-bar:nth-child(3) { height: 9px;  animation-delay: 0.2s; }
-        .xi-bar:nth-child(4) { height: 16px; animation-delay: 0.3s; }
-        .xi-bar:nth-child(5) { height: 7px;  animation-delay: 0.4s; }
-        @keyframes xiBar { 0%,100% { opacity: 0.25; transform: scaleY(0.5); } 50% { opacity: 1; transform: scaleY(1); } }
-        .xi-label { font-family: var(--font-ui); font-size: 9px; color: var(--accent-magenta); letter-spacing: 3px; text-transform: uppercase; opacity: 0.7; animation: pulse 1.2s infinite; }
 
-        /* --- Ticker --- */
-        .ticker-wrap {
-            background: rgba(255, 0, 234, 0.08); border-bottom: 1px solid var(--accent-magenta);
-            overflow: hidden; height: 28px; display: flex; align-items: center; flex-shrink: 0; position: relative;
-        }
-        .ticker-wrap::before, .ticker-wrap::after { content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; }
-        .ticker-wrap::before { left: 0; background: linear-gradient(to right, var(--bg-color), transparent); }
-        .ticker-wrap::after { right: 0; background: linear-gradient(to left, var(--bg-color), transparent); }
-        .ticker { display: flex; white-space: nowrap; animation: ticker-scroll 64s linear infinite; }
-        .ticker-item { color: var(--accent-magenta); font-family: var(--font-ui); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; padding: 0 22px; text-shadow: 0 0 6px rgba(255, 0, 234, 0.4); }
-        .ticker-item::before { content: '◆ '; color: var(--accent-cyan); }
-        @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-
-        /* --- Input Areas --- */
-        #input-area {
-            padding: 16px 24px; background: rgba(3, 7, 18, 0.8); border-top: 1px solid var(--glass-border);
-            display: flex; gap: 12px; align-items: flex-end; transition: all 0.3s;
+        .news-content {
+            flex: 1;
         }
 
-        /* --- Xeno-Comm Control Panel --- */
-        #news-control-panel {
-            background: rgba(10, 0, 30, 0.95); border-top: 1px solid rgba(255, 0, 234, 0.25);
-            padding: 12px 18px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-        }
-        .ncp-freq-block { display: flex; flex-direction: column; gap: 2px; min-width: 110px; flex-shrink: 0; }
-        .ncp-freq-label { font-family: var(--font-ui); font-size: 7px; color: var(--text-muted); letter-spacing: 2.5px; text-transform: uppercase; }
-        .ncp-freq-value { font-family: var(--font-ui); font-size: 10px; color: var(--accent-magenta); letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 0 8px rgba(255,0,234,0.4); }
-        #news-search {
-            flex: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,0,234,0.25); color: #fff;
-            padding: 9px 14px; outline: none; font-family: var(--font-mono); font-size: 12px;
-            transition: border-color 0.2s; height: 38px;
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
-        }
-        #news-search:focus { border-color: var(--accent-magenta); box-shadow: 0 0 8px rgba(255,0,234,0.15); }
-        #news-search::placeholder { color: var(--text-muted); }
-        .ncp-btn {
-            font-family: var(--font-ui); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
-            background: rgba(255,0,234,0.07); color: var(--accent-magenta);
-            border: 1px solid rgba(255,0,234,0.35); padding: 0 14px; cursor: pointer;
-            transition: all 0.2s; white-space: nowrap; height: 38px; flex-shrink: 0;
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
-        }
-        .ncp-btn:hover { background: rgba(255,0,234,0.18); box-shadow: var(--glow-magenta); }
-        .ncp-btn.gold { color: var(--accent-gold); border-color: rgba(57,255,20,0.35); background: rgba(57,255,20,0.05); }
-        .ncp-btn.gold:hover { background: rgba(57,255,20,0.15); box-shadow: var(--glow-gold); }
-        #input-wrapper { flex: 1; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; transition: border-color 0.3s; }
-        #input-wrapper:focus-within { border-color: var(--accent-cyan); box-shadow: 0 0 10px rgba(0, 238, 255, 0.1); }
-        #chat-input { width: 100%; background: transparent; border: none; color: #fff; padding: 14px 18px; outline: none; resize: none; min-height: 48px; font-family: var(--font-text); font-size: 15px; }
-
-        #news-search {
-            flex: 1; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); color: #fff;
-            padding: 14px 18px; border-radius: 4px; outline: none; font-family: var(--font-mono); font-size: 14px;
-            transition: border-color 0.3s; height: 48px;
-        }
-        #news-search:focus { border-color: var(--accent-cyan); box-shadow: 0 0 10px rgba(0, 238, 255, 0.1); }
-        #news-search::placeholder { color: var(--text-muted); }
-
-        .btn { font-family: var(--font-ui); background: rgba(0, 238, 255, 0.1); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); padding: 8px 16px; border-radius: 4px; cursor: pointer; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; transition: all 0.2s; position: relative; overflow: hidden; }
-        .btn:hover { background: rgba(0, 238, 255, 0.2); box-shadow: var(--glow-cyan); }
-        .btn.magenta { color: var(--accent-magenta); border-color: var(--accent-magenta); background: rgba(255, 0, 234, 0.08); }
-        .btn.magenta:hover { background: rgba(255, 0, 234, 0.2); box-shadow: var(--glow-magenta); }
-        .btn.gold { color: var(--accent-gold); border-color: var(--accent-gold); background: rgba(57, 255, 20, 0.08); }
-        .btn.gold:hover { background: rgba(57, 255, 20, 0.2); box-shadow: var(--glow-gold); }
-
-        #file-preview-area { display: flex; gap: 8px; padding: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--glass-border); }
-        .file-preview-item { display: flex; align-items: center; gap: 6px; background: rgba(0, 238, 255, 0.05); border: 1px solid var(--glass-border); padding: 4px 8px; border-radius: 4px; font-size: 11px; color: var(--text-muted); }
-
-        #typing-indicator { display: none; padding: 8px 24px; font-family: var(--font-ui); font-size: 10px; color: var(--accent-cyan); letter-spacing: 2px; border-top: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); }
-        #typing-indicator.active { display: block; }
-
-        #login-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2000; background: var(--bg-color); backdrop-filter: blur(10px); }
-        .login-card { text-align: center; background: var(--glass-bg); padding: 40px; border-radius: 8px; border: 1px solid var(--glass-border); max-width: 360px; width: 90%; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
-        .login-subtitle { font-family: var(--font-ui); color: var(--text-muted); font-size: 9px; letter-spacing: 3px; margin-bottom: 20px; text-transform: uppercase; }
-        .login-input { padding: 14px; margin-bottom: 20px; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); color: white; border-radius: 4px; width: 100%; outline: none; transition: border-color 0.3s; }
-        .login-input:focus { border-color: var(--accent-cyan); }
-
-        /* --- Mobile sidebar toggle --- */
-        #sidebar-toggle { display: none; background: none; border: 1px solid var(--glass-border); color: var(--accent-cyan); font-size: 18px; line-height: 1; cursor: pointer; padding: 4px 10px; border-radius: 4px; }
-        @media (max-width: 768px) {
-            #app-container { height: 100dvh; margin: 0; border-radius: 0; }
-            #sidebar-toggle { display: block; }
-            #sidebar { position: fixed; right: 0; top: 0; bottom: 0; z-index: 500; transform: translateX(100%); transition: transform 0.3s; }
-            #sidebar.open { transform: translateX(0); box-shadow: -10px 0 40px rgba(0,0,0,0.5); }
-            .tab-btn { padding: 8px 12px; font-size: 10px; }
-            #chat-container { padding: 16px; }
-            #news-container { padding: 10px 12px; }
-            #news-control-panel { padding: 10px 12px; gap: 8px; }
-            .ncp-freq-block { display: none; }
+        .news-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
         }
 
-        /* News system-msg line */
-        .system-msg { text-align: center; font-family: var(--font-ui); font-size: 10px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; padding: 6px 0; grid-column: 1 / -1; }
+        .news-author {
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .news-time {
+            font-size: 11px;
+            color: #556677;
+            font-family: monospace;
+        }
+
+        .news-text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #e2e8f0;
+        }
+
+        /* ==================== OUTER- NEWS VIEW ==================== */
+        .outer-news-layout {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+        }
+
+        .outer-news-nav {
+            width: 300px;
+            background: rgba(5, 8, 15, 0.95);
+            border-right: 1px solid var(--border-glass);
+            padding: 40px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .outer-logo {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            color: var(--alert);
+            text-transform: uppercase;
+            text-shadow: 0 0 30px rgba(255, 42, 109, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .outer-logo::before {
+            content: '◉';
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .nav-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .nav-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #556677;
+            font-weight: 700;
+        }
+
+        .nav-item {
+            padding: 14px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 42, 109, 0.1);
+            border-color: rgba(255, 42, 109, 0.3);
+            color: var(--alert);
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--alert);
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+
+        .outer-news-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .outer-header {
+            padding: 30px 40px;
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .outer-title {
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 3px;
+        }
+
+        .outer-subtitle {
+            font-size: 12px;
+            color: #667788;
+            margin-top: 4px;
+            letter-spacing: 1px;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--alert);
+            font-weight: 700;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--alert);
+            border-radius: 50%;
+            animation: blink 1s infinite;
+            box-shadow: 0 0 10px var(--alert);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .outer-feed {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .outer-feed::-webkit-scrollbar { width: 8px; }
+        .outer-feed::-webkit-scrollbar-track { background: transparent; }
+        .outer-feed::-webkit-scrollbar-thumb { background: rgba(255, 42, 109, 0.3); border-radius: 4px; }
+
+        .outer-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 42, 109, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            animation: cardEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes cardEnter {
+            from { opacity: 0; transform: translateY(30px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .outer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--alert), transparent);
+            opacity: 0.5;
+        }
+
+        .outer-card:hover {
+            border-color: rgba(255, 42, 109, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(255, 42, 109, 0.1);
+        }
+
+        .outer-card.priority-high {
+            border-color: rgba(255, 42, 109, 0.6);
+            background: rgba(255, 42, 109, 0.05);
+        }
+
+        .outer-card.priority-high::before {
+            opacity: 1;
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-source {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        .source-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 42, 109, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .card-timestamp {
+            font-family: monospace;
+            font-size: 12px;
+            color: #556677;
+        }
+
+        .card-headline {
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .card-excerpt {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #aabbcc;
+            margin-bottom: 20px;
+        }
+
+        .card-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tag.alert { background: rgba(255, 42, 109, 0.15); border-color: rgba(255, 42, 109, 0.3); color: var(--alert); }
+        .tag.tech { background: rgba(0, 229, 255, 0.15); border-color: rgba(0, 229, 255, 0.3); color: var(--primary); }
+        .tag.net { background: rgba(179, 0, 255, 0.15); border-color: rgba(179, 0, 255, 0.3); color: var(--secondary); }
+
+        /* ==================== SHARED COMPONENTS ==================== */
+        #ambient-ui {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            pointer-events: none;
+            z-index: 10;
+            transition: opacity 0.3s;
+        }
+
+        .nexus-title {
+            font-size: 28px;
+            font-weight: 200;
+            letter-spacing: 6px;
+            color: #fff;
+            text-transform: uppercase;
+            text-shadow: 0 0 30px rgba(0, 229, 255, 0.6);
+        }
+
+        .nexus-subtitle {
+            font-size: 11px;
+            color: var(--primary);
+            letter-spacing: 3px;
+            margin-top: 6px;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            position: absolute;
+            top: 40px;
+            right: 440px;
+            z-index: 100;
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-btn {
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            color: var(--primary);
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-size: 12px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+        }
+
+        .nav-btn:hover {
+            background: rgba(0, 229, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 25px rgba(0, 229, 255, 0.3);
+        }
+
+        .nav-btn.secondary {
+            background: rgba(255, 42, 109, 0.1);
+            border-color: rgba(255, 42, 109, 0.3);
+            color: var(--alert);
+        }
+
+        .nav-btn.secondary:hover {
+            box-shadow: 0 5px 25px rgba(255, 42, 109, 0.3);
+        }
+
+        .nav-btn.in-standard {
+            right: 40px;
+            background: rgba(179, 0, 255, 0.1);
+            border-color: rgba(179, 0, 255, 0.3);
+            color: var(--secondary);
+        }
+
+        /* Outer News Access from Standard */
+        .outer-access-btn {
+            margin-top: auto;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 42, 109, 0.1), rgba(255, 42, 109, 0.05));
+            border: 1px solid rgba(255, 42, 109, 0.3);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .outer-access-btn:hover {
+            background: rgba(255, 42, 109, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(255, 42, 109, 0.2);
+        }
+
+        .outer-access-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--alert);
+            margin-bottom: 6px;
+        }
+
+        .outer-access-desc {
+            font-size: 11px;
+            color: #8899aa;
+            line-height: 1.5;
+        }
+
+        /* Back button for Outer News */
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            width: fit-content;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        /* Chat Panel (Shared) */
+        #chat-panel {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: var(--chat-width);
+            height: 100vh;
+            background: var(--bg-glass);
+            border-left: 1px solid var(--border-glass);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -20px 0 60px rgba(0, 0, 0, 0.8);
+            z-index: 20;
+            backdrop-filter: blur(24px) saturate(150%);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #standard-view.active ~ #chat-panel,
+        #outer-news-view.active ~ #chat-panel {
+            transform: translateX(100%);
+        }
+
+        .chat-header {
+            padding: 28px 32px;
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+        }
+
+        .header-title { 
+            font-weight: 600; 
+            font-size: 15px; 
+            letter-spacing: 1.5px; 
+            text-transform: uppercase; 
+        }
+
+        .user-count { 
+            background: rgba(0, 229, 255, 0.1); 
+            padding: 6px 14px; 
+            border-radius: 20px;
+            font-size: 11px; 
+            font-weight: 600; 
+            color: var(--primary); 
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
+        }
+
+        .chat-messages { 
+            flex: 1; 
+            padding: 32px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 24px; 
+        }
+
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-track { background: transparent; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+
+        .message { 
+            padding: 16px 20px; 
+            border-radius: 18px; 
+            font-size: 14px; 
+            line-height: 1.6; 
+            max-width: 90%; 
+            position: relative;
+            animation: messagePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
+            opacity: 0; 
+            transform: translateY(20px) scale(0.95);
+        }
+        
+        @keyframes messagePop { to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .message.system { 
+            background: transparent; 
+            color: #8899aa; 
+            align-self: center; 
+            font-size: 12px; 
+            font-weight: 500; 
+            letter-spacing: 0.5px; 
+        }
+        .message.other { 
+            background: rgba(255, 255, 255, 0.04); 
+            color: #e2e8f0; 
+            align-self: flex-start; 
+            border-bottom-left-radius: 6px; 
+            border: 1px solid var(--border-glass); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+        }
+        .message.local { 
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(179, 0, 255, 0.15)); 
+            color: #fff; 
+            align-self: flex-end; 
+            border-bottom-right-radius: 6px; 
+            border: 1px solid rgba(0, 229, 255, 0.3); 
+            box-shadow: 0 8px 25px rgba(0, 229, 255, 0.1); 
+        }
+        .msg-author { 
+            font-size: 10px; 
+            margin-bottom: 8px; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+            opacity: 0.9; 
+        }
+
+        .chat-input-area { 
+            padding: 32px; 
+            background: rgba(0, 0, 0, 0.4); 
+            border-top: 1px solid var(--border-glass); 
+        }
+        
+        .chat-input-wrapper { 
+            display: flex; 
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px; 
+            overflow: hidden; 
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .chat-input-wrapper:focus-within {
+            border-color: var(--primary); 
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.15), inset 0 2px 10px rgba(0,0,0,0.2); 
+            transform: translateY(-2px);
+        }
+
+        .chat-input { 
+            flex: 1; 
+            background: transparent; 
+            border: none; 
+            padding: 18px 24px; 
+            color: #fff; 
+            outline: none; 
+            font-family: inherit; 
+            font-size: 15px; 
+        }
+        .chat-input::placeholder { color: #64748b; font-weight: 400; }
+        
+        .chat-submit { 
+            background: transparent; 
+            border: none; 
+            color: var(--primary); 
+            padding: 0 24px; 
+            cursor: pointer; 
+            font-weight: 800; 
+            letter-spacing: 1.5px; 
+            transition: all 0.2s; 
+            font-size: 13px; 
+        }
+        .chat-submit:hover { 
+            color: #fff; 
+            transform: scale(1.05); 
+            text-shadow: 0 0 10px var(--primary); 
+        }
+
+        @media (max-width: 1024px) {
+            #chat-panel { width: 100%; }
+            .nav-buttons { right: 20px; top: 20px; flex-direction: column; }
+            .standard-layout { flex-direction: column; }
+            .users-sidebar { width: 100%; height: auto; max-height: 300px; }
+            .outer-news-nav { width: 100%; height: auto; }
+            .outer-news-layout { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
 
-<div class="scanline"></div>
-<div id="notification-container"></div>
-
-<div id="login-screen">
-    <div class="login-card">
-        <h2 style="font-family:var(--font-ui); color:var(--accent-cyan); margin-bottom:8px;">Initialize Link</h2>
-        <div class="login-subtitle">Backroom // Outer-News</div>
-        <div id="login-error" style="color:var(--accent-magenta); display:none; margin-bottom:10px;">Invalid callsign</div>
-        <input type="text" id="username-input" class="login-input" placeholder="Enter Callsign" maxlength="20">
-        <button class="btn" id="join-btn" style="width:100%">Engage</button>
-    </div>
-</div>
-
-<div id="app-container">
-    <div id="chat-main">
-        <header id="app-header">
-            <div class="header-top">
-                <div class="title"><span class="conn-status" id="conn-dot"></span> BACKROOM TERMINAL</div>
-                <div class="header-right-group">
-                    <span id="connection-text">OFFLINE</span>
-                    <button id="sidebar-toggle">&#9776;</button>
-                </div>
-            </div>
-            <div class="tab-bar">
-                <button class="tab-btn active" data-tab="chat">▣ Backroom</button>
-                <button class="tab-btn" data-tab="news">◈ Outer-News <span class="tab-badge" id="news-badge"></span></button>
-            </div>
-        </header>
-
-        <!-- ==================== CHAT VIEW ==================== -->
-        <div class="view active" id="view-chat">
-            <div id="chat-container"></div>
-            <div id="typing-indicator">
-                <span id="typing-text">Unknown entity transmitting...</span>
-            </div>
-            <div id="input-area">
-                <label for="file-input" class="btn" style="padding:12px">+</label>
-                <input type="file" id="file-input" multiple accept="image/*,video/*" style="display:none">
-                <div id="input-wrapper">
-                    <div id="file-preview-area" style="display:none;"></div>
-                    <textarea id="chat-input" placeholder="Input sequence... (/help for commands)" rows="1"></textarea>
-                </div>
-                <button class="btn" id="send-btn" style="height:48px;">Transmit</button>
-            </div>
-        </div>
-
-        <!-- ==================== NEWS VIEW ==================== -->
-        <div class="view" id="view-news">
-            <div class="xeno-header-bar">
-                <div class="xhb-station">◈ OUTER-NEWS // INTERSTELLAR DISPATCH</div>
-                <div class="xhb-right">
-                    <div class="xhb-stat">STARDATE <span id="date-text">—</span></div>
-                    <div class="xhb-stat">SIGNALS <span id="xc-count">0</span></div>
-                    <div class="xhb-pulse"></div>
-                </div>
-            </div>
-            <div class="ticker-wrap">
-                <div class="ticker" id="ticker">
-                    <span class="ticker-item">Reactor core stabilized</span>
-                    <span class="ticker-item">Signals incoming from Sector 7G</span>
-                    <span class="ticker-item">Universal translator active</span>
-                    <span class="ticker-item">Stand by for telepathic dump</span>
-                    <span class="ticker-item">Reactor core stabilized</span>
-                </div>
-            </div>
-            <div id="news-container">
-                <div class="system-msg">◈ TUNING THE SINGULARITY DRIVE ◈</div>
-            </div>
-            <div id="news-control-panel">
-                <div class="ncp-freq-block">
-                    <div class="ncp-freq-label">Channel</div>
-                    <div class="ncp-freq-value" id="category-label">ALL FREQUENCIES</div>
-                </div>
-                <input type="text" id="news-search" placeholder="Filter transmissions...">
-                <button class="ncp-btn" id="refresh-btn">↺ RESCAN</button>
-                <button class="ncp-btn gold" id="cycle-btn">⟳ NEXT FREQ</button>
-            </div>
-        </div>
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons" id="navButtons">
+        <button class="nav-btn" id="viewToggle">Standard View</button>
     </div>
 
-    <aside id="sidebar">
-        <!-- Sidebar: Chat mode -->
-        <div class="sidebar-section active" id="sidebar-chat">
-            <div class="sidebar-title">Entities Online <span id="online-count">0</span></div>
-            <div id="user-list"></div>
-        </div>
-        <!-- Sidebar: News mode -->
-        <div class="sidebar-section" id="sidebar-news">
-            <div class="sidebar-title">Dispatch Archive <span id="archive-count">0</span></div>
-            <div id="archive-list"></div>
-        </div>
-    </aside>
-</div>
+    <!-- Ambient UI -->
+    <div id="ambient-ui">
+        <div class="nexus-title">Ether Nexus</div>
+        <div class="nexus-subtitle" id="mode-indicator">IMMERSIVE INSTANCE</div>
+    </div>
 
-<script>
-// ============================================================
-// AUDIO ENGINE (Web Audio API)
-// ============================================================
-let audioCtx = null; // FIX: Defer initialization to avoid Autoplay Policy violations
+    <!-- 3D NEXUS VIEW -->
+    <div id="nexus-view">
+        <div id="canvas-container"></div>
+        <div id="speech-layer"></div>
+    </div>
 
-function initAudio() {
-    if (!audioCtx) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new AudioContext();
-    }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-}
+    <!-- STANDARD CHAT VIEW -->
+    <div id="standard-view">
+        <div class="standard-layout">
+            <aside class="users-sidebar">
+                <div class="sidebar-title">Connected Entities</div>
+                <div class="user-list" id="standardUserList"></div>
+                
+                <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-glass);">
+                    <div class="sidebar-title">System Status</div>
+                    <div style="font-size: 12px; color: #556677; line-height: 1.8; margin-top: 8px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Latency:</span>
+                            <span style="color: var(--primary); font-family: monospace;">12ms</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Sync:</span>
+                            <span style="color: #00ff88;">Stable</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Dimension:</span>
+                            <span style="color: var(--secondary);" id="dimensionStatus">3D-Active</span>
+                        </div>
+                    </div>
+                </div>
 
-function playTone(freq, type, duration, vol = 0.1) {
-    if (!audioCtx) return; // FIX: Silent fallback if audio context isn't initialized yet
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    
-    gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-    
-    osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    
-    osc.start();
-    osc.stop(audioCtx.currentTime + duration);
-}
-
-function sfxAlert() { playTone(880, 'square', 0.15, 0.1); setTimeout(() => playTone(1100, 'square', 0.2, 0.1), 100); }
-function sfxMessage() { playTone(440, 'sine', 0.1, 0.05); }
-function sfxLogin() { playTone(220, 'sawtooth', 0.3, 0.1); setTimeout(() => playTone(440, 'sine', 0.4, 0.1), 200); }
-
-// ============================================================
-// HELPERS
-// ============================================================
-function getOrCreateUserId() {
-    let id = localStorage.getItem('xenoUserId');
-    if (!id) { id = 'xeno-' + Math.random().toString(36).slice(2, 10); localStorage.setItem('xenoUserId', id); }
-    return id;
-}
-
-// ============================================================
-// SHARED STATE
-// ============================================================
-let pusher = null;
-let presenceChannel = null;
-let currentUser = { name: 'User', id: getOrCreateUserId() };
-let selectedFiles = [];
-let isConnected = false;
-let typingTimeout = null;
-const typingUsers = new Map();
-
-function escapeHtml(str) {
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
-
-function showNotification(text, type = 'info') {
-    const container = document.getElementById('notification-container');
-    const n = document.createElement('div');
-    n.className = `system-notification${type === 'error' ? ' error' : ''}`;
-    n.textContent = text;
-    container.appendChild(n);
-    setTimeout(() => n.remove(), 3000);
-}
-
-// ============================================================
-// HTTP HELPER
-// ============================================================
-function postJson(url, data) {
-    return fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    }).catch(e => console.warn('POST failed:', url, e));
-}
-
-// ============================================================
-// PUSHER / REALTIME SETUP
-// ============================================================
-function connectPusher(config) {
-    if (pusher) { pusher.disconnect(); pusher = null; presenceChannel = null; }
-
-    Pusher.logToConsole = false;
-    pusher = new Pusher(config.pusherKey, {
-        cluster: config.pusherCluster,
-        authEndpoint: '/api/pusher/auth',
-        auth: { params: { user_id: currentUser.id, user_name: currentUser.name } }
-    });
-
-    pusher.connection.bind('connected', async () => {
-        isConnected = true;
-        document.getElementById('conn-dot').classList.add('online');
-        document.getElementById('connection-text').innerText = 'ONLINE';
-        try {
-            const h = await fetch('/api/chat/history').then(r => r.json());
-            if (Array.isArray(h)) h.forEach(renderMessage);
-        } catch (e) { /* no history on cold start */ }
-    });
-
-    pusher.connection.bind('disconnected', () => {
-        isConnected = false;
-        document.getElementById('conn-dot').classList.remove('online');
-        document.getElementById('connection-text').innerText = 'OFFLINE';
-    });
-
-    presenceChannel = pusher.subscribe('presence-chat-room');
-
-    presenceChannel.bind('pusher:subscription_succeeded', renderUserList);
-    presenceChannel.bind('pusher:member_added',   () => renderUserList(presenceChannel.members));
-    presenceChannel.bind('pusher:member_removed', () => renderUserList(presenceChannel.members));
-
-    presenceChannel.bind('chat-message', (data) => {
-        if (data.user?.id !== currentUser.id) {
-            renderMessage(data);
-            if(data.isAlert) sfxAlert(); else sfxMessage();
-        }
-    });
-
-    presenceChannel.bind('typing', (data) => {
-        if (data.id !== currentUser.id) { typingUsers.set(data.id, data.name); updateTypingIndicator(); }
-    });
-
-    presenceChannel.bind('typing-stop', (data) => {
-        typingUsers.delete(data.id); updateTypingIndicator();
-    });
-}
-
-function renderUserList(members) {
-    const users = [];
-    members.each(m => users.push({ id: m.id, name: m.info?.name || 'Unknown' }));
-    document.getElementById('online-count').textContent = users.length;
-    const list = document.getElementById('user-list');
-    list.innerHTML = '';
-    users.forEach(u => {
-        const item = document.createElement('div');
-        item.className = 'user-list-item';
-        const dot = document.createElement('div'); dot.className = 'status-dot';
-        const name = document.createElement('span');
-        name.style.color = stringToColor(u.name);
-        name.textContent = u.name;
-        item.appendChild(dot); item.appendChild(name);
-        list.appendChild(item);
-    });
-}
-
-// ============================================================
-// LOGIN
-// ============================================================
-window.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const config = await fetch('/api/config').then(r => r.json());
-        window._pusherConfig = config;
-        const saved = localStorage.getItem('futureChatUser');
-        if (saved) {
-            try {
-                currentUser = { ...currentUser, ...JSON.parse(saved) };
-                connectPusher(config);
-                enterChat();
-            } catch (e) { localStorage.removeItem('futureChatUser'); }
-        }
-    } catch (e) {
-        showNotification('Config fetch failed — Running in Local Mode', 'error');
-    }
-});
-
-function enterChat() {
-    initAudio(); // FIX: Explicitly grant audio context on intentional user action
-    sfxLogin();
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-container').style.display = 'flex';
-}
-
-function doJoin() {
-    const val = document.getElementById('username-input').value.trim();
-    if (!val) { document.getElementById('login-error').style.display = 'block'; return; }
-    currentUser.name = val;
-    localStorage.setItem('futureChatUser', JSON.stringify(currentUser));
-    if (window._pusherConfig) connectPusher(window._pusherConfig);
-    enterChat();
-}
-
-document.getElementById('join-btn').addEventListener('click', doJoin);
-document.getElementById('username-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') doJoin(); });
-
-// ============================================================
-// TAB SWITCHING
-// ============================================================
-const tabButtons = document.querySelectorAll('.tab-btn');
-const views = {
-    chat: document.getElementById('view-chat'),
-    news: document.getElementById('view-news')
-};
-const sidebars = {
-    chat: document.getElementById('sidebar-chat'),
-    news: document.getElementById('sidebar-news')
-};
-let newsStarted = false;
-
-window.switchTab = function(tab) {
-    tabButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-    Object.entries(views).forEach(([k, el]) => el.classList.toggle('active', k === tab));
-    Object.entries(sidebars).forEach(([k, el]) => el.classList.toggle('active', k === tab));
-    if (tab === 'news' && !newsStarted) {
-        newsStarted = true;
-        startNews();
-    }
-    if (tab === 'news') document.getElementById('news-badge').textContent = '';
-};
-tabButtons.forEach(btn => btn.addEventListener('click', () => window.switchTab(btn.dataset.tab)));
-
-// ============================================================
-// BACKROOM CHAT LOGIC
-// ============================================================
-async function processFile(file) {
-    if (!file.type.startsWith('image/') || file.type === 'image/gif') return file;
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.src = URL.createObjectURL(file);
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 1280;
-            let width = img.width, height = img.height;
-            if (width > MAX_WIDTH) { height = Math.round(height * MAX_WIDTH / width); width = MAX_WIDTH; }
-            canvas.width = width; canvas.height = height;
-            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-            canvas.toBlob((blob) => resolve(new File([blob], file.name, { type: 'image/jpeg' })), 'image/jpeg', 0.8);
-        };
-    });
-}
-
-function stringToColor(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    return `hsl(${Math.abs(hash) % 360}, 100%, 65%)`;
-}
-
-function renderMessage(data) {
-    const container = document.getElementById('chat-container');
-    const isSelf = data.user.id === currentUser.id;
-    const isSystem = data.user.id === 'sys';
-    const userColor = isSystem ? 'var(--accent-gold)' : stringToColor(data.user.name);
-
-    const wrapper = document.createElement('div');
-    wrapper.className = `message-wrapper ${isSelf ? 'self' : 'other'}`;
-    wrapper.style.setProperty('--user-color', userColor);
-
-    const header = document.createElement('div');
-    header.className = 'user-header';
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'username';
-    nameSpan.style.color = userColor;
-    nameSpan.textContent = data.user.name;
-    const tsSpan = document.createElement('span');
-    tsSpan.className = 'timestamp';
-    tsSpan.textContent = data.timestamp || '';
-    header.appendChild(nameSpan);
-    header.appendChild(tsSpan);
-
-    const bubble = document.createElement('div');
-    bubble.className = `message${data.isAlert ? ' tactical-alert' : ''}${isSystem ? ' system-alert' : ''}`;
-    
-    // Check if this is a forwarded dispatch payload
-    if (data.dispatch) {
-        bubble.style.padding = '0';
-        bubble.style.background = 'transparent';
-        bubble.style.border = 'none';
-
-        const dCard = document.createElement('div');
-        dCard.className = `xeno-card dispatch-forward`;
-        dCard.innerHTML = `
-            <div class="xc-card-header">
-                <span class="xc-sig">◆ FWD SIGNAL</span>
-                <div class="xc-divider"></div>
-                <span class="xc-source-name">${escapeHtml(data.dispatch.source)}</span>
-            </div>
-            <div class="xc-card-body">
-                <div class="xc-headline">${escapeHtml(data.dispatch.title)}</div>
-                <div class="xc-body" style="font-size: 11px;">${escapeHtml(data.dispatch.content)}</div>
-            </div>
-        `;
-        bubble.appendChild(dCard);
-    } else {
-        if (data.text) bubble.appendChild(document.createTextNode(data.text));
-
-        if (data.files?.length) {
-            data.files.forEach(f => {
-                let media;
-                if (f.type?.startsWith('video/')) {
-                    media = document.createElement('video');
-                    media.src = f.data;
-                    media.controls = true;
-                } else {
-                    media = document.createElement('img');
-                    media.src = f.data;
-                    media.addEventListener('click', () => openLightbox(f.data));
-                }
-                media.className = 'media-attachment';
-                bubble.appendChild(media);
-            });
-        }
-    }
-
-    wrapper.appendChild(header);
-    wrapper.appendChild(bubble);
-    container.appendChild(wrapper);
-    container.scrollTop = container.scrollHeight;
-}
-
-function openLightbox(src) {
-    const lb = document.createElement('div');
-    lb.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;z-index:9999;cursor:zoom-out';
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.cssText = 'max-width:90vw;max-height:90vh;object-fit:contain;border-radius:4px;border:1px solid rgba(0,238,255,0.2)';
-    lb.appendChild(img);
-    lb.addEventListener('click', () => lb.remove());
-    document.body.appendChild(lb);
-}
-
-// Terminal Command Parser
-function processCommand(text) {
-    const args = text.split(' ');
-    const cmd = args[0].toLowerCase();
-
-    if (cmd === '/clear') {
-        document.getElementById('chat-container').innerHTML = '';
-        return true;
-    }
-    if (cmd === '/ping') {
-        renderMessage({ user: {name: 'SYSTEM', id: 'sys'}, text: 'PONG - Connection stable.', timestamp: new Date().toLocaleTimeString() });
-        return true;
-    }
-    if (cmd === '/glitch') {
-        document.body.classList.toggle('glitch-active');
-        renderMessage({ user: {name: 'SYSTEM', id: 'sys'}, text: 'Visual distortion matrix toggled.', timestamp: new Date().toLocaleTimeString() });
-        return true;
-    }
-    if (cmd === '/theme' && args[1]) {
-        document.documentElement.style.setProperty('--accent-cyan', args[1]);
-        renderMessage({ user: {name: 'SYSTEM', id: 'sys'}, text: `Primary optical accent updated to ${args[1]}`, timestamp: new Date().toLocaleTimeString() });
-        return true;
-    }
-    if (cmd === '/help') {
-        const helpText = `Available Commands:\n/alert [msg] - Broadcast priority signal\n/clear - Purge local terminal buffer\n/ping - Test system response\n/glitch - Toggle visual artifacts\n/theme [hex] - Override primary UI color`;
-        renderMessage({ user: {name: 'SYSTEM', id: 'sys'}, text: helpText, timestamp: new Date().toLocaleTimeString() });
-        return true;
-    }
-    return false;
-}
-
-// Function to handle forwarded dispatches
-function sendDispatch(dispatchData) {
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    const msgData = {
-        id: (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : Math.random().toString(36).slice(2), // FIX: Check for crypto window object before calling it
-        user: currentUser,
-        text: '', 
-        dispatch: dispatchData,
-        timestamp: new Date().toLocaleTimeString()
-    };
-    renderMessage(msgData);
-    postJson('/api/chat/message', msgData);
-    sfxAlert(); // specific chime for data dumps
-}
-
-async function handleSend() {
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    
-    const input = document.getElementById('chat-input');
-    let text = input.value.trim();
-    let isAlert = false;
-
-    if (!text && selectedFiles.length === 0) return;
-    
-    // Check for local terminal commands first
-    if (text.startsWith('/') && !text.startsWith('/alert')) {
-        if(processCommand(text)) {
-            input.value = '';
-            autoResize(input);
-            return;
-        }
-    }
-
-    if (text.startsWith('/alert ')) { text = text.slice(7); isAlert = true; }
-
-    clearTimeout(typingTimeout);
-    postJson('/api/chat/typing-stop', { id: currentUser.id });
-
-    const processedFiles = await Promise.all(selectedFiles.map(async f => {
-        const processed = await processFile(f);
-        return new Promise(res => {
-            const r = new FileReader();
-            r.onload = e => res({ type: processed.type, data: e.target.result });
-            r.readAsDataURL(processed);
-        });
-    }));
-
-    const msgData = {
-        id: (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : Math.random().toString(36).slice(2), // FIX: Check for crypto window object
-        user: currentUser,
-        text,
-        files: processedFiles,
-        isAlert,
-        timestamp: new Date().toLocaleTimeString()
-    };
-
-    renderMessage(msgData);
-    if(isAlert) sfxAlert(); else sfxMessage();
-    postJson('/api/chat/message', msgData);
-    
-    input.value = '';
-    selectedFiles = [];
-    document.getElementById('file-preview-area').style.display = 'none';
-    autoResize(input);
-}
-
-function updateTypingIndicator() {
-    const el = document.getElementById('typing-indicator');
-    const textEl = document.getElementById('typing-text');
-    const names = Array.from(typingUsers.values());
-    if (names.length === 0) {
-        el.classList.remove('active');
-    } else {
-        const label = names.length === 1
-            ? `${escapeHtml(names[0])} is transmitting...`
-            : `${names.slice(0, -1).map(escapeHtml).join(', ')} & ${escapeHtml(names.at(-1))} are transmitting...`;
-        textEl.textContent = label;
-        el.classList.add('active');
-    }
-}
-
-function autoResize(el) {
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-}
-
-document.getElementById('send-btn').addEventListener('click', handleSend);
-document.getElementById('chat-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
-});
-document.getElementById('chat-input').addEventListener('input', (e) => {
-    autoResize(e.target);
-    postJson('/api/chat/typing', { id: currentUser.id, name: currentUser.name });
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => postJson('/api/chat/typing-stop', { id: currentUser.id }), 2000);
-});
-
-document.getElementById('file-input').addEventListener('change', (e) => {
-    selectedFiles = Array.from(e.target.files);
-    const area = document.getElementById('file-preview-area');
-    area.style.display = 'flex';
-    area.innerHTML = '';
-    selectedFiles.forEach(f => {
-        const item = document.createElement('div');
-        item.className = 'file-preview-item';
-        item.textContent = f.name;
-        area.appendChild(item);
-    });
-});
-
-document.getElementById('sidebar-toggle').addEventListener('click', () => {
-    document.getElementById('sidebar').classList.toggle('open');
-});
-
-// ============================================================
-// DRAG AND DROP (CUSTOM POINTER LOGIC)
-// ============================================================
-let dragState = { active: false, element: null, data: null, startX: 0, startY: 0, ghost: null };
-
-document.addEventListener('pointerdown', (e) => {
-    const card = e.target.closest('.xeno-card');
-    // Only capture left click or touch; ignore if clicking a link
-    if (!card || e.button !== 0 || e.target.closest('a')) return;
-
-    dragState.element = card;
-    dragState.startX = e.clientX;
-    dragState.startY = e.clientY;
-    dragState.data = JSON.parse(card.dataset.dispatch || "{}");
-    dragState.active = false;
-});
-
-document.addEventListener('pointermove', (e) => {
-    if (!dragState.element) return;
-    const dx = e.clientX - dragState.startX;
-    const dy = e.clientY - dragState.startY;
-
-    // Start drag execution if moved more than 8 pixels
-    if (!dragState.active && Math.sqrt(dx*dx + dy*dy) > 8) {
-        dragState.active = true;
-        
-        // Build the ghost element
-        const originalRect = dragState.element.getBoundingClientRect();
-        dragState.ghost = dragState.element.cloneNode(true);
-        dragState.ghost.classList.add('drag-ghost');
-        dragState.ghost.style.width = originalRect.width + 'px';
-        document.body.appendChild(dragState.ghost);
-        
-        // Auto-switch to the chat view
-        window.switchTab('chat');
-        document.getElementById('view-chat').classList.add('dropzone-active');
-        
-        if(window.audioCtx && window.audioCtx.state === 'running') playTone(600, 'sine', 0.1, 0.05);
-    }
-
-    if (dragState.active) {
-        e.preventDefault(); // Stop natural scrolling during active drag
-        // Center the floating ghost tightly on the cursor pointer
-        dragState.ghost.style.left = (e.clientX - dragState.ghost.offsetWidth / 2) + 'px';
-        dragState.ghost.style.top = (e.clientY - dragState.ghost.offsetHeight / 2) + 'px';
-        dragState.ghost.style.transform = 'scale(0.9) rotate(3deg)';
-    }
-});
-
-document.addEventListener('pointerup', (e) => {
-    if (!dragState.element) return;
-    if (dragState.active) {
-        const chatView = document.getElementById('view-chat');
-        chatView.classList.remove('dropzone-active');
-        
-        // Assess drop parameters
-        const dropRect = chatView.getBoundingClientRect();
-        const isInside = e.clientX >= dropRect.left && e.clientX <= dropRect.right && 
-                         e.clientY >= dropRect.top && e.clientY <= dropRect.bottom;
-
-        // FIX: Capture reference to ghost before dragState is wiped so the timeout can properly remove it from DOM
-        const ghostRef = dragState.ghost;
-
-        if (isInside && dragState.data.title) {
-            // Animating into the terminal
-            ghostRef.style.transition = 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            ghostRef.style.transform = 'scale(0.1)';
-            ghostRef.style.opacity = '0';
+                <!-- OUTER- NEWS Access Button -->
+                <div class="outer-access-btn" id="outerNewsBtn">
+                    <div class="outer-access-title">◉ OUTER- NEWS</div>
+                    <div class="outer-access-desc">Access external intelligence feed and sector broadcasts</div>
+                </div>
+            </aside>
             
-            const payload = dragState.data;
-            setTimeout(() => {
-                if (ghostRef) ghostRef.remove(); // FIX: Memory leak resolved using captured reference
-                sendDispatch(payload);
-            }, 300);
-        } else {
-            // Drop failed / aborted
-            ghostRef.style.transition = 'all 0.3s ease';
-            ghostRef.style.opacity = '0';
-            ghostRef.style.transform = 'scale(0.8)';
-            setTimeout(() => {
-                if (ghostRef) ghostRef.remove(); // FIX: Memory leak resolved using captured reference
-            }, 300);
+            <main class="chat-main">
+                <div class="chat-toolbar">
+                    <div>
+                        <div class="room-title">Global Stream</div>
+                        <div style="font-size: 12px; color: #556677; margin-top: 4px;">Internal backroom communications</div>
+                    </div>
+                    <div class="user-count" id="standardUserCount">0 Linked</div>
+                </div>
+                <div class="news-ticker" id="standardChatMessages">
+                    <div class="message system" style="opacity: 1; transform: none;">Initializing standard interface...</div>
+                </div>
+                <div class="chat-input-area" style="background: rgba(0,0,0,0.3);">
+                    <form id="standardChatForm" class="chat-input-wrapper">
+                        <input type="text" id="standardChatInput" class="chat-input" placeholder="Transmit to backroom..." autocomplete="off">
+                        <button type="submit" class="chat-submit">SEND</button>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- OUTER- NEWS VIEW (Dedicated Page) -->
+    <div id="outer-news-view">
+        <div class="outer-news-layout">
+            <nav class="outer-news-nav">
+                <div class="outer-logo">OUTER-</div>
+                
+                <div class="nav-section">
+                    <div class="nav-title">Feeds</div>
+                    <div class="nav-item active" data-feed="all">
+                        <span>◈</span> All Broadcasts
+                        <span class="nav-badge">LIVE</span>
+                    </div>
+                    <div class="nav-item" data-feed="alerts">
+                        <span>▲</span> Priority Alerts
+                    </div>
+                    <div class="nav-item" data-feed="sector">
+                        <span>◎</span> Sector Reports
+                    </div>
+                    <div class="nav-item" data-feed="tech">
+                        <span>◉</span> Tech Intel
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-title">Archives</div>
+                    <div class="nav-item" data-feed="archive">
+                        <span>◫</span> Last 24 Hours
+                    </div>
+                    <div class="nav-item" data-feed="week">
+                        <span>◫</span> Weekly Digest
+                    </div>
+                </div>
+
+                <div style="margin-top: auto;">
+                    <button class="back-btn" id="backFromOuter">
+                        <span>←</span> Return to Standard
+                    </button>
+                </div>
+            </nav>
+
+            <main class="outer-news-main">
+                <header class="outer-header">
+                    <div>
+                        <div class="outer-title">OUTER- NEWS</div>
+                        <div class="outer-subtitle">External intelligence network // Unfiltered sector broadcasts</div>
+                    </div>
+                    <div class="live-indicator">
+                        <div class="live-dot"></div>
+                        LIVE FEED
+                    </div>
+                </header>
+
+                <div class="outer-feed" id="outerFeed">
+                    <!-- News cards injected here -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- SHARED CHAT PANEL (3D Mode only) -->
+    <div id="chat-panel">
+        <div class="chat-header">
+            <span class="header-title">Global Stream</span>
+            <span class="user-count" id="userCount">0 Linked</span>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message system">Initiating quantum handshake...</div>
+        </div>
+        <div class="chat-input-area">
+            <form id="chatForm" class="chat-input-wrapper">
+                <input type="text" id="chatInput" class="chat-input" placeholder="Transmit sequence..." autocomplete="off">
+                <button type="submit" class="chat-submit">SEND</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
         }
-    }
-    // Object reset immediately, therefore a local reference to ghost was required above
-    dragState = { active: false, element: null, data: null, startX: 0, startY: 0, ghost: null };
-});
+    </script>
 
-// ============================================================
-// XENO-COMM NEWS LOGIC
-// ============================================================
-const newsChat = document.getElementById('news-container');
-const tickerEl = document.getElementById('ticker');
-const dateEl = document.getElementById('date-text');
-const categoryLabel = document.getElementById('category-label');
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-let newsQueue = [], newsIdx = 0, newsLoopTimer = null;
-let newsFetchAbortController = null;
+        // ==================== STATE MANAGEMENT ====================
+        class NexusState {
+            constructor() {
+                this.users = new Map();
+                this.messages = [];
+                this.outerNews = [];
+                this.currentMode = 'nexus'; // 'nexus', 'standard', 'outer-news'
+                this.listeners = [];
+            }
 
-(function setStardate() {
-    const d = new Date();
-    dateEl.textContent = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
-})();
+            addUser(user) {
+                this.users.set(user.id, user);
+                this.notify('userAdded', user);
+            }
 
-const dict = {
-    "\\bworld\\b":"sector","\\bglobal\\b":"galaxy-wide","\\bpeople\\b":"carbon-based lifeforms",
-    "\\bhumans\\b":"earthlings","\\bpresident\\b":"Overlord","\\bprime minister\\b":"Hive Leader",
-    "\\bgovernment\\b":"The High Council","\\bcountry\\b":"planetoid","\\bnation\\b":"star-system",
-    "\\bwar\\b":"planetary conflict","\\bmilitary\\b":"defense fleet","\\bpolice\\b":"intergalactic peacekeepers",
-    "\\bmoney\\b":"galactic credits","\\bdollars\\b":"credits","\\bbillion\\b":"a nebula of",
-    "\\bmillion\\b":"a supernova of","\\beconomy\\b":"resource distribution","\\bcity\\b":"outpost",
-    "\\bcities\\b":"outposts","\\bcar\\b":"hover-pod","\\bcars\\b":"hover-pods",
-    "\\btechnology\\b":"xenotech","\\btech\\b":"xenotech",
-    "\\bcompany\\b":"megacorp","\\bcompanies\\b":"megacorps",
-    "\\binternet\\b":"the primitive web","\\bonline\\b":"on the signal",
-    "\\bcomputer\\b":"processing unit","\\bsmartphone\\b":"handheld scanner",
-    "\\bsmartphones\\b":"pocket relays",
-    "\\bai\\b":"synthetic intelligence","\\bartificial intelligence\\b":"neural matrix",
-    "\\bsocial media\\b":"psychic noise","\\bapp\\b":"sub-routine",
-    "\\bvideo\\b":"hologram","\\bstock market\\b":"quantum market",
-    "\\belection\\b":"leader-selection","\\bsays\\b":"transmitted","\\bsaid\\b":"transmitted",
-    "\\breports\\b":"beams in","\\breported\\b":"pulsed word",
-    "\\bhealth\\b":"biological integrity","\\bsports\\b":"kinetic contests",
-    "\\bscience\\b":"quantum theory"
-};
+            addMessage(msg) {
+                this.messages.push(msg);
+                this.notify('messageAdded', msg);
+            }
 
-function xenoTranslate(t) {
-    if (!t) return "";
-    for (const [k, v] of Object.entries(dict)) t = t.replace(new RegExp(k, "gi"), v);
-    return t;
-}
+            addOuterNews(news) {
+                this.outerNews.unshift(news);
+                this.notify('outerNewsAdded', news);
+            }
 
-function updateTicker(items) {
-    tickerEl.innerHTML = '';
-    [...items, ...items].forEach(h => {
-        const s = document.createElement('span');
-        s.className = 'ticker-item';
-        s.textContent = xenoTranslate(h);
-        tickerEl.appendChild(s);
-    });
-}
+            subscribe(callback) {
+                this.listeners.push(callback);
+            }
 
-function newsScrollDown() { newsChat.scrollTo({ top: newsChat.scrollHeight, behavior: 'smooth' }); }
+            notify(event, data) {
+                this.listeners.forEach(cb => cb(event, data));
+            }
 
-function safeUrl(u) {
-    if (!u) return null;
-    try { const p = new URL(u); return (p.protocol === 'http:' || p.protocol === 'https:') ? u : null; }
-    catch { return null; }
-}
+            setMode(mode) {
+                this.currentMode = mode;
+                this.notify('modeChanged', mode);
+            }
+        }
 
-function renderNewsCard(item, idx) {
-    const card = document.createElement('div');
-    card.className = 'xeno-card';
-    card.style.animationDelay = `${idx * 45}ms`;
-    card.dataset.dispatch = JSON.stringify(item);
+        const state = new NexusState();
 
-    const headlineInner = item.url
-        ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>`
-        : escapeHtml(item.title);
+        // ==================== 3D NEXUS CONTROLLER ====================
+        class ParticleChatNexus {
+            constructor() {
+                this.container = document.getElementById('canvas-container');
+                this.speechLayer = document.getElementById('speech-layer');
+                this.isActive = true;
+                
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x010205);
+                this.scene.fog = new THREE.FogExp2(0x010205, 0.0025);
+                
+                this.camera = new THREE.PerspectiveCamera(45, this.container.clientWidth / this.container.clientHeight, 0.1, 2000);
+                this.camera.position.set(0, 400, 900);
 
-    card.innerHTML = `
-        <div class="xc-card-header">
-            <span class="xc-source-name">${escapeHtml(item.source)}</span>
-            <span class="xc-time">${new Date().toLocaleTimeString()}</span>
-        </div>
-        <div class="xc-card-body">
-            <div class="xc-headline">${headlineInner}</div>
-            <div class="xc-body">${escapeHtml(item.content)}</div>
-        </div>
-        ${item.url ? `<div class="xc-card-footer"><a class="xc-read-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Read Transmission →</a></div>` : ''}`;
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.container.appendChild(this.renderer.domElement);
 
-    newsChat.appendChild(card);
-}
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.03;
+                this.controls.autoRotate = true;
+                this.controls.autoRotateSpeed = 0.5;
+                this.controls.maxDistance = 800;
+                this.controls.enablePan = false;
 
-function renderAllNews() {
-    newsChat.querySelectorAll('.system-msg, .xeno-intercepting').forEach(el => el.remove());
-    newsQueue.forEach((item, i) => renderNewsCard(item, i));
-    const countEl = document.getElementById('xc-count');
-    if (countEl) countEl.textContent = newsQueue.length;
-    updateArchive();
-    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
-    if (activeTab !== 'news' && newsQueue.length) {
-        document.getElementById('news-badge').textContent = newsQueue.length;
-    }
-}
+                this.clock = new THREE.Clock();
+                this.activeBubbles = new Map();
+                this.currentSpeakerId = null;
+                this.particleTexture = this.createParticleTexture();
+                this.volumeRadius = 250;
+                this.introActive = true;
+                this.introTargetPos = new THREE.Vector3(0, 150, 450);
 
-async function startNews(q, category) {
-    if (newsFetchAbortController) newsFetchAbortController.abort();
-    newsFetchAbortController = new AbortController();
+                this.init();
+            }
 
-    let endpoint = '/api/news';
-    const params = [];
-    if (q) params.push(`q=${encodeURIComponent(q)}`);
-    if (category) params.push(`category=${encodeURIComponent(category)}`);
-    if (params.length) endpoint += '?' + params.join('&');
-
-    try {
-        const res = await fetch(endpoint, { signal: newsFetchAbortController.signal });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (data.status === 'ok' && data.articles?.length) {
-            data.articles.forEach(a => {
-                if (!a.title || a.title === '[Removed]') return;
-                newsQueue.push({
-                    title: xenoTranslate(a.title),
-                    content: xenoTranslate(a.description || "No further word came across the wire."),
-                    source: a.source?.name || "River Wire",
-                    url: safeUrl(a.url)
+            async init() {
+                this.createEnvironment();
+                
+                window.addEventListener('resize', () => {
+                    if (!this.isActive) return;
+                    this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
                 });
-            });
-            updateTicker(data.articles.slice(0, 10).map(a => a.title));
-        } else {
-            throw new Error('Empty Dispatch');
+
+                this.animate();
+            }
+
+            createParticleTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 64; canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+                const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+                gradient.addColorStop(0, 'rgba(255,255,255,1)');
+                gradient.addColorStop(0.15, 'rgba(255,255,255,0.8)');
+                gradient.addColorStop(0.4, 'rgba(255,255,255,0.2)');
+                gradient.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 64, 64);
+                return new THREE.CanvasTexture(canvas);
+            }
+
+            createEnvironment() {
+                const dustGeo = new THREE.BufferGeometry();
+                const dustCount = 2500;
+                const dustPos = new Float32Array(dustCount * 3);
+                for (let i = 0; i < dustCount; i++) {
+                    dustPos[i*3] = (Math.random() - 0.5) * 800;
+                    dustPos[i*3+1] = (Math.random() - 0.5) * 800;
+                    dustPos[i*3+2] = (Math.random() - 0.5) * 800;
+                }
+                dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+                const dustMat = new THREE.PointsMaterial({
+                    color: 0x557799, size: 2.5, map: this.particleTexture,
+                    transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false
+                });
+                this.dust = new THREE.Points(dustGeo, dustMat);
+                this.scene.add(this.dust);
+
+                const coreGeo = new THREE.IcosahedronGeometry(40, 2);
+                const coreMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, wireframe: true, transparent: true, opacity: 0.03 });
+                this.nexusCore = new THREE.Mesh(coreGeo, coreMat);
+                this.scene.add(this.nexusCore);
+            }
+
+            addUser(userData) {
+                const pCount = 200;
+                const pPos = new Float32Array(pCount * 3);
+                
+                for(let i=0; i < pCount; i++) {
+                    const r = Math.random() * 12;
+                    const theta = Math.random() * 2 * Math.PI;
+                    const phi = Math.acos((Math.random() * 2) - 1);
+                    pPos[i*3] = r * Math.sin(phi) * Math.cos(theta);
+                    pPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+                    pPos[i*3+2] = r * Math.cos(phi);
+                }
+                
+                const clusterGeo = new THREE.BufferGeometry();
+                clusterGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+                
+                const clusterMat = new THREE.PointsMaterial({
+                    color: new THREE.Color(userData.color), size: 9, map: this.particleTexture,
+                    transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false
+                });
+
+                const cluster = new THREE.Points(clusterGeo, clusterMat);
+                
+                const coreMat = new THREE.SpriteMaterial({ 
+                    map: this.particleTexture, color: userData.color, blending: THREE.AdditiveBlending, opacity: 0.5 
+                });
+                const core = new THREE.Sprite(coreMat);
+                core.scale.set(40, 40, 1);
+                
+                const userGroup = new THREE.Group();
+                userGroup.add(cluster);
+                userGroup.add(core);
+
+                userGroup.position.set((Math.random()-0.5)*200, (Math.random()-0.5)*100, (Math.random()-0.5)*200);
+                this.scene.add(userGroup);
+
+                const user = {
+                    ...userData,
+                    mesh: userGroup,
+                    velocity: new THREE.Vector3((Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2),
+                    baseMaxSpeed: 1.2 + Math.random() * 0.8,
+                    baseMaxForce: 0.04 + Math.random() * 0.02,
+                    presentExpires: 0,
+                    wanderTime: Math.random() * 1000,
+                    wanderSpeed: 0.1 + Math.random() * 0.1,
+                    wanderOffsets: {
+                        x: 0.5 + Math.random(), y: 0.3 + Math.random(), z: 0.4 + Math.random()
+                    },
+                    phase: Math.random() * Math.PI * 2
+                };
+
+                state.addUser(user);
+            }
+
+            triggerChat(userId, message) {
+                const user = Array.from(state.users.values()).find(u => u.id === userId);
+                if (!user) return;
+
+                if (this.currentSpeakerId && this.currentSpeakerId !== userId) {
+                    const oldSpeaker = Array.from(state.users.values()).find(u => u.id === this.currentSpeakerId);
+                    if (oldSpeaker && oldSpeaker.presentExpires > Date.now()) {
+                        oldSpeaker.presentExpires = 0;
+                        const bounceDir = new THREE.Vector3(
+                            (Math.random() > 0.5 ? 1 : -1) * (15 + Math.random() * 10),
+                            10 + Math.random() * 15,
+                            -(15 + Math.random() * 15)
+                        ).applyQuaternion(this.camera.quaternion);
+                        
+                        oldSpeaker.velocity.copy(bounceDir);
+
+                        if (this.activeBubbles.has(this.currentSpeakerId)) {
+                            this.activeBubbles.get(this.currentSpeakerId).expires = 0;
+                        }
+                    }
+                }
+
+                this.currentSpeakerId = userId;
+                user.presentExpires = Date.now() + 6000;
+
+                if (this.activeBubbles.has(userId)) {
+                    const oldBubble = this.activeBubbles.get(userId);
+                    if (oldBubble.element.parentNode) {
+                        oldBubble.element.parentNode.removeChild(oldBubble.element);
+                    }
+                }
+
+                const bubble = document.createElement('div');
+                bubble.className = 'speech-bubble';
+                bubble.innerHTML = `<span class="speech-username" style="color:${user.color}; text-shadow: 0 0 15px ${user.color}">${user.username}</span>${message}`;
+                this.speechLayer.appendChild(bubble);
+
+                void bubble.offsetWidth; 
+                bubble.classList.add('visible');
+
+                this.activeBubbles.set(userId, {
+                    element: bubble,
+                    user: user,
+                    expires: user.presentExpires
+                });
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                if (!this.isActive || state.currentMode !== 'nexus') {
+                    return;
+                }
+
+                const deltaTime = Math.min(this.clock.getDelta(), 0.1);
+                const timeScale = deltaTime * 60;
+                const now = Date.now();
+                const time = this.clock.getElapsedTime();
+                
+                this.camera.updateMatrixWorld();
+
+                if (this.introActive) {
+                    this.camera.position.lerp(this.introTargetPos, 0.02);
+                    if (this.camera.position.distanceTo(this.introTargetPos) < 5) this.introActive = false;
+                }
+
+                if (this.dust) this.dust.rotation.y = time * 0.015;
+                if (this.nexusCore) {
+                    this.nexusCore.rotation.y -= deltaTime * 0.2;
+                    this.nexusCore.rotation.x -= deltaTime * 0.1;
+                }
+
+                state.users.forEach((user) => {
+                    const breathScale = 1 + Math.sin(time * 2 + user.phase) * 0.15;
+                    user.mesh.scale.set(breathScale, breathScale, breathScale);
+
+                    user.mesh.children[0].rotation.y += deltaTime * 0.8;
+                    user.mesh.children[0].rotation.z += deltaTime * 0.4;
+
+                    let currentTarget;
+                    let maxSpeed = user.baseMaxSpeed;
+                    let maxForce = user.baseMaxForce;
+
+                    if (user.presentExpires && now < user.presentExpires) {
+                        const offset = new THREE.Vector3(0, -10, -140); 
+                        currentTarget = offset.applyMatrix4(this.camera.matrixWorld);
+                        maxSpeed = 5.0; 
+                        maxForce = 0.2;
+                        const dist = user.mesh.position.distanceTo(currentTarget);
+                        if (dist < 80) maxSpeed = Math.max(0.2, maxSpeed * (dist / 80));
+                    } else {
+                        user.wanderTime += deltaTime * user.wanderSpeed;
+                        const nx = Math.sin(user.wanderTime * user.wanderOffsets.x) * Math.cos(user.wanderTime * 0.5);
+                        const ny = Math.sin(user.wanderTime * user.wanderOffsets.y) * 0.4;
+                        const nz = Math.cos(user.wanderTime * user.wanderOffsets.z) * Math.sin(user.wanderTime * 0.6);
+                        currentTarget = new THREE.Vector3(nx, ny, nz).multiplyScalar(this.volumeRadius);
+                    }
+
+                    const desired = currentTarget.clone().sub(user.mesh.position);
+                    const distToTarget = desired.length();
+
+                    if (distToTarget > 0.5) {
+                        desired.normalize().multiplyScalar(maxSpeed);
+                        const steer = desired.sub(user.velocity);
+                        steer.clampLength(0, maxForce * timeScale);
+                        user.velocity.add(steer);
+                    }
+
+                    user.velocity.multiplyScalar(0.96);
+                    const velOffset = user.velocity.clone().multiplyScalar(timeScale);
+                    user.mesh.position.add(velOffset);
+
+                    if (user.velocity.lengthSq() > 0.01) {
+                        const lookTarget = user.mesh.position.clone().add(user.velocity);
+                        const movementMatrix = new THREE.Matrix4().lookAt(user.mesh.position, lookTarget, this.camera.up);
+                        const targetQuat = new THREE.Quaternion().setFromRotationMatrix(movementMatrix);
+                        user.mesh.quaternion.slerp(targetQuat, 0.08);
+                    }
+                });
+
+                this.activeBubbles.forEach((bubble, id) => {
+                    if (now > bubble.expires) {
+                        bubble.element.classList.remove('visible');
+                        setTimeout(() => { 
+                            if (bubble.element.parentNode) bubble.element.parentNode.removeChild(bubble.element); 
+                        }, 300);
+                        this.activeBubbles.delete(id);
+                        if(this.currentSpeakerId === id) this.currentSpeakerId = null;
+                    } else {
+                        const vector = bubble.user.mesh.position.clone();
+                        vector.project(this.camera);
+                        
+                        if (vector.z > 1) {
+                            bubble.element.style.display = 'none';
+                        } else {
+                            bubble.element.style.display = 'block';
+                            const x = (vector.x * 0.5 + 0.5) * this.container.clientWidth;
+                            const y = (-(vector.y * 0.5) + 0.5) * this.container.clientHeight;
+                            bubble.element.style.left = `${x}px`;
+                            bubble.element.style.top = `${y}px`;
+                        }
+                    }
+                });
+
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
         }
-    } catch (e) {
-        if (e.name === 'AbortError') return;
-        console.warn('NewsAPI Error:', e.message);
-        newsQueue.push({
-            title: "TELEGRAPH LINES DOWN",
-            content: "Solar flare interference detected. The data-stream is corrupted. Check /api/news backend.",
-            source: "Singularity Drive Maintenance",
-            url: null
+
+        // ==================== STANDARD VIEW CONTROLLER ====================
+        class StandardViewController {
+            constructor() {
+                this.userListEl = document.getElementById('standardUserList');
+                this.messagesEl = document.getElementById('standardChatMessages');
+                this.countEl = document.getElementById('standardUserCount');
+                
+                state.subscribe((event, data) => {
+                    if (event === 'userAdded') this.renderUser(data);
+                    if (event === 'messageAdded') this.renderMessage(data);
+                });
+
+                this.setupInput();
+            }
+
+            setupInput() {
+                const form = document.getElementById('standardChatForm');
+                const input = document.getElementById('standardChatInput');
+                
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const text = input.value.trim();
+                    if (!text) return;
+
+                    const msg = {
+                        id: Date.now(),
+                        username: 'You',
+                        text: text,
+                        type: 'local',
+                        color: '#00ff88',
+                        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                    };
+                    
+                    state.addMessage(msg);
+                    input.value = '';
+                    
+                    if (window.nexusApp) {
+                        window.nexusApp.triggerChat('local_user', text);
+                    }
+                });
+            }
+
+            renderUser(user) {
+                const el = document.createElement('div');
+                el.className = `user-item ${user.id === 'local_user' ? 'active' : ''}`;
+                el.id = `user-${user.id}`;
+                el.innerHTML = `
+                    <div class="user-avatar" style="color: ${user.color}; border-color: ${user.color}">
+                        ${user.username[0]}
+                        ${user.id !== 'local_user' ? '<div class="user-status"></div>' : ''}
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name" style="color: ${user.color}">${user.username}</div>
+                        <div class="user-role">${user.id === 'local_user' ? 'Operator' : 'Entity'}</div>
+                    </div>
+                `;
+                this.userListEl.appendChild(el);
+                this.countEl.textContent = `${state.users.size} Linked`;
+            }
+
+            renderMessage(msg) {
+                if (msg.type === 'system') {
+                    const div = document.createElement('div');
+                    div.className = 'message system';
+                    div.style.cssText = 'opacity: 1; transform: none; text-align: center; padding: 20px; color: #556677;';
+                    div.textContent = msg.text;
+                    this.messagesEl.appendChild(div);
+                } else {
+                    const item = document.createElement('div');
+                    item.className = 'news-item';
+                    item.innerHTML = `
+                        <div class="news-avatar" style="color: ${msg.color}; background: ${msg.color}20; border: 1px solid ${msg.color}40;">
+                            ${msg.username[0]}
+                        </div>
+                        <div class="news-content">
+                            <div class="news-header">
+                                <span class="news-author" style="color: ${msg.color}">${msg.username}</span>
+                                <span class="news-time">${msg.time || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+                            <div class="news-text">${msg.text}</div>
+                        </div>
+                    `;
+                    this.messagesEl.appendChild(item);
+                }
+                this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+            }
+        }
+
+        // ==================== OUTER- NEWS CONTROLLER ====================
+        class OuterNewsController {
+            constructor() {
+                this.feedEl = document.getElementById('outerFeed');
+                this.navItems = document.querySelectorAll('.nav-item');
+                this.currentFilter = 'all';
+                
+                this.setupNavigation();
+                this.generateInitialNews();
+                
+                // Auto-generate new news every 8 seconds
+                setInterval(() => this.generateNewsItem(), 8000);
+            }
+
+            setupNavigation() {
+                this.navItems.forEach(item => {
+                    item.addEventListener('click', () => {
+                        this.navItems.forEach(n => n.classList.remove('active'));
+                        item.classList.add('active');
+                        this.currentFilter = item.dataset.feed;
+                        this.filterNews();
+                    });
+                });
+            }
+
+            generateInitialNews() {
+                const initialNews = [
+                    {
+                        source: 'SECTOR-7 RELAY',
+                        icon: '7',
+                        headline: 'Anomalous energy signatures detected in sub-level maintenance tunnels',
+                        excerpt: 'Maintenance crews report fluctuating electromagnetic fields consistent with unregistered server activity. Investigation ongoing. All personnel advised to avoid Sector 7-B until cleared.',
+                        priority: 'high',
+                        tags: ['alert', 'sector'],
+                        time: new Date(Date.now() - 120000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                    },
+                    {
+                        source: 'NETWATCH INTEL',
+                        icon: '◉',
+                        headline: 'New routing protocol deployed across backbone nodes',
+                        excerpt: 'Packet efficiency increased by 34% following midnight update. Some legacy terminals experiencing handshake delays. Recommend immediate firmware verification for pre-2049 hardware.',
+                        priority: 'normal',
+                        tags: ['tech', 'net'],
+                        time: new Date(Date.now() - 300000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                    },
+                    {
+                        source: 'PERIMETER SCAN',
+                        icon: '◎',
+                        headline: 'Unauthorized access attempt blocked at Gate 4',
+                        excerpt: 'Automated defense systems engaged. Trace signatures suggest automated probe rather than human operator. Perimeter integrity maintained. No further action required.',
+                        priority: 'normal',
+                        tags: ['alert'],
+                        time: new Date(Date.now() - 600000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                    }
+                ];
+
+                initialNews.forEach(news => this.renderNewsCard(news));
+            }
+
+            generateNewsItem() {
+                const sources = [
+                    { name: 'SECTOR-7 RELAY', icon: '7' },
+                    { name: 'NETWATCH INTEL', icon: '◉' },
+                    { name: 'PERIMETER SCAN', icon: '◎' },
+                    { name: 'DATA HARVEST', icon: '◈' },
+                    { name: 'SIGNAL DECODE', icon: '△' }
+                ];
+
+                const headlines = [
+                    'Quantum encryption keys rotated successfully',
+                    'Atmospheric pressure variance detected in server farm',
+                    'Unauthorized drone signature spotted in outer rim',
+                    'Neural net training cycle completed ahead of schedule',
+                    'Backup generators online following grid fluctuation',
+                    'New entity detected in 3D nexus space',
+                    'Packet loss anomaly resolved in District 12',
+                    'Cryogenic cooling efficiency at 97% capacity'
+                ];
+
+                const excerpts = [
+                    'Routine maintenance completed without incident. All systems nominal.',
+                    'Anomalous readings suggest potential hardware degradation. Monitoring increased.',
+                    'External probe repelled by automated countermeasures. No breach detected.',
+                    'Performance metrics exceed projections for Q2 cycle. Optimization continuing.',
+                    'Personnel advised to report any unusual auditory phenomena in server corridors.',
+                    'Synchronization with primary nexus maintained. Latency within acceptable parameters.',
+                    'Emergency protocols stand ready. Civilian traffic rerouted through secondary nodes.'
+                ];
+
+                const source = sources[Math.floor(Math.random() * sources.length)];
+                const news = {
+                    source: source.name,
+                    icon: source.icon,
+                    headline: headlines[Math.floor(Math.random() * headlines.length)],
+                    excerpt: excerpts[Math.floor(Math.random() * excerpts.length)],
+                    priority: Math.random() > 0.7 ? 'high' : 'normal',
+                    tags: this.getRandomTags(),
+                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                };
+
+                this.renderNewsCard(news, true);
+            }
+
+            getRandomTags() {
+                const allTags = ['alert', 'tech', 'net', 'sector'];
+                const count = 1 + Math.floor(Math.random() * 2);
+                const shuffled = allTags.sort(() => 0.5 - Math.random());
+                return shuffled.slice(0, count);
+            }
+
+            renderNewsCard(news, prepend = false) {
+                const card = document.createElement('div');
+                card.className = `outer-card ${news.priority === 'high' ? 'priority-high' : ''}`;
+                card.dataset.tags = news.tags.join(' ');
+                
+                card.innerHTML = `
+                    <div class="card-meta">
+                        <div class="card-source">
+                            <div class="source-icon">${news.icon}</div>
+                            <span>${news.source}</span>
+                        </div>
+                        <div class="card-timestamp">${news.time}</div>
+                    </div>
+                    <div class="card-headline">${news.headline}</div>
+                    <div class="card-excerpt">${news.excerpt}</div>
+                    <div class="card-tags">
+                        ${news.tags.map(tag => `<span class="tag ${tag}">${tag}</span>`).join('')}
+                    </div>
+                `;
+
+                if (prepend && this.currentFilter === 'all' || this.matchesFilter(news.tags)) {
+                    card.style.animation = 'cardEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    this.feedEl.insertBefore(card, this.feedEl.firstChild);
+                    
+                    // Keep max 20 items
+                    if (this.feedEl.children.length > 20) {
+                        this.feedEl.removeChild(this.feedEl.lastChild);
+                    }
+                } else if (!prepend) {
+                    this.feedEl.appendChild(card);
+                }
+            }
+
+            matchesFilter(tags) {
+                if (this.currentFilter === 'all') return true;
+                if (this.currentFilter === 'alerts') return tags.includes('alert');
+                if (this.currentFilter === 'sector') return tags.includes('sector');
+                if (this.currentFilter === 'tech') return tags.includes('tech');
+                return true;
+            }
+
+            filterNews() {
+                const cards = this.feedEl.querySelectorAll('.outer-card');
+                cards.forEach(card => {
+                    const tags = card.dataset.tags || '';
+                    const matches = this.matchesFilter(tags.split(' '));
+                    card.style.display = matches ? 'block' : 'none';
+                });
+            }
+        }
+
+        // ==================== SHARED CHAT PANEL (3D Mode) ====================
+        const chatMessages = document.getElementById('chatMessages');
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
+        const userCountEl = document.getElementById('userCount');
+
+        function appendChatMessage(username, text, type, colorHex) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${type}`;
+            if (type !== 'system') {
+                msgDiv.innerHTML = `<div class="msg-author" style="color:${colorHex}; text-shadow: 0 0 10px ${colorHex}">${username}</div>${text}`;
+            } else {
+                msgDiv.textContent = text;
+            }
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            state.addMessage({
+                username, text, type, color: colorHex,
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            });
+        }
+
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            appendChatMessage('You', text, 'local', '#00ff88');
+            chatInput.value = '';
+
+            if (window.nexusApp) {
+                window.nexusApp.triggerChat('local_user', text);
+            }
         });
-    }
 
-    renderAllNews();
-}
+        // ==================== INITIALIZATION ====================
+        window.nexusApp = new ParticleChatNexus();
+        const standardController = new StandardViewController();
+        const outerNewsController = new OuterNewsController();
 
-function refreshNews(q, category) {
-    newsQueue = [];
-    newsChat.innerHTML = '';
-    const countEl = document.getElementById('xc-count');
-    if (countEl) countEl.textContent = '0';
-    const sys = document.createElement('div');
-    sys.className = 'system-msg';
-    sys.textContent = '◈ SCANNING THE OUTER REACHES ◈';
-    newsChat.appendChild(sys);
-    startNews(q, category);
-}
+        // Setup Users
+        const LOCAL_USER = { id: 'local_user', username: 'You', color: '#00ff88' };
+        const BOTS = [
+            { id: 'b1', name: 'Nova', color: '#ff2a6d' },
+            { id: 'b2', name: 'Cipher', color: '#05d9e8' },
+            { id: 'b3', name: 'Aura', color: '#ffd700' },
+            { id: 'b4', name: 'Vortex', color: '#ff00ff' },
+            { id: 'b5', name: 'Echo', color: '#01ddc6' }
+        ];
 
-// Search
-document.getElementById('news-search').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const val = e.target.value.trim();
-        if (!val) return;
-        e.target.value = '';
-        refreshNews(val, null);
-    }
-});
-document.getElementById('refresh-btn').addEventListener('click', () => refreshNews());
+        window.nexusApp.addUser(LOCAL_USER);
+        BOTS.forEach(bot => window.nexusApp.addUser({ id: bot.id, username: bot.name, color: bot.color }));
 
-// Categories
-const CATEGORIES = ['general', 'business', 'technology', 'sports', 'entertainment', 'health', 'science'];
-const CAT_LABELS = { general: 'All Frequencies', business: 'Galactic Credits', technology: 'Cybernetics', sports: 'Arena Games', entertainment: 'Holo-shows', health: 'Bio-maintenance', science: 'Quantum Discoveries' };
-let catIdx = 0;
+        userCountEl.textContent = `${state.users.size} Entities Linked`;
 
-document.getElementById('cycle-btn').addEventListener('click', () => {
-    catIdx = (catIdx + 1) % CATEGORIES.length;
-    const cat = CATEGORIES[catIdx];
-    categoryLabel.textContent = CAT_LABELS[cat].toUpperCase();
-    refreshNews(null, cat === 'general' ? null : cat);
-});
+        // ==================== BOT SIMULATION ====================
+        const botPhrases = [
+            "Data stream looks clear on this node.",
+            "Syncing telemetry...",
+            "Has anyone mapped the outer bounds yet?",
+            "Packet loss detected. Rerouting.",
+            "This volume is incredibly calm today.",
+            "Drifting toward sector 7.",
+            "Aesthetic parameters accepted.",
+            "Connection stable."
+        ];
 
-// Archive sidebar
-function updateArchive() {
-    const list = document.getElementById('archive-list');
-    const count = document.getElementById('archive-count');
-    list.innerHTML = '';
-    const items = newsQueue.slice(0);
-    count.textContent = items.length;
-    if (!items.length) {
-        const empty = document.createElement('div');
-        empty.className = 'system-msg';
-        empty.style.padding = '20px 0';
-        empty.textContent = 'No dispatches loaded';
-        list.appendChild(empty);
-        return;
-    }
-    items.forEach((item, i) => {
-        const el = document.createElement('div');
-        el.className = 'archive-entry' + (item.url ? '' : ' no-link');
-        el.innerHTML = `
-            <div class="archive-idx">${String(i + 1).padStart(2, '0')} // ${escapeHtml(item.source)}</div>
-            <div class="archive-entry-title">${escapeHtml(item.title)}</div>
-        `;
-        if (item.url) el.onclick = () => window.open(item.url, '_blank');
-        list.appendChild(el);
-    });
-}
-</script>
+        setInterval(() => {
+            if (Math.random() > 0.5) {
+                const bot = BOTS[Math.floor(Math.random() * BOTS.length)];
+                const phrase = botPhrases[Math.floor(Math.random() * botPhrases.length)];
+                
+                appendChatMessage(bot.name, phrase, 'other', bot.color);
+                if (window.nexusApp) {
+                    window.nexusApp.triggerChat(bot.id, phrase);
+                }
+            }
+        }, 3500);
 
+        setTimeout(() => {
+            appendChatMessage('System', 'Connection established. Welcome to the Nexus.', 'system');
+        }, 1800);
 
+        // ==================== VIEW NAVIGATION ====================
+        const viewToggle = document.getElementById('viewToggle');
+        const outerNewsBtn = document.getElementById('outerNewsBtn');
+        const backFromOuter = document.getElementById('backFromOuter');
+        const nexusView = document.getElementById('nexus-view');
+        const standardView = document.getElementById('standard-view');
+        const outerNewsView = document.getElementById('outer-news-view');
+        const modeIndicator = document.getElementById('mode-indicator');
+        const dimensionStatus = document.getElementById('dimensionStatus');
+        const navButtons = document.getElementById('navButtons');
+
+        function showNexus() {
+            state.setMode('nexus');
+            nexusView.classList.remove('hidden');
+            standardView.classList.remove('active');
+            outerNewsView.classList.remove('active');
+            viewToggle.textContent = 'Standard View';
+            viewToggle.classList.remove('secondary');
+            modeIndicator.textContent = 'IMMERSIVE INSTANCE';
+            dimensionStatus.textContent = '3D-Active';
+            window.nexusApp.isActive = true;
+            window.nexusApp.clock.start();
+            
+            // Show only standard toggle in nav
+            navButtons.innerHTML = '<button class="nav-btn" id="viewToggle">Standard View</button>';
+            document.getElementById('viewToggle').addEventListener('click', showStandard);
+        }
+
+        function showStandard() {
+            state.setMode('standard');
+            nexusView.classList.add('hidden');
+            standardView.classList.add('active');
+            outerNewsView.classList.remove('active');
+            modeIndicator.textContent = 'STANDARD INTERFACE';
+            dimensionStatus.textContent = '2D-Mode';
+            window.nexusApp.isActive = false;
+            
+            // Show both toggles
+            navButtons.innerHTML = `
+                <button class="nav-btn" id="viewToggle">Enter 3D Nexus</button>
+                <button class="nav-btn secondary" id="outerNewsNavBtn">OUTER- NEWS</button>
+            `;
+            document.getElementById('viewToggle').addEventListener('click', showNexus);
+            document.getElementById('outerNewsNavBtn').addEventListener('click', showOuterNews);
+        }
+
+        function showOuterNews() {
+            state.setMode('outer-news');
+            nexusView.classList.add('hidden');
+            standardView.classList.remove('active');
+            outerNewsView.classList.add('active');
+            modeIndicator.textContent = 'EXTERNAL INTELLIGENCE';
+            dimensionStatus.textContent = 'Feed-Active';
+            window.nexusApp.isActive = false;
+            
+            // Only show back options
+            navButtons.innerHTML = '<button class="nav-btn" id="backToStandard">← Back to Standard</button>';
+            document.getElementById('backToStandard').addEventListener('click', showStandard);
+        }
+
+        // Initial setup
+        viewToggle.addEventListener('click', showStandard);
+        outerNewsBtn.addEventListener('click', showOuterNews);
+        backFromOuter.addEventListener('click', showStandard);
+    </script>
 </body>
 </html>
