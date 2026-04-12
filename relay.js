@@ -33,7 +33,6 @@ mongoose.connect(process.env.MONGODB_URI)
 
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   color: { type: String, default: '#00e5ff' }
 }, { timestamps: true });
@@ -93,15 +92,14 @@ app.get('/api/config', (_req, res) => {
 
 // Authentication Endpoints
 app.post('/api/auth/register', async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, password } = req.body;
   try {
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-    if (existingUser) return res.status(400).json({ error: 'Username or email already in use' });
+    const existingUser = await User.findOne({ username });
+    if (existingUser) return res.status(400).json({ error: 'Username already in use' });
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const user = new User({ 
-      username, 
-      email, 
+    const user = new User({
+      username,
       password: hashedPassword,
       color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')
     });

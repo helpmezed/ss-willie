@@ -1341,12 +1341,6 @@
                 <div class="auth-subtitle">SECURE AUTHENTICATION PROTOCOL v9.4</div>
 
                 <form id="authForm" class="auth-form">
-                    <div id="registerFields" style="display: none;">
-                        <div class="auth-input-group">
-                            <label class="auth-input-label">Neural Path</label>
-                            <input type="email" id="authEmail" class="auth-input" placeholder="email@domain.net" autocomplete="email">
-                        </div>
-                    </div>
                     <div class="auth-input-group">
                         <label class="auth-input-label">Operator ID</label>
                         <input type="text" id="authUsername" class="auth-input" placeholder="Enter designation..." autocomplete="username" required>
@@ -1359,10 +1353,6 @@
                 </form>
 
                 <div id="authError" class="auth-error" style="color: var(--cp-red); font-family: var(--font-mono-cp); font-size: 12px; text-align: center; margin-top: 16px;"></div>
-                <div class="auth-footer">
-                    <span id="authToggleText">Awaiting assignment?</span>
-                    <span id="authToggleBtn" class="auth-toggle">Register Entity</span>
-                </div>
             </div>
         </div>
     </div>
@@ -1384,20 +1374,14 @@
         class AuthManager {
             constructor() {
                 this.user = null;
-                this.isRegister = false;
                 this.overlay = document.getElementById('authOverlay');
                 this.form = document.getElementById('authForm');
                 this.title = document.getElementById('authTitle');
                 this.error = document.getElementById('authError');
-                this.toggleBtn = document.getElementById('authToggleBtn');
-                this.toggleText = document.getElementById('authToggleText');
-                this.regFields = document.getElementById('registerFields');
-                
                 this.init();
             }
 
             async init() {
-                this.toggleBtn.addEventListener('click', () => this.toggleMode());
                 this.form.addEventListener('submit', (e) => this.handleSubmit(e));
                 
                 // Initial session check
@@ -1412,24 +1396,14 @@
                 }
             }
 
-            toggleMode() {
-                this.isRegister = !this.isRegister;
-                this.title.textContent = this.isRegister ? 'New Entity Assignment' : 'Nexus Protocol';
-                this.toggleText.textContent = this.isRegister ? 'System registered?' : 'Awaiting assignment?';
-                this.toggleBtn.textContent = this.isRegister ? 'Access Portal' : 'Register Entity';
-                this.regFields.style.display = this.isRegister ? 'block' : 'none';
-                this.error.textContent = '';
-            }
-
             async handleSubmit(e) {
                 e.preventDefault();
                 this.error.textContent = '';
                 const username = document.getElementById('authUsername').value;
                 const password = document.getElementById('authPassword').value;
-                const email = document.getElementById('authEmail').value;
 
-                const endpoint = this.isRegister ? '/api/auth/register' : '/api/auth/login';
-                const body = this.isRegister ? { username, password, email } : { username, password };
+                const endpoint = '/api/auth/login';
+                const body = { username, password };
 
                 try {
                     const res = await fetch(endpoint, {
