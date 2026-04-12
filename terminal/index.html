@@ -574,10 +574,10 @@
 
                 this.scene = new THREE.Scene();
                 this.scene.background = new THREE.Color(0x010205);
-                this.scene.fog = new THREE.FogExp2(0x010205, 0.04);
+                this.scene.fog = new THREE.FogExp2(0x010205, 0.018);
 
-                this.camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 200);
-                this.camera.position.set(0, 0, 14);
+                this.camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 300);
+                this.camera.position.set(0, 0, 26);
 
                 this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
                 this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
@@ -591,7 +591,7 @@
                 this.activeBubbles = new Map();
                 this.currentSpeakerId = null;
                 this.particleTexture = this.createParticleTexture();
-                this.volumeRadius = 10;
+                this.volumeRadius = 18;
                 this.mouse = { x: 0, y: 0 };
 
                 this.init();
@@ -751,7 +751,7 @@
                     particleSystems.push(points);
                 }
 
-                userGroup.position.set((Math.random()-0.5)*16, (Math.random()-0.5)*8, (Math.random()-0.5)*8);
+                userGroup.position.set((Math.random()-0.5)*28, (Math.random()-0.5)*16, (Math.random()-0.5)*10);
                 this.scene.add(userGroup);
 
                 const user = {
@@ -835,8 +835,8 @@
                 const now = Date.now();
 
                 // Fish-tank glass parallax: mouse tilts the viewpoint slightly
-                this.lookTarget.x += (this.mouse.x * 2.5 - this.lookTarget.x) * 0.03;
-                this.lookTarget.y += (-this.mouse.y * 1.8 - this.lookTarget.y) * 0.03;
+                this.lookTarget.x += (this.mouse.x * 4 - this.lookTarget.x) * 0.03;
+                this.lookTarget.y += (-this.mouse.y * 3 - this.lookTarget.y) * 0.03;
                 this.camera.lookAt(this.lookTarget);
 
                 // Slow idle bob — like watching from outside a tank
@@ -846,7 +846,7 @@
                 const chatAge = now - (this.lastChatTime || 0);
                 const chatBoost = chatAge < 1400 ? Math.sin((chatAge / 1400) * Math.PI) : 0;
                 if (Math.random() < 0.002) {
-                    this.scene.fog.density = 0.04 + Math.random() * 0.02;
+                    this.scene.fog.density = 0.018 + Math.random() * 0.006;
                 }
 
                 if (this.dust) this.dust.rotation.y = time * (0.015 + chatBoost * 0.06);
@@ -978,38 +978,14 @@
                         user.velocity.add(steer);
                     }
 
-                    // Cohesion
-                    let center = new THREE.Vector3();
-                    let count = 0;
-                    usersArray.forEach(other => {
-                        if (other === user) return;
-                        const dist = user.mesh.position.distanceTo(other.mesh.position);
-                        if (dist < 15) { center.add(other.mesh.position); count++; }
-                    });
-                    if (count > 0) {
-                        center.divideScalar(count);
-                        user.velocity.add(center.sub(user.mesh.position).multiplyScalar(0.002));
-                    }
-
-                    // Separation
+                    // Separation only — no cohesion so sprites roam independently
                     usersArray.forEach(other => {
                         if (other === user) return;
                         const diff = new THREE.Vector3().subVectors(user.mesh.position, other.mesh.position);
                         const dist = diff.length();
-                        if (dist < 6 && dist > 0.001) {
+                        if (dist < 9 && dist > 0.001) {
                             diff.normalize();
-                            user.velocity.add(diff.multiplyScalar(((6 - dist) / 6) * 0.03));
-                        }
-                    });
-
-                    // Swirl
-                    usersArray.forEach(other => {
-                        if (other === user) return;
-                        const diff = new THREE.Vector3().subVectors(other.mesh.position, user.mesh.position);
-                        const dist = diff.length();
-                        if (dist < 12) {
-                            const tangent = new THREE.Vector3(-diff.z, 0, diff.x).normalize();
-                            user.velocity.add(tangent.multiplyScalar(0.008));
+                            user.velocity.add(diff.multiplyScalar(((9 - dist) / 9) * 0.06));
                         }
                     });
 
