@@ -46,40 +46,55 @@
             z-index: 1;
         }
 
-        /* ── Nav (top-left, clear of the chat panel) ── */
-        #page-nav {
+        /* ── Site navbar ── */
+        #site-nav {
             position: fixed;
-            top: 24px;
-            left: 28px;
-            z-index: 100;
+            top: 0; left: 0; right: 0;
+            height: 56px;
+            z-index: 200;
             display: flex;
-            gap: 10px;
+            align-items: center;
+            padding: 0 32px;
+            background: rgba(0, 4, 0, 0.94);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            gap: 24px;
         }
-        .page-nav-btn {
-            background: rgba(0, 10, 0, 0.85);
-            border: 1px solid var(--border-mid);
+        .site-nav-logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 4px;
             color: var(--green);
-            padding: 8px 18px;
-            font-family: 'Share Tech Mono', monospace;
+            text-shadow: 0 0 16px rgba(0,255,65,0.5);
+            text-decoration: none;
+        }
+        .site-nav-links { display: flex; gap: 4px; margin-left: auto; }
+        .site-nav-link {
+            color: rgba(0,255,65,0.35);
+            text-decoration: none;
             font-size: 11px;
+            font-weight: 700;
             letter-spacing: 2px;
             text-transform: uppercase;
-            text-decoration: none;
-            backdrop-filter: blur(10px);
-            transition: background 0.2s, box-shadow 0.2s;
-            box-shadow: 0 0 8px var(--green-glow);
+            padding: 7px 18px;
+            border-radius: 20px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
         }
-        .page-nav-btn:hover {
+        .site-nav-link:hover { color: var(--green); background: var(--green-glow); }
+        .site-nav-link.active {
+            color: var(--green);
             background: var(--green-dim);
-            box-shadow: 0 0 18px rgba(0,255,65,0.3);
+            border-color: rgba(0,255,65,0.3);
         }
 
         /* ── Full-height chat panel on the right ── */
         #chat-panel {
             position: fixed;
-            right: 0; top: 0;
+            right: 0; top: 56px;
             width: 380px;
-            height: 100vh;
+            height: calc(100vh - 56px);
             z-index: 20;
             display: flex;
             flex-direction: column;
@@ -260,16 +275,20 @@
                 border-left: none;
                 border-top: 1px solid var(--border);
             }
-            #page-nav { top: 12px; left: 12px; }
         }
     </style>
 </head>
 <body>
 
     <!-- Nav top-left, well clear of the chat panel -->
-    <nav id="page-nav">
-        <a class="page-nav-btn" href="standard.html">Standard</a>
-        <a class="page-nav-btn" href="outer-news.html">Outer News</a>
+    <!-- Site Navbar -->
+    <nav id="site-nav">
+        <a class="site-nav-logo" href="standard.html">ETHER NEXUS</a>
+        <div class="site-nav-links">
+            <a class="site-nav-link" href="standard.html">Chat</a>
+            <a class="site-nav-link active" href="index.html">Backroom</a>
+            <a class="site-nav-link" href="outer-news.html">News</a>
+        </div>
     </nav>
 
     <!-- Full-height chat panel -->
