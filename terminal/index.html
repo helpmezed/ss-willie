@@ -708,11 +708,11 @@
                     cvs.width = 64; cvs.height = 64;
                     const ctx = cvs.getContext('2d');
                     const char = chars[Math.floor(Math.random() * chars.length)];
-                    ctx.fillStyle = userData.color;
+                    ctx.fillStyle = `hsl(120, 100%, ${Math.floor(Math.random() * 30 + 30)}%)`;
                     ctx.font = 'bold 48px monospace';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.shadowColor = userData.color;
+                    ctx.shadowColor = '#00FF00';
                     ctx.shadowBlur = 10;
                     ctx.fillText(char, 32, 32);
 
@@ -914,11 +914,11 @@
                                 const idx3 = i * 3, idx4 = i * 4;
                                 const bx = baseData[idx4], by = baseData[idx4+1], bz = baseData[idx4+2], phase = baseData[idx4+3];
                                 const dist = Math.sqrt(bx*bx + by*by + bz*bz);
-                                const spinSpeed = 0.05 + (0.5 / (dist + 2)) + (chatBurst * 0.02);
+                                const spinSpeed = 0.15 + (1.0 / (dist + 1)) + (chatBurst * 0.05);
                                 const angle = time * spinSpeed;
                                 const cosA = Math.cos(angle), sinA = Math.sin(angle);
                                 positions[idx3]   = (bx * cosA - bz * sinA) * expansion;
-                                positions[idx3+1] = (by * expansion) + Math.sin(time * 0.8 + phase) * 0.5;
+                                positions[idx3+1] = (by * expansion) + Math.sin(time * 1.5 + phase) * 0.4;
                                 positions[idx3+2] = (bx * sinA + bz * cosA) * expansion;
                             }
                             pts.geometry.attributes.position.needsUpdate = true;
@@ -945,7 +945,7 @@
 
                     const chatReactBurst = user.chatReact
                         ? Math.sin(((now - user.chatReact.startTime) / user.chatReact.duration) * Math.PI) * 0.5 : 0;
-                    const breathScale = (1 + Math.sin(time * 2 + user.phase) * 0.15) * (1 + chatReactBurst);
+                    const breathScale = (1 + Math.sin(time * 2 + user.phase) * 0.03) * (1 + chatReactBurst);
                     user.mesh.scale.set(breathScale, breathScale, breathScale);
 
                     let currentTarget, maxSpeed = user.baseMaxSpeed, maxForce = user.baseMaxForce;
