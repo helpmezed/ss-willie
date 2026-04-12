@@ -6,6 +6,16 @@
     <title>Ether Nexus | 3D Immersive</title>
     <link rel="stylesheet" href="shared.css">
     <style>
+        /* ==================== GLOBAL MOTION SYSTEM ==================== */
+        :root {
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ease-smooth:   cubic-bezier(0.4, 0, 0.2, 1);
+            --motion-fast:   0.18s;
+            --motion-med:    0.35s;
+            --motion-slow:   0.6s;
+        }
+
         /* Nav override: shift left to clear the chat panel */
         .nav-buttons { right: calc(var(--chat-width) + 40px); }
 
@@ -40,22 +50,32 @@
             font-size: 15px;
             letter-spacing: 0.3px;
             pointer-events: none;
-            transform: translate(-50%, calc(-100% - 50px)) scale(0.8);
+            transform: translate(-50%, calc(-100% - 60px)) scale(0.6);
+            filter: blur(10px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.2), 0 0 40px rgba(0, 229, 255, 0.15);
             border: 1px solid var(--border-glass);
             backdrop-filter: blur(16px) saturate(180%);
             opacity: 0;
-            transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: opacity var(--motion-med) var(--ease-out-expo),
+                        transform var(--motion-med) var(--ease-spring),
+                        filter var(--motion-med) var(--ease-out-expo);
             max-width: 300px;
             text-align: center;
             word-wrap: break-word;
             line-height: 1.4;
             z-index: 100;
+            animation: bubblePulse 3s infinite ease-in-out;
         }
 
         .speech-bubble.visible {
             opacity: 1;
             transform: translate(-50%, calc(-100% - 30px)) scale(1);
+            filter: blur(0);
+        }
+
+        @keyframes bubblePulse {
+            0%, 100% { box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(0,229,255,0.2); }
+            50%       { box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 40px rgba(0,229,255,0.4); }
         }
 
         .speech-username {
@@ -102,14 +122,26 @@
             right: 0; top: 0;
             width: var(--chat-width);
             height: 100vh;
-            background: var(--bg-glass);
+            background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.6));
             border-left: 1px solid var(--border-glass);
             display: flex;
             flex-direction: column;
             box-shadow: -20px 0 60px rgba(0, 0, 0, 0.8);
             z-index: 20;
-            backdrop-filter: blur(24px) saturate(150%);
+            backdrop-filter: blur(30px) saturate(180%);
         }
+
+        #chat-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: url('https://grainy-gradients.vercel.app/noise.svg');
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        #chat-panel > * { position: relative; z-index: 1; }
 
         .chat-header {
             padding: 28px 32px;
@@ -145,6 +177,7 @@
             display: flex;
             flex-direction: column;
             gap: 24px;
+            scroll-behavior: smooth;
         }
 
         .chat-messages::-webkit-scrollbar { width: 6px; }
@@ -158,12 +191,24 @@
             line-height: 1.6;
             max-width: 90%;
             position: relative;
-            animation: messagePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            animation: messagePop var(--motion-slow) var(--ease-spring) forwards;
             opacity: 0;
-            transform: translateY(20px) scale(0.95);
+            transform: translateY(30px) scale(0.9);
+            transition: transform var(--motion-fast) var(--ease-out-expo),
+                        box-shadow var(--motion-fast);
+            transform-origin: bottom;
         }
 
-        @keyframes messagePop { to { opacity: 1; transform: translateY(0) scale(1); } }
+        .message:not(.system):hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        }
+
+        @keyframes messagePop {
+            0%   { opacity: 0; transform: translateY(30px) scale(0.9); filter: blur(6px); }
+            60%  { opacity: 1; transform: translateY(-4px) scale(1.02); }
+            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
 
         .message.system {
             background: transparent;
@@ -213,7 +258,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all var(--motion-med) var(--ease-out-expo);
             box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
         }
 
@@ -221,7 +266,7 @@
             border-color: var(--primary);
             background: rgba(255,255,255,0.08);
             box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.15), inset 0 2px 10px rgba(0,0,0,0.2);
-            transform: translateY(-2px);
+            transform: translateY(-4px) scale(1.02);
         }
 
         .chat-input {
@@ -253,6 +298,10 @@
             color: #fff;
             transform: scale(1.05);
             text-shadow: 0 0 10px var(--primary);
+        }
+
+        .chat-submit:active {
+            transform: scale(0.92);
         }
 
         /* ==================== GLITCH TEXT ==================== */
@@ -551,6 +600,7 @@
                 this.volumeRadius = 250;
                 this.introActive = true;
                 this.introTargetPos = new THREE.Vector3(0, 150, 450);
+                this.mouse = { x: 0, y: 0 };
 
                 this.init();
             }
@@ -563,6 +613,12 @@
                     this.camera.updateProjectionMatrix();
                     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
                 });
+
+                window.addEventListener('mousemove', (e) => {
+                    this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                    this.mouse.y = (e.clientY / window.innerHeight) * 2 - 1;
+                });
+
                 this.animate();
             }
 
@@ -748,6 +804,10 @@
                 user.chatReact = { startTime: Date.now(), duration: 1400 };
                 this.lastChatTime = Date.now();
 
+                // Flash the core sprite on chat
+                user.coreMat.opacity = 1.0;
+                setTimeout(() => { user.coreMat.opacity = 0.5; }, 300);
+
                 if (this.activeBubbles.has(userId)) {
                     const oldBubble = this.activeBubbles.get(userId);
                     oldBubble.element.classList.remove('visible');
@@ -773,16 +833,31 @@
                 const now = Date.now();
 
                 if (this.introActive) {
-                    this.camera.position.lerp(this.introTargetPos, 0.02);
+                    this.camera.position.lerp(this.introTargetPos, 0.04);
                     if (this.camera.position.distanceTo(this.introTargetPos) < 5) this.introActive = false;
+                } else {
+                    // Cursor-based depth parallax via orbit target nudge
+                    this.controls.target.x += (this.mouse.x * 20 - this.controls.target.x) * 0.02;
+                    this.controls.target.y += (-this.mouse.y * 15 - this.controls.target.y) * 0.02;
                 }
+
+                // Idle camera drift
+                this.camera.position.y += Math.sin(time * 0.3) * 0.05;
+                this.camera.position.x += Math.cos(time * 0.2) * 0.05;
 
                 const chatAge = now - (this.lastChatTime || 0);
                 const chatBoost = chatAge < 1400 ? Math.sin((chatAge / 1400) * Math.PI) : 0;
+                // Subtle fog fluctuation — makes the world feel alive
+                if (Math.random() < 0.002) {
+                    this.scene.fog.density = 0.0025 + Math.random() * 0.002;
+                }
+
                 if (this.dust) this.dust.rotation.y = time * (0.015 + chatBoost * 0.06);
                 if (this.nexusCore) {
                     this.nexusCore.rotation.y -= deltaTime * 0.2;
                     this.nexusCore.rotation.x -= deltaTime * 0.1;
+                    // Glow flicker
+                    this.nexusCore.material.opacity = 0.02 + Math.sin(time * 2) * 0.01;
                 }
                 if (this.stars) this.stars.rotation.y = time * 0.004;
 
@@ -807,6 +882,10 @@
                         ? Math.sin(((now - user.chatReact.startTime) / user.chatReact.duration) * Math.PI) * 0.5 : 0;
                     const breathScale = (1 + Math.sin(time * 2 + user.phase) * 0.15) * (1 + chatReactBurst);
                     user.mesh.scale.set(breathScale, breathScale, breathScale);
+
+                    // Core sprite breathes independently at a faster frequency
+                    const corePulse = Math.sin(time * 4 + user.phase) * 0.2 + 1;
+                    user.mesh.children[1].scale.set(40 * corePulse, 40 * corePulse, 1);
 
                     const reactSpin = user.chatReact ? 3.5 : 1;
                     user.mesh.children[0].rotation.y += deltaTime * 0.8 * reactSpin;
@@ -1027,6 +1106,17 @@
         });
 
         setTimeout(() => appendChatMessage('System', 'Connection established. Welcome to the Nexus.', 'system'), 1800);
+
+        // ==================== MAGNETIC INPUT ====================
+        chatInput.addEventListener('mousemove', (e) => {
+            const rect = chatInput.getBoundingClientRect();
+            const dx = (e.clientX - rect.left) / rect.width - 0.5;
+            const dy = (e.clientY - rect.top) / rect.height - 0.5;
+            chatInput.style.transform = `translate(${dx * 4}px, ${dy * 4}px)`;
+        });
+        chatInput.addEventListener('mouseleave', () => {
+            chatInput.style.transform = 'translate(0,0)';
+        });
 
         // ==================== BOOT SEQUENCE ====================
         (function initBootSequence() {
