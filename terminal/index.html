@@ -713,9 +713,9 @@
             }
 
             addUser(userData) {
-                const numSystems = 12;
+                const numSystems = 14;
                 const particlesPerSystem = 30;
-                const cloudRadius = 28;
+                const cloudRadius = 40;
                 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ'.split('');
 
                 const userGroup = new THREE.Group();
@@ -726,28 +726,30 @@
                     cvs.width = 128; cvs.height = 128;
                     const ctx = cvs.getContext('2d');
                     const char = chars[Math.floor(Math.random() * chars.length)];
-                    // Bright glow halo first
+                    // Fill entire canvas with a dim color base so the whole point quad is tinted
+                    ctx.fillStyle = userData.color + '22';
+                    ctx.fillRect(0, 0, 128, 128);
+                    // Large glow halo
                     ctx.shadowColor = userData.color;
-                    ctx.shadowBlur = 24;
+                    ctx.shadowBlur = 32;
                     ctx.fillStyle = userData.color;
-                    ctx.font = 'bold 96px monospace';
+                    ctx.font = 'bold 88px monospace';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(char, 64, 64);
-                    // Second pass for extra brightness
-                    ctx.shadowBlur = 8;
+                    // Bright white core on top
+                    ctx.shadowBlur = 0;
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 72px monospace';
+                    ctx.font = 'bold 68px monospace';
                     ctx.fillText(char, 64, 64);
 
                     const texture = new THREE.CanvasTexture(cvs);
-                    const baseOpacity = 0.75 + Math.random() * 0.2;
-                    const baseSize = 14 + Math.random() * 8;
+                    const baseOpacity = 0.85 + Math.random() * 0.15;
+                    const baseSize = 40 + Math.random() * 20;
                     const material = new THREE.PointsMaterial({
                         size: baseSize, map: texture,
                         transparent: true, opacity: baseOpacity,
                         blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
-                        alphaTest: 0.01,
                     });
 
                     const geometry = new THREE.BufferGeometry();
@@ -944,7 +946,7 @@
                                 const angle = time * spinSpeed;
                                 const cosA = Math.cos(angle), sinA = Math.sin(angle);
                                 positions[idx3]   = bx * cosA - bz * sinA;
-                                positions[idx3+1] = by + Math.sin(time * 1.5 + phase) * 3.5;
+                                positions[idx3+1] = by + Math.sin(time * 1.5 + phase) * 5.0;
                                 positions[idx3+2] = bx * sinA + bz * cosA;
                             }
                             pts.geometry.attributes.position.needsUpdate = true;
