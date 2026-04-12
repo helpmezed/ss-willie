@@ -12,11 +12,52 @@
             box-sizing: border-box;
         }
 
+        /* Page transition */
+        @keyframes pageIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
         body {
             margin: 0;
             overflow: hidden;
             background-color: #000;
             font-family: 'Share Tech Mono', monospace;
+            animation: pageIn 0.35s ease forwards;
+        }
+        body.page-exit {
+            animation: none !important;
+            transition: opacity 0.25s ease, transform 0.25s ease !important;
+            opacity: 0 !important;
+            transform: translateY(-8px) !important;
+            pointer-events: none;
+        }
+
+        /* Nav */
+        #page-nav {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+        .page-nav-btn {
+            background: rgba(0, 20, 0, 0.85);
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 8px 18px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 8px rgba(0,255,0,0.15);
+        }
+        .page-nav-btn:hover {
+            background: rgba(0, 40, 0, 0.95);
+            box-shadow: 0 0 18px rgba(0,255,0,0.35);
         }
 
         canvas {
@@ -187,6 +228,11 @@
     </style>
 </head>
 <body>
+    <nav id="page-nav">
+        <a class="page-nav-btn" href="standard.html">Standard</a>
+        <a class="page-nav-btn" href="outer-news.html">Outer News</a>
+    </nav>
+
     <div id="chat-container">
         <div class="chat-header">
             <div class="status-dot"></div>
@@ -521,6 +567,17 @@
         });
 
         messageInput.focus();
+
+        // Page transition: fade out before navigating
+        document.querySelectorAll('a[href]').forEach(a => {
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('http') || href.startsWith('#') || a.target === '_blank') return;
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                document.body.classList.add('page-exit');
+                setTimeout(() => { window.location.href = href; }, 260);
+            });
+        });
     </script>
 </body>
 </html>
