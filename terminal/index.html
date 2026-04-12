@@ -125,6 +125,58 @@
             font-weight: 800;
             text-shadow: 0 0 10px currentColor;
         }
+        
+        /* Reply UI Styles */
+        .reply-context {
+            font-size: 11px;
+            color: #8899aa;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 12px;
+            border-left: 2px solid var(--primary);
+            margin-bottom: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: block;
+            text-align: left;
+        }
+        .reply-context:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .reply-indicator-bar {
+            background: rgba(0, 229, 255, 0.1);
+            border-left: 3px solid var(--primary);
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            animation: slideDown 0.3s ease;
+            border-radius: 12px 12px 0 0;
+        }
+        .reply-indicator-bar .close-reply {
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--alert);
+        }
+        .msg-reply-btn {
+            font-size: 10px;
+            color: var(--primary);
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+        .news-item:hover .msg-reply-btn,
+        .message:hover .msg-reply-btn {
+            opacity: 1;
+        }
+        .is-reply-to-me {
+            border-right: 3px solid var(--secondary) !important;
+            background: rgba(179, 0, 255, 0.05) !important;
+        }
 
         /* ==================== STANDARD VIEW (Chat) ==================== */
         .standard-layout {
@@ -299,6 +351,11 @@
 
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -487,176 +544,188 @@
             50% { opacity: 0.3; }
         }
 
-
-        .outer-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 42, 109, 0.15);
-            border-radius: 16px;
-            overflow: hidden;
-            transition: all 0.3s;
-            animation: cardEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        @keyframes cardEnter {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .outer-card:hover {
-            border-color: rgba(255, 42, 109, 0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(255, 42, 109, 0.1);
-        }
-
-        .card-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            display: block;
-            background: rgba(255, 42, 109, 0.05);
-        }
-
-        .card-image-placeholder {
-            width: 100%;
-            height: 140px;
-            background: linear-gradient(135deg, rgba(255,42,109,0.08), rgba(0,0,0,0.2));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            color: rgba(255,42,109,0.3);
-        }
-
-        .card-body {
-            padding: 22px 24px 18px;
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-        }
-
-        .card-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .card-source {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 700;
-            color: var(--alert);
-        }
-
-        .card-timestamp {
-            font-family: monospace;
-            font-size: 11px;
-            color: #556677;
-        }
-
-        .card-headline {
-            font-size: 18px;
-            font-weight: 700;
-            line-height: 1.4;
-            margin-bottom: 10px;
-            color: #fff;
-        }
-
-        .card-excerpt {
-            font-size: 13px;
-            line-height: 1.7;
-            color: #8899aa;
-            margin-bottom: 16px;
-            flex: 1;
-        }
-
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: auto;
-        }
-
-        .card-category {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: #556677;
-            font-weight: 600;
-        }
-
-        .card-read-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--alert);
-            text-decoration: none;
-            padding: 6px 14px;
-            border: 1px solid rgba(255,42,109,0.3);
-            border-radius: 20px;
-            transition: all 0.2s;
-        }
-
-        .card-read-link:hover {
-            background: rgba(255,42,109,0.15);
-            border-color: var(--alert);
-        }
-
-        .outer-feed-loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 300px;
-            gap: 16px;
-            color: #556677;
-            font-size: 13px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .outer-feed-loading::before {
-            content: '';
-            width: 32px;
-            height: 32px;
-            border: 2px solid rgba(255,42,109,0.2);
-            border-top-color: var(--alert);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .outer-feed-error {
-            padding: 40px;
-            text-align: center;
-            color: #556677;
-            font-size: 13px;
-            line-height: 1.8;
-        }
-
-        .outer-feed-error strong { color: var(--alert); display: block; margin-bottom: 8px; font-size: 15px; }
-
         .outer-feed {
             flex: 1;
             overflow-y: auto;
-            padding: 30px 40px;
+            padding: 40px;
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 20px;
+            gap: 24px;
             align-content: start;
         }
 
         .outer-feed::-webkit-scrollbar { width: 8px; }
         .outer-feed::-webkit-scrollbar-track { background: transparent; }
         .outer-feed::-webkit-scrollbar-thumb { background: rgba(255, 42, 109, 0.3); border-radius: 4px; }
+
+        .outer-feed-loading, .outer-feed-error {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: #556677;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+        .outer-feed-error strong { display: block; margin-bottom: 8px; color: var(--alert); font-size: 16px; }
+
+        .card-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .card-image-placeholder {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #334455;
+            margin-bottom: 16px;
+        }
+        .card-body { display: flex; flex-direction: column; gap: 6px; }
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .card-category {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #556677;
+        }
+        .card-read-link {
+            font-size: 11px;
+            color: var(--alert);
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.2s;
+        }
+        .card-read-link:hover { color: #fff; }
+
+        .outer-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 42, 109, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            animation: cardEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes cardEnter {
+            from { opacity: 0; transform: translateY(30px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .outer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--alert), transparent);
+            opacity: 0.5;
+        }
+
+        .outer-card:hover {
+            border-color: rgba(255, 42, 109, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(255, 42, 109, 0.1);
+        }
+
+        .outer-card.priority-high {
+            border-color: rgba(255, 42, 109, 0.6);
+            background: rgba(255, 42, 109, 0.05);
+        }
+
+        .outer-card.priority-high::before {
+            opacity: 1;
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-source {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        .source-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 42, 109, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .card-timestamp {
+            font-family: monospace;
+            font-size: 12px;
+            color: #556677;
+        }
+
+        .card-headline {
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .card-excerpt {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #aabbcc;
+            margin-bottom: 20px;
+        }
+
+        .card-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tag.alert { background: rgba(255, 42, 109, 0.15); border-color: rgba(255, 42, 109, 0.3); color: var(--alert); }
+        .tag.tech { background: rgba(0, 229, 255, 0.15); border-color: rgba(0, 229, 255, 0.3); color: var(--primary); }
+        .tag.net { background: rgba(179, 0, 255, 0.15); border-color: rgba(179, 0, 255, 0.3); color: var(--secondary); }
 
         /* ==================== SHARED COMPONENTS ==================== */
         #ambient-ui {
@@ -960,265 +1029,6 @@
             .outer-news-nav { width: 100%; height: auto; }
             .outer-news-layout { flex-direction: column; }
         }
-
-        /* ==================== AUTH OVERLAY (CYBERPUNK) ==================== */
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700;900&display=swap');
-
-        :root {
-            --cp-cyan: #00f0ff;
-            --cp-yellow: #fcee0a;
-            --cp-red: #ff003c;
-            --font-mono-cp: 'Share Tech Mono', monospace;
-            --font-display-cp: 'Orbitron', sans-serif;
-        }
-
-        .auth-overlay {
-            position: fixed;
-            inset: 0;
-            background: #040405;
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: var(--font-mono-cp);
-            transition: opacity 0.5s, visibility 0.5s;
-            overflow: hidden;
-        }
-
-        .auth-overlay.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        /* CRT + vignette overlays */
-        .auth-crt {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%),
-                        linear-gradient(90deg, rgba(255,0,0,0.06), rgba(0,255,0,0.02), rgba(0,0,255,0.06));
-            background-size: 100% 4px, 3px 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .auth-vignette {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.8) 100%);
-            pointer-events: none;
-            z-index: 9;
-        }
-
-        /* Boot sequence text */
-        .auth-boot-seq {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 13px;
-            line-height: 1.6;
-            color: var(--cp-cyan);
-            text-shadow: 0 0 5px var(--cp-cyan);
-            z-index: 15;
-            transition: opacity 0.3s;
-        }
-
-        .auth-boot-line {
-            opacity: 0;
-            animation: authTypeLine 0.1s forwards;
-        }
-
-        @keyframes authTypeLine {
-            to { opacity: 1; }
-        }
-
-        .auth-boot-glitch {
-            animation: authSevereGlitch 0.5s infinite;
-            filter: drop-shadow(2px 0 var(--cp-red)) drop-shadow(-2px 0 var(--cp-yellow));
-        }
-
-        @keyframes authSevereGlitch {
-            0%   { transform: translate(0); clip-path: inset(0 0 0 0); }
-            20%  { transform: translate(-5px, 2px); clip-path: inset(20% 0 80% 0); }
-            40%  { transform: translate(5px, -2px); clip-path: inset(80% 0 5% 0); }
-            60%  { transform: translate(-2px, 5px); clip-path: inset(40% 0 40% 0); }
-            80%  { transform: translate(2px, -5px); clip-path: inset(10% 0 60% 0); }
-            100% { transform: translate(0); clip-path: inset(0 0 0 0); }
-        }
-
-        /* Morphing container */
-        .auth-morph {
-            position: relative;
-            z-index: 20;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
-        .auth-morph.state-hidden  { width: 0; height: 0; opacity: 0; }
-        .auth-morph.state-dot     { width: 4px; height: 4px; background: var(--cp-cyan); box-shadow: 0 0 20px 5px var(--cp-cyan); opacity: 1; }
-        .auth-morph.state-line    { width: 400px; height: 2px; background: var(--cp-cyan); box-shadow: 0 0 15px var(--cp-cyan); opacity: 1; }
-
-        .auth-morph.state-box {
-            width: 400px;
-            height: 480px;
-            background: rgba(9,9,11,0.9);
-            border: 2px solid var(--cp-cyan);
-            box-shadow: 0 0 30px rgba(0,240,255,0.2), inset 0 0 20px rgba(0,240,255,0.1);
-            clip-path: polygon(0 20px, 20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
-            opacity: 1;
-        }
-
-        .auth-morph.state-box::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 4px;
-            background: var(--cp-yellow);
-            transform: scaleX(0);
-            transform-origin: left;
-            animation: authExpandBar 0.5s ease forwards 4.2s;
-        }
-
-        @keyframes authExpandBar {
-            to { transform: scaleX(1); }
-        }
-
-        /* Card inner content */
-        .auth-card {
-            width: 100%;
-            height: 100%;
-            padding: 36px 40px;
-            display: flex;
-            flex-direction: column;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .auth-card.content-visible {
-            animation: authGlitchIn 0.6s forwards;
-            pointer-events: all;
-        }
-
-        @keyframes authGlitchIn {
-            0%   { opacity: 0; transform: scale(0.98); filter: blur(4px); }
-            50%  { opacity: 0.5; filter: blur(0px) drop-shadow(2px 0 var(--cp-red)); }
-            55%  { opacity: 1; transform: translate(2px,0); }
-            60%  { opacity: 0; transform: translate(-2px,0); }
-            65%  { opacity: 1; transform: translate(0,0); filter: none; }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        .auth-card h2 {
-            font-family: var(--font-display-cp);
-            font-size: 22px;
-            font-weight: 700;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 4px;
-        }
-
-        .auth-subtitle {
-            font-size: 11px;
-            color: var(--cp-yellow);
-            letter-spacing: 1px;
-            margin-bottom: 32px;
-        }
-
-        .auth-form {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-        }
-
-        .auth-input-group {
-            margin-bottom: 18px;
-        }
-
-        .auth-input-label {
-            display: block;
-            font-size: 11px;
-            color: rgba(0,240,255,0.7);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .auth-input {
-            width: 100%;
-            background: rgba(0,240,255,0.05);
-            border: 1px solid rgba(0,240,255,0.3);
-            color: #fff;
-            font-family: var(--font-mono-cp);
-            font-size: 15px;
-            padding: 11px 14px;
-            outline: none;
-            border-radius: 0;
-            transition: all 0.2s ease;
-        }
-
-        .auth-input:focus {
-            border-color: var(--cp-cyan);
-            background: rgba(0,240,255,0.1);
-            box-shadow: inset 0 0 10px rgba(0,240,255,0.2);
-        }
-
-        .auth-input::placeholder { color: rgba(0,240,255,0.35); }
-
-        .auth-submit {
-            width: 100%;
-            margin-top: 8px;
-            padding: 14px;
-            background: var(--cp-yellow);
-            color: #09090b;
-            font-family: var(--font-display-cp);
-            font-size: 14px;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-            transition: all 0.2s ease;
-        }
-
-        .auth-submit:hover {
-            background: var(--cp-cyan);
-            box-shadow: 0 0 15px var(--cp-cyan);
-        }
-
-        .auth-submit::after {
-            content: '>>';
-            position: absolute;
-            right: 14px;
-            transition: right 0.2s ease;
-        }
-
-        .auth-submit:hover::after { right: 9px; }
-
-        .auth-footer {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 12px;
-            color: rgba(0,240,255,0.5);
-        }
-
-        .auth-toggle {
-            color: var(--cp-cyan);
-            cursor: pointer;
-            font-weight: 600;
-            margin-left: 6px;
-            text-shadow: 0 0 8px var(--cp-cyan);
-        }
-
-        .auth-toggle:hover { color: var(--cp-yellow); text-shadow: 0 0 8px var(--cp-yellow); }
-
-        @media (max-width: 500px) {
-            .auth-morph.state-line { width: 90vw; }
-            .auth-morph.state-box  { width: 90vw; height: 500px; }
-        }
     </style>
 </head>
 <body>
@@ -1240,55 +1050,58 @@
         <div id="speech-layer"></div>
     </div>
 
-    <!-- STANDARD CHAT VIEW -->
+    <!-- STANDARD NEWS VIEW -->
     <div id="standard-view">
-        <div class="standard-layout">
-            <aside class="users-sidebar">
-                <div class="sidebar-title">Connected Entities</div>
-                <div class="user-list" id="standardUserList"></div>
-                
-                <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-glass);">
-                    <div class="sidebar-title">System Status</div>
-                    <div style="font-size: 12px; color: #556677; line-height: 1.8; margin-top: 8px;">
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Latency:</span>
-                            <span style="color: var(--primary); font-family: monospace;">12ms</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Sync:</span>
-                            <span style="color: #00ff88;">Stable</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Dimension:</span>
-                            <span style="color: var(--secondary);" id="dimensionStatus">3D-Active</span>
-                        </div>
+        <div class="outer-news-layout">
+            <nav class="outer-news-nav">
+                <div class="outer-logo" style="color: var(--primary); text-shadow: 0 0 30px rgba(0,229,255,0.4);">NEXUS-</div>
+
+                <div class="nav-section">
+                    <div class="nav-title">Categories</div>
+                    <div class="nav-item active" data-category="">
+                        <span>◈</span> Top Headlines
+                        <span class="nav-badge">LIVE</span>
+                    </div>
+                    <div class="nav-item" data-category="technology">
+                        <span>◉</span> Technology
+                    </div>
+                    <div class="nav-item" data-category="business">
+                        <span>◎</span> Business
+                    </div>
+                    <div class="nav-item" data-category="science">
+                        <span>◈</span> Science
+                    </div>
+                    <div class="nav-item" data-category="health">
+                        <span>△</span> Health
+                    </div>
+                    <div class="nav-item" data-category="sports">
+                        <span>◫</span> Sports
+                    </div>
+                    <div class="nav-item" data-category="entertainment">
+                        <span>◫</span> Entertainment
                     </div>
                 </div>
 
-                <!-- OUTER- NEWS Access Button -->
-                <div class="outer-access-btn" id="outerNewsBtn">
-                    <div class="outer-access-title">◉ OUTER- NEWS</div>
-                    <div class="outer-access-desc">Access external intelligence feed and sector broadcasts</div>
-                </div>
-            </aside>
-            
-            <main class="chat-main">
-                <div class="chat-toolbar">
-                    <div>
-                        <div class="room-title">Global Stream</div>
-                        <div style="font-size: 12px; color: #556677; margin-top: 4px;">Internal backroom communications</div>
+                <div style="margin-top: auto;">
+                    <div class="outer-access-btn" id="outerNewsBtn">
+                        <div class="outer-access-title">◉ OUTER- NEWS</div>
+                        <div class="outer-access-desc">Access external intelligence feed and sector broadcasts</div>
                     </div>
-                    <div class="user-count" id="standardUserCount">0 Linked</div>
                 </div>
-                <div class="news-ticker" id="standardChatMessages">
-                    <div class="message system" style="opacity: 1; transform: none;">Initializing standard interface...</div>
-                </div>
-                <div class="chat-input-area" style="background: rgba(0,0,0,0.3);">
-                    <form id="standardChatForm" class="chat-input-wrapper">
-                        <input type="text" id="standardChatInput" class="chat-input" placeholder="Transmit to backroom..." autocomplete="off">
-                        <button type="submit" class="chat-submit">SEND</button>
-                    </form>
-                </div>
+            </nav>
+
+            <main class="outer-news-main">
+                <header class="outer-header">
+                    <div>
+                        <div class="outer-title" id="standardNewsTitle">TOP HEADLINES</div>
+                        <div class="outer-subtitle" id="dimensionStatus">Live news intelligence // Real-time global broadcasts</div>
+                    </div>
+                    <div class="live-indicator">
+                        <div class="live-dot"></div>
+                        LIVE FEED
+                    </div>
+                </header>
+                <div class="outer-feed" id="standardFeed"></div>
             </main>
         </div>
     </div>
@@ -1300,31 +1113,28 @@
                 <div class="outer-logo">OUTER-</div>
 
                 <div class="nav-section">
-                    <div class="nav-title">Feeds</div>
+                    <div class="nav-title">Categories</div>
                     <div class="nav-item active" data-category="">
-                        <span>◈</span> Top Stories
+                        <span>◈</span> All News
                         <span class="nav-badge">LIVE</span>
-                    </div>
-                    <div class="nav-item" data-category="general">
-                        <span>▲</span> General
-                    </div>
-                    <div class="nav-item" data-category="business">
-                        <span>◎</span> Business
                     </div>
                     <div class="nav-item" data-category="technology">
                         <span>◉</span> Technology
                     </div>
+                    <div class="nav-item" data-category="business">
+                        <span>◎</span> Business
+                    </div>
                     <div class="nav-item" data-category="science">
-                        <span>◫</span> Science
+                        <span>◈</span> Science
                     </div>
                     <div class="nav-item" data-category="health">
-                        <span>♦</span> Health
-                    </div>
-                    <div class="nav-item" data-category="entertainment">
-                        <span>★</span> Entertainment
+                        <span>△</span> Health
                     </div>
                     <div class="nav-item" data-category="sports">
-                        <span>◐</span> Sports
+                        <span>◫</span> Sports
+                    </div>
+                    <div class="nav-item" data-category="entertainment">
+                        <span>◫</span> Entertainment
                     </div>
                 </div>
 
@@ -1354,48 +1164,14 @@
         </div>
     </div>
 
-    <!-- SHARED CHAT PANEL (3D Mode only) -->
+    <!-- LIVE NEWS PANEL (3D Mode only) -->
     <div id="chat-panel">
         <div class="chat-header">
-            <span class="header-title">Global Stream</span>
-            <span class="user-count" id="userCount">0 Linked</span>
+            <span class="header-title">Live Intel</span>
+            <span class="user-count" id="userCount">Loading...</span>
         </div>
         <div class="chat-messages" id="chatMessages">
-            <div class="message system">Initiating quantum handshake...</div>
-        </div>
-        <div class="chat-input-area">
-            <form id="chatForm" class="chat-input-wrapper">
-                <input type="text" id="chatInput" class="chat-input" placeholder="Transmit sequence..." autocomplete="off">
-                <button type="submit" class="chat-submit">SEND</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- AUTHENTICATION OVERLAY -->
-    <div id="authOverlay" class="auth-overlay">
-        <div class="auth-vignette"></div>
-        <div class="auth-crt"></div>
-        <div class="auth-boot-seq" id="authBootSeq"></div>
-
-        <div class="auth-morph state-hidden" id="authMorph">
-            <div class="auth-card" id="authCard">
-                <h2 id="authTitle">NCPD_NET</h2>
-                <div class="auth-subtitle">SECURE AUTHENTICATION PROTOCOL v9.4</div>
-
-                <form id="authForm" class="auth-form">
-                    <div class="auth-input-group">
-                        <label class="auth-input-label">Operator ID</label>
-                        <input type="text" id="authUsername" class="auth-input" placeholder="Enter designation..." autocomplete="username" required>
-                    </div>
-                    <div class="auth-input-group">
-                        <label class="auth-input-label">Neural Passkey</label>
-                        <input type="password" id="authPassword" class="auth-input" placeholder="••••••••" autocomplete="current-password" required>
-                    </div>
-                    <button type="submit" id="authSubmit" class="auth-submit">Link</button>
-                </form>
-
-                <div id="authError" class="auth-error" style="color: var(--cp-red); font-family: var(--font-mono-cp); font-size: 12px; text-align: center; margin-top: 16px;"></div>
-            </div>
+            <div class="message system" style="opacity:1;transform:none;">Scanning intelligence feeds...</div>
         </div>
     </div>
 
@@ -1411,70 +1187,6 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-        // ==================== AUTHENTICATION MANAGER ====================
-        class AuthManager {
-            constructor() {
-                this.overlay = document.getElementById('authOverlay');
-                this.form = document.getElementById('authForm');
-                this.error = document.getElementById('authError');
-                this.init();
-            }
-
-            init() {
-                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
-
-                // Resume session from localStorage
-                const saved = localStorage.getItem('nexus_user');
-                if (saved) {
-                    try {
-                        this.finishAuth(JSON.parse(saved));
-                        return;
-                    } catch (e) {
-                        localStorage.removeItem('nexus_user');
-                    }
-                }
-            }
-
-            handleSubmit(e) {
-                e.preventDefault();
-                this.error.textContent = '';
-                const username = document.getElementById('authUsername').value.trim();
-                const password = document.getElementById('authPassword').value;
-
-                if (!username) { this.error.textContent = 'Operator ID required'; return; }
-                if (password.length < 4) { this.error.textContent = 'Passkey too short'; return; }
-
-                const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
-                const user = { id: 'u_' + Date.now(), username, color };
-                localStorage.setItem('nexus_user', JSON.stringify(user));
-                this.finishAuth(user);
-            }
-
-            finishAuth(user) {
-                this.overlay.classList.add('hidden');
-                initApp(user);
-            }
-        }
-
-        let appInitialized = false;
-        function initApp(userData) {
-            if (appInitialized) return;
-            appInitialized = true;
-
-            // Initialize state and controllers
-            const LOCAL_USER = { id: userData.id, username: userData.username, color: userData.color };
-            window.nexusApp = new ParticleChatNexus();
-            const standardController = new StandardViewController();
-            const outerNewsController = new OuterNewsController();
-
-            window.nexusApp.addUser(LOCAL_USER);
-            BOTS.forEach(bot => window.nexusApp.addUser({ id: bot.id, username: bot.name, color: bot.color }));
-            userCountEl.textContent = `${state.users.size} Entities Linked`;
-            
-            // Start bot simulation
-            startSimulations();
-        }
 
         // ==================== STATE MANAGEMENT ====================
         class NexusState {
@@ -1808,91 +1520,81 @@
             }
         }
 
-        // ==================== STANDARD VIEW CONTROLLER ====================
-        class StandardViewController {
-            constructor() {
-                this.userListEl = document.getElementById('standardUserList');
-                this.messagesEl = document.getElementById('standardChatMessages');
-                this.countEl = document.getElementById('standardUserCount');
-                
-                state.subscribe((event, data) => {
-                    if (event === 'userAdded') this.renderUser(data);
-                    if (event === 'messageAdded') this.renderMessage(data);
-                });
+        // ==================== NEWS UTILITY ====================
+        async function fetchNewsArticles(category = '') {
+            const url = '/api/news' + (category ? `?category=${encodeURIComponent(category)}` : '');
+            const res = await fetch(url);
+            const data = await res.json();
+            if (!res.ok || data.status !== 'ok') throw new Error(data.message || data.error || 'Feed unavailable');
+            return (data.articles || []).filter(a => a.title && a.title !== '[Removed]');
+        }
 
-                this.setupInput();
-            }
-
-            setupInput() {
-                const form = document.getElementById('standardChatForm');
-                const input = document.getElementById('standardChatInput');
-                
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const text = input.value.trim();
-                    if (!text) return;
-
-                    const msg = {
-                        id: Date.now(),
-                        username: 'You',
-                        text: text,
-                        type: 'local',
-                        color: '#00ff88',
-                        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                    };
-                    
-                    state.addMessage(msg);
-                    input.value = '';
-                    
-                    if (window.nexusApp) {
-                        window.nexusApp.triggerChat('local_user', text);
-                    }
-                });
-            }
-
-            renderUser(user) {
-                const el = document.createElement('div');
-                el.className = `user-item ${user.id === 'local_user' ? 'active' : ''}`;
-                el.id = `user-${user.id}`;
-                el.innerHTML = `
-                    <div class="user-avatar" style="color: ${user.color}; border-color: ${user.color}">
-                        ${user.username[0]}
-                        ${user.id !== 'local_user' ? '<div class="user-status"></div>' : ''}
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name" style="color: ${user.color}">${user.username}</div>
-                        <div class="user-role">${user.id === 'local_user' ? 'Operator' : 'Entity'}</div>
-                    </div>
-                `;
-                this.userListEl.appendChild(el);
-                this.countEl.textContent = `${state.users.size} Linked`;
-            }
-
-            renderMessage(msg) {
-                if (msg.type === 'system') {
-                    const div = document.createElement('div');
-                    div.className = 'message system';
-                    div.style.cssText = 'opacity: 1; transform: none; text-align: center; padding: 20px; color: #556677;';
-                    div.textContent = msg.text;
-                    this.messagesEl.appendChild(div);
-                } else {
-                    const item = document.createElement('div');
-                    item.className = 'news-item';
-                    item.innerHTML = `
-                        <div class="news-avatar" style="color: ${msg.color}; background: ${msg.color}20; border: 1px solid ${msg.color}40;">
-                            ${msg.username[0]}
-                        </div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-author" style="color: ${msg.color}">${msg.username}</span>
-                                <span class="news-time">${msg.time || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                            </div>
-                            <div class="news-text">${msg.text}</div>
-                        </div>
-                    `;
-                    this.messagesEl.appendChild(item);
+        function buildNewsCard(article, category) {
+            const card = document.createElement('div');
+            card.className = 'outer-card';
+            const source = article.source?.name || 'Unknown Source';
+            const time = article.publishedAt
+                ? new Date(article.publishedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                : '';
+            const cat = category || 'top stories';
+            card.innerHTML = `
+                ${article.urlToImage
+                    ? `<img class="card-image" src="${article.urlToImage}" alt="" loading="lazy" onerror="this.style.display='none'">`
+                    : `<div class="card-image-placeholder">◈</div>`
                 }
-                this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+                <div class="card-body">
+                    <div class="card-meta">
+                        <div class="card-source">${source}</div>
+                        <div class="card-timestamp">${time}</div>
+                    </div>
+                    <div class="card-headline">${article.title}</div>
+                    ${article.description ? `<div class="card-excerpt">${article.description}</div>` : ''}
+                    <div class="card-footer">
+                        <span class="card-category">${cat}</span>
+                        ${article.url ? `<a class="card-read-link" href="${article.url}" target="_blank" rel="noopener">Read →</a>` : ''}
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        // ==================== STANDARD NEWS CONTROLLER ====================
+        class StandardNewsController {
+            constructor() {
+                this.feedEl = document.getElementById('standardFeed');
+                this.titleEl = document.getElementById('standardNewsTitle');
+                this.navItems = document.querySelectorAll('#standard-view .nav-item');
+                this.currentCategory = '';
+                this.setupNavigation();
+                this.fetchAndRender('');
+            }
+
+            setupNavigation() {
+                this.navItems.forEach(item => {
+                    item.addEventListener('click', () => {
+                        this.navItems.forEach(n => n.classList.remove('active'));
+                        item.classList.add('active');
+                        this.currentCategory = item.dataset.category || '';
+                        const label = item.textContent.replace('LIVE', '').trim();
+                        if (this.titleEl) this.titleEl.textContent = label.toUpperCase();
+                        this.fetchAndRender(this.currentCategory);
+                    });
+                });
+            }
+
+            async fetchAndRender(category) {
+                this.feedEl.innerHTML = '<div class="outer-feed-loading">Fetching live feed...</div>';
+                try {
+                    const articles = await fetchNewsArticles(category);
+                    this.feedEl.innerHTML = '';
+                    if (articles.length === 0) {
+                        this.feedEl.innerHTML = '<div class="outer-feed-error"><strong>No articles found</strong>Try a different category.</div>';
+                        return;
+                    }
+                    articles.forEach(a => this.feedEl.appendChild(buildNewsCard(a, category || 'top stories')));
+                } catch (err) {
+                    this.feedEl.innerHTML = `<div class="outer-feed-error"><strong>Feed Unavailable</strong>${err.message}</div>`;
+                }
             }
         }
 
@@ -1903,7 +1605,7 @@
                 this.navItems = document.querySelectorAll('#outer-news-view .nav-item');
                 this.currentCategory = '';
                 this.setupNavigation();
-                this.fetchNews('');
+                this.fetchAndRender('');
             }
 
             setupNavigation() {
@@ -1911,139 +1613,108 @@
                     item.addEventListener('click', () => {
                         this.navItems.forEach(n => n.classList.remove('active'));
                         item.classList.add('active');
-                        this.currentCategory = item.dataset.category;
-                        this.fetchNews(this.currentCategory);
+                        this.currentCategory = item.dataset.category || '';
+                        this.fetchAndRender(this.currentCategory);
                     });
                 });
             }
 
-            async fetchNews(category) {
+            async fetchAndRender(category) {
                 this.feedEl.innerHTML = '<div class="outer-feed-loading">Fetching live feed...</div>';
                 try {
-                    const url = '/api/news' + (category ? `?category=${category}` : '');
-                    const res = await fetch(url);
-                    const data = await res.json();
-
-                    if (!res.ok || data.status !== 'ok') {
-                        throw new Error(data.message || data.error || 'Feed unavailable');
-                    }
-
+                    const articles = await fetchNewsArticles(category);
                     this.feedEl.innerHTML = '';
-                    const articles = (data.articles || []).filter(a => a.title && a.title !== '[Removed]');
                     if (articles.length === 0) {
                         this.feedEl.innerHTML = '<div class="outer-feed-error"><strong>No articles found</strong>Try a different category.</div>';
                         return;
                     }
-                    articles.forEach(article => this.renderCard(article, category));
+                    articles.forEach(a => this.feedEl.appendChild(buildNewsCard(a, category || 'top stories')));
                 } catch (err) {
                     this.feedEl.innerHTML = `<div class="outer-feed-error"><strong>Feed Unavailable</strong>${err.message}</div>`;
                 }
             }
-
-            renderCard(article, category) {
-                const card = document.createElement('div');
-                card.className = 'outer-card';
-
-                const source = article.source?.name || 'Unknown Source';
-                const time = article.publishedAt
-                    ? new Date(article.publishedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                    : '';
-                const desc = article.description || '';
-                const cat = category || 'top stories';
-
-                card.innerHTML = `
-                    ${article.urlToImage
-                        ? `<img class="card-image" src="${article.urlToImage}" alt="" loading="lazy" onerror="this.style.display='none'">`
-                        : `<div class="card-image-placeholder">◈</div>`
-                    }
-                    <div class="card-body">
-                        <div class="card-meta">
-                            <div class="card-source">${source}</div>
-                            <div class="card-timestamp">${time}</div>
-                        </div>
-                        <div class="card-headline">${article.title}</div>
-                        ${desc ? `<div class="card-excerpt">${desc}</div>` : ''}
-                        <div class="card-footer">
-                            <span class="card-category">${cat}</span>
-                            ${article.url ? `<a class="card-read-link" href="${article.url}" target="_blank" rel="noopener">Read →</a>` : ''}
-                        </div>
-                    </div>
-                `;
-
-                this.feedEl.appendChild(card);
-            }
         }
 
-        // ==================== SHARED CHAT PANEL (3D Mode) ====================
-        const chatMessages = document.getElementById('chatMessages');
-        const chatForm = document.getElementById('chatForm');
-        const chatInput = document.getElementById('chatInput');
-        const userCountEl = document.getElementById('userCount');
-
-        function appendChatMessage(username, text, type, colorHex) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${type}`;
-            if (type !== 'system') {
-                msgDiv.innerHTML = `<div class="msg-author" style="color:${colorHex}; text-shadow: 0 0 10px ${colorHex}">${username}</div>${text}`;
-            } else {
-                msgDiv.textContent = text;
+        // ==================== NEXUS NEWS PANEL (3D mode side panel) ====================
+        class NexusNewsPanel {
+            constructor() {
+                this.messagesEl = document.getElementById('chatMessages');
+                this.countEl = document.getElementById('userCount');
+                this.headlines = [];
+                this.init();
             }
-            chatMessages.appendChild(msgDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            state.addMessage({
-                username, text, type, color: colorHex,
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            });
-        }
 
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const text = chatInput.value.trim();
-            if (!text) return;
-
-            appendChatMessage('You', text, 'local', '#00ff88');
-            chatInput.value = '';
-
-            if (window.nexusApp) {
-                window.nexusApp.triggerChat('local_user', text);
-            }
-        });
-
-        // Setup Users
-        const BOTS = [
-            { id: 'b4', name: 'Vortex', color: '#ff00ff' },
-            { id: 'b5', name: 'Echo', color: '#01ddc6' }
-        ];
-        // ==================== BOT SIMULATION ====================
-        function startSimulations() {
-            const botPhrases = [
-                "Data stream looks clear on this node.",
-                "Syncing telemetry...",
-                "Has anyone mapped the outer bounds yet?",
-                "Packet loss detected. Rerouting.",
-                "This volume is incredibly calm today.",
-                "Drifting toward sector 7.",
-                "Aesthetic parameters accepted.",
-                "Connection stable."
-            ];
-
-            setInterval(() => {
-                if (Math.random() > 0.5) {
-                    const bot = BOTS[Math.floor(Math.random() * BOTS.length)];
-                    const phrase = botPhrases[Math.floor(Math.random() * botPhrases.length)];
-                    
-                    appendChatMessage(bot.name, phrase, 'other', bot.color);
-                    if (window.nexusApp) {
-                        window.nexusApp.triggerChat(bot.id, phrase);
-                    }
+            async init() {
+                try {
+                    const articles = await fetchNewsArticles('');
+                    this.headlines = articles;
+                    this.countEl.textContent = `${articles.length} Articles`;
+                    this.messagesEl.innerHTML = '';
+                    articles.slice(0, 15).forEach(a => this.renderArticle(a));
+                } catch (err) {
+                    this.countEl.textContent = 'Feed Error';
+                    this.messagesEl.innerHTML = `<div class="message system" style="opacity:1;transform:none;">Feed unavailable: ${err.message}</div>`;
                 }
-            }, 3500);
+            }
+
+            renderArticle(article) {
+                const source = article.source?.name || 'Unknown';
+                const time = article.publishedAt
+                    ? new Date(article.publishedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                    : '';
+                const div = document.createElement('div');
+                div.className = 'message other';
+                div.style.cssText = 'opacity:1; transform:none; cursor:pointer;';
+                div.innerHTML = `
+                    <div class="msg-author" style="color:var(--primary)">${source}</div>
+                    <div style="font-size:13px;line-height:1.5;margin-bottom:6px;">${article.title}</div>
+                    <div style="font-size:10px;color:#556677;font-family:monospace;">${time}</div>
+                    ${article.url ? `<a href="${article.url}" target="_blank" rel="noopener" style="font-size:10px;color:var(--alert);text-decoration:none;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Read →</a>` : ''}
+                `;
+                this.messagesEl.appendChild(div);
+                this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+            }
+
+            getRandomHeadline() {
+                if (this.headlines.length === 0) return null;
+                return this.headlines[Math.floor(Math.random() * this.headlines.length)];
+            }
         }
 
-        setTimeout(() => {
-            appendChatMessage('System', 'Connection established. Welcome to the Nexus.', 'system');
-        }, 1800);
+        // ==================== INITIALIZATION ====================
+        window.nexusApp = new ParticleChatNexus();
+        const standardNewsController = new StandardNewsController();
+        const outerNewsController = new OuterNewsController();
+        const nexusNewsPanel = new NexusNewsPanel();
+
+        // Broadcast nodes (replace bots) — float in 3D space and display news headlines
+        const BROADCAST_NODES = [
+            { id: 'n1', username: 'TECH', color: '#00e5ff' },
+            { id: 'n2', username: 'WORLD', color: '#ff2a6d' },
+            { id: 'n3', username: 'SCIENCE', color: '#ffd700' },
+            { id: 'n4', username: 'BUSINESS', color: '#ff00ff' },
+            { id: 'n5', username: 'HEALTH', color: '#01ddc6' }
+        ];
+
+        const LOCAL_USER = { id: 'local_user', username: 'Observer', color: '#00ff88' };
+        window.nexusApp.addUser(LOCAL_USER);
+        BROADCAST_NODES.forEach(node => window.nexusApp.addUser(node));
+
+        document.getElementById('userCount').textContent = `${nexusNewsPanel.headlines.length || '...'} Articles`;
+
+        // ==================== NEWS HEADLINE TICKER (3D nodes broadcast real headlines) ====================
+        setInterval(() => {
+            if (state.currentMode !== 'nexus') return;
+            const article = nexusNewsPanel.getRandomHeadline();
+            if (!article) return;
+            const node = BROADCAST_NODES[Math.floor(Math.random() * BROADCAST_NODES.length)];
+            const headline = article.title.length > 90
+                ? article.title.substring(0, 90) + '...'
+                : article.title;
+            if (window.nexusApp) {
+                window.nexusApp.triggerChat(node.id, headline);
+            }
+        }, 4500);
 
         // ==================== VIEW NAVIGATION ====================
         const viewToggle = document.getElementById('viewToggle');
@@ -2109,49 +1780,6 @@
         viewToggle.addEventListener('click', showStandard);
         outerNewsBtn.addEventListener('click', showOuterNews);
         backFromOuter.addEventListener('click', showStandard);
-
-        // Start Auth
-        new AuthManager();
-
-        // ==================== CYBERPUNK BOOT SEQUENCE ====================
-        (function initBootSequence() {
-            const bootLines = [
-                "INIT KERNEL... OK",
-                "MOUNTING NEURAL DRIVES... OK",
-                "CHECKING FIREWALL STATUS... WARNING: BREACH DETECTED",
-                "REROUTING MAINFRAME POWER...",
-                "DECRYPTING PROTOCOLS: [████████░░]",
-                "DECRYPTING PROTOCOLS: [██████████] DONE",
-                "ESTABLISHING SECURE HANDSHAKE...",
-                "ALLOCATING MEMORY BLOCKS...",
-                "SYSTEM READY."
-            ];
-
-            const bootSeq   = document.getElementById('authBootSeq');
-            const morph     = document.getElementById('authMorph');
-            const card      = document.getElementById('authCard');
-
-            // Only run if the overlay is visible (not already authed)
-            if (!bootSeq || !morph || !card) return;
-
-            bootLines.forEach((line, i) => {
-                setTimeout(() => {
-                    const p = document.createElement('div');
-                    p.className = 'auth-boot-line';
-                    p.textContent = '> ' + line;
-                    bootSeq.appendChild(p);
-                }, i * 200);
-            });
-
-            setTimeout(() => { bootSeq.classList.add('auth-boot-glitch'); }, 2200);
-            setTimeout(() => {
-                bootSeq.style.opacity = '0';
-                morph.className = 'auth-morph state-dot';
-            }, 2600);
-            setTimeout(() => { morph.className = 'auth-morph state-line'; }, 3000);
-            setTimeout(() => { morph.className = 'auth-morph state-box'; }, 3600);
-            setTimeout(() => { card.classList.add('content-visible'); }, 4200);
-        })();
     </script>
 </body>
 </html>
