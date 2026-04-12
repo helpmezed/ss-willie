@@ -3,338 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ether Nexus | 3D Immersive</title>
-    <link rel="stylesheet" href="shared.css">
+    <title>Ether Nexus</title>
     <style>
-        /* ==================== GLOBAL MOTION SYSTEM ==================== */
-        :root {
-            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-            --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
-            --ease-smooth:   cubic-bezier(0.4, 0, 0.2, 1);
-            --motion-fast:   0.18s;
-            --motion-med:    0.35s;
-            --motion-slow:   0.6s;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100%; height: 100%;
+            background: #000;
+            overflow: hidden;
         }
 
-        /* Nav override: shift left to clear the chat panel */
-        .nav-buttons { right: calc(var(--chat-width) + 40px); }
-
-        @media (max-width: 1024px) {
-            .nav-buttons { right: 20px; top: 20px; flex-direction: column; }
-        }
-
-        /* ==================== NEXUS VIEW ==================== */
         #canvas-container {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            z-index: 1;
-        }
-
-        #speech-layer {
+            width: 100%; height: 100%;
             position: absolute;
             top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 15;
-            overflow: hidden;
-        }
-
-        .speech-bubble {
-            position: absolute;
-            background: rgba(15, 20, 30, 0.9);
-            color: #f8fafc;
-            padding: 16px 24px;
-            border-radius: 24px;
-            font-weight: 500;
-            font-size: 15px;
-            letter-spacing: 0.3px;
-            pointer-events: none;
-            transform: translate(-50%, calc(-100% - 60px)) scale(0.6);
-            filter: blur(10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.2), 0 0 40px rgba(0, 229, 255, 0.15);
-            border: 1px solid var(--border-glass);
-            backdrop-filter: blur(16px) saturate(180%);
-            opacity: 0;
-            transition: opacity var(--motion-med) var(--ease-out-expo),
-                        transform var(--motion-med) var(--ease-spring),
-                        filter var(--motion-med) var(--ease-out-expo);
-            max-width: 300px;
-            text-align: center;
-            word-wrap: break-word;
-            line-height: 1.4;
-            z-index: 100;
-            animation: bubblePulse 3s infinite ease-in-out;
-        }
-
-        .speech-bubble.visible {
-            opacity: 1;
-            transform: translate(-50%, calc(-100% - 30px)) scale(1);
-            filter: blur(0);
-        }
-
-        @keyframes bubblePulse {
-            0%, 100% { box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(0,229,255,0.2); }
-            50%       { box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 40px rgba(0,229,255,0.4); }
-        }
-
-        .speech-username {
-            display: block;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 8px;
-            font-weight: 800;
-            text-shadow: 0 0 10px currentColor;
-        }
-
-        /* ==================== AMBIENT UI ==================== */
-        #ambient-ui {
-            position: absolute;
-            top: 40px;
-            left: 40px;
-            pointer-events: none;
-            z-index: 10;
-            transition: opacity 0.3s;
-        }
-
-        .nexus-title {
-            font-size: 28px;
-            font-weight: 200;
-            letter-spacing: 6px;
-            color: #fff;
-            text-transform: uppercase;
-            text-shadow: 0 0 30px rgba(0, 229, 255, 0.6);
-        }
-
-        .nexus-subtitle {
-            font-size: 11px;
-            color: var(--primary);
-            letter-spacing: 3px;
-            margin-top: 6px;
-            font-weight: 600;
-            opacity: 0.8;
-        }
-
-        /* ==================== CHAT PANEL (3D Mode) ==================== */
-        #chat-panel {
-            position: absolute;
-            right: 0; top: 0;
-            width: var(--chat-width);
-            height: 100vh;
-            background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.6));
-            border-left: 1px solid var(--border-glass);
-            display: flex;
-            flex-direction: column;
-            box-shadow: -20px 0 60px rgba(0, 0, 0, 0.8);
-            z-index: 20;
-            backdrop-filter: blur(30px) saturate(180%);
-        }
-
-        #chat-panel::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: url('https://grainy-gradients.vercel.app/noise.svg');
-            opacity: 0.05;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        #chat-panel > * { position: relative; z-index: 1; }
-
-        .chat-header {
-            padding: 28px 32px;
-            border-bottom: 1px solid var(--border-glass);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
-        }
-
-        .header-title {
-            font-weight: 600;
-            font-size: 15px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-
-        .user-count {
-            background: rgba(0, 229, 255, 0.1);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--primary);
-            border: 1px solid rgba(0, 229, 255, 0.3);
-            box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
-        }
-
-        .chat-messages {
-            flex: 1;
-            padding: 32px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            scroll-behavior: smooth;
-        }
-
-        .chat-messages::-webkit-scrollbar { width: 6px; }
-        .chat-messages::-webkit-scrollbar-track { background: transparent; }
-        .chat-messages::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
-
-        .message {
-            padding: 16px 20px;
-            border-radius: 18px;
-            font-size: 14px;
-            line-height: 1.6;
-            max-width: 90%;
-            position: relative;
-            animation: messagePop var(--motion-slow) var(--ease-spring) forwards;
-            opacity: 0;
-            transform: translateY(30px) scale(0.9);
-            transition: transform var(--motion-fast) var(--ease-out-expo),
-                        box-shadow var(--motion-fast);
-            transform-origin: bottom;
-        }
-
-        .message:not(.system):hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-        }
-
-        @keyframes messagePop {
-            0%   { opacity: 0; transform: translateY(30px) scale(0.9); filter: blur(6px); }
-            60%  { opacity: 1; transform: translateY(-4px) scale(1.02); }
-            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-        }
-
-        .message.system {
-            background: transparent;
-            color: #8899aa;
-            align-self: center;
-            font-size: 12px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-        }
-
-        .message.other {
-            background: rgba(255, 255, 255, 0.04);
-            color: #e2e8f0;
-            align-self: flex-start;
-            border-bottom-left-radius: 6px;
-            border: 1px solid var(--border-glass);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .message.local {
-            background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(179, 0, 255, 0.15));
-            color: #fff;
-            align-self: flex-end;
-            border-bottom-right-radius: 6px;
-            border: 1px solid rgba(0, 229, 255, 0.3);
-            box-shadow: 0 8px 25px rgba(0, 229, 255, 0.1);
-        }
-
-        .msg-author {
-            font-size: 10px;
-            margin-bottom: 8px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            opacity: 0.9;
-        }
-
-        .chat-input-area {
-            padding: 32px;
-            background: rgba(0, 0, 0, 0.4);
-            border-top: 1px solid var(--border-glass);
-        }
-
-        .chat-input-wrapper {
-            display: flex;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            overflow: hidden;
-            transition: all var(--motion-med) var(--ease-out-expo);
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        .chat-input-wrapper:focus-within {
-            border-color: var(--primary);
-            background: rgba(255,255,255,0.08);
-            box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.15), inset 0 2px 10px rgba(0,0,0,0.2);
-            transform: translateY(-4px) scale(1.02);
-        }
-
-        .chat-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: 18px 24px;
-            color: #fff;
-            outline: none;
-            font-family: inherit;
-            font-size: 15px;
-        }
-
-        .chat-input::placeholder { color: #64748b; font-weight: 400; }
-
-        .chat-submit {
-            background: transparent;
-            border: none;
-            color: var(--primary);
-            padding: 0 24px;
-            cursor: pointer;
-            font-weight: 800;
-            letter-spacing: 1.5px;
-            transition: all 0.2s;
-            font-size: 13px;
-        }
-
-        .chat-submit:hover {
-            color: #fff;
-            transform: scale(1.05);
-            text-shadow: 0 0 10px var(--primary);
-        }
-
-        .chat-submit:active {
-            transform: scale(0.92);
-        }
-
-        /* ==================== GLITCH TEXT ==================== */
-        .glitch-text { position: relative; }
-        .glitch-text::before,
-        .glitch-text::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-        }
-        .glitch-text::before {
-            color: var(--primary);
-            animation: glitch-a 4s infinite;
-            clip-path: polygon(0 25%, 100% 25%, 100% 45%, 0 45%);
-        }
-        .glitch-text::after {
-            color: var(--alert);
-            animation: glitch-b 4s infinite;
-            clip-path: polygon(0 65%, 100% 65%, 100% 80%, 0 80%);
-        }
-        @keyframes glitch-a {
-            0%, 80%, 100% { transform: translate(0); opacity: 0; }
-            82% { transform: translate(-3px, 1px); opacity: 0.7; }
-            84% { transform: translate(3px, -1px); opacity: 0.5; }
-            86% { transform: translate(0); opacity: 0; }
-        }
-        @keyframes glitch-b {
-            0%, 83%, 100% { transform: translate(0); opacity: 0; }
-            84% { transform: translate(4px, 1px); opacity: 0.6; }
-            86% { transform: translate(-2px, 0); opacity: 0.3; }
-            88% { transform: translate(0); opacity: 0; }
         }
 
         .nexus-grid-horizon {
@@ -344,78 +26,12 @@
             pointer-events: none;
             z-index: 2;
         }
-
-        @media (max-width: 1024px) {
-            #chat-panel { width: 100%; }
-        }
     </style>
 </head>
 <body>
 
-    <!-- Navigation -->
-    <div class="nav-buttons">
-        <a class="nav-btn" href="standard.html">Standard View</a>
-    </div>
-
-    <!-- Ambient UI -->
-    <div id="ambient-ui">
-        <div class="nexus-title glitch-text" data-text="Ether Nexus">Ether Nexus</div>
-        <div class="nexus-subtitle" id="mode-indicator">IMMERSIVE INSTANCE</div>
-    </div>
-
-    <!-- Toast notifications -->
-    <div id="nexus-toasts"></div>
-
-    <!-- 3D NEXUS VIEW -->
-    <div id="nexus-view" style="position:absolute;top:0;left:0;width:100%;height:100vh;">
-        <div id="canvas-container"></div>
-        <div id="speech-layer"></div>
-        <div class="nexus-grid-horizon"></div>
-    </div>
-
-    <!-- SHARED CHAT PANEL -->
-    <div id="chat-panel">
-        <div class="chat-header">
-            <span class="header-title">Global Stream</span>
-            <span class="user-count" id="userCount">0 Linked</span>
-        </div>
-        <div class="chat-messages" id="chatMessages">
-            <div class="message system">Initiating quantum handshake...</div>
-        </div>
-        <div class="chat-input-area">
-            <form id="chatForm" class="chat-input-wrapper">
-                <input type="text" id="chatInput" class="chat-input" placeholder="Transmit sequence..." autocomplete="off">
-                <button type="submit" class="chat-submit">SEND</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- AUTHENTICATION OVERLAY -->
-    <div id="authOverlay" class="auth-overlay">
-        <div class="auth-vignette"></div>
-        <div class="auth-crt"></div>
-        <div class="auth-boot-seq" id="authBootSeq"></div>
-        <div class="auth-morph state-hidden" id="authMorph">
-            <div class="auth-card" id="authCard">
-                <h2 id="authTitle">NCPD_NET</h2>
-                <div class="auth-subtitle">SECURE AUTHENTICATION PROTOCOL v9.4</div>
-                <form id="authForm" class="auth-form">
-                    <div class="auth-input-group">
-                        <label class="auth-input-label">Operator ID</label>
-                        <input type="text" id="authUsername" class="auth-input" placeholder="Enter designation..." autocomplete="username" required>
-                    </div>
-                    <div class="auth-input-group">
-                        <label class="auth-input-label">Neural Passkey</label>
-                        <input type="password" id="authPassword" class="auth-input" placeholder="••••••••" autocomplete="current-password" required>
-                    </div>
-                    <button type="submit" id="authSubmit" class="auth-submit">Link</button>
-                </form>
-                <div id="authError" style="color:var(--cp-red);font-family:var(--font-mono-cp);font-size:12px;text-align:center;margin-top:16px;"></div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://js.pusher.com/8.2/pusher.min.js"></script>
+    <div id="canvas-container"></div>
+    <div class="nexus-grid-horizon"></div>
 
     <script type="importmap">
         {
@@ -429,167 +45,33 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // ==================== AUTHENTICATION MANAGER ====================
-        class AuthManager {
-            constructor() {
-                this.overlay = document.getElementById('authOverlay');
-                this.form = document.getElementById('authForm');
-                this.error = document.getElementById('authError');
-                this.init();
-            }
-
-            init() {
-                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
-                const saved = localStorage.getItem('nexus_user');
-                if (saved) {
-                    try { this.finishAuth(JSON.parse(saved)); return; }
-                    catch (e) { localStorage.removeItem('nexus_user'); }
-                }
-            }
-
-            handleSubmit(e) {
-                e.preventDefault();
-                this.error.textContent = '';
-                const username = document.getElementById('authUsername').value.trim();
-                const password = document.getElementById('authPassword').value;
-                if (!username) { this.error.textContent = 'Operator ID required'; return; }
-                if (password.length < 4) { this.error.textContent = 'Passkey too short'; return; }
-                const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
-                const user = { id: 'u_' + Date.now(), username, color };
-                localStorage.setItem('nexus_user', JSON.stringify(user));
-                this.finishAuth(user);
-            }
-
-            finishAuth(user) {
-                this.overlay.classList.add('hidden');
-                initApp(user);
-            }
-        }
-
-        let appInitialized = false;
-        function initApp(userData) {
-            if (appInitialized) return;
-            appInitialized = true;
-
-            const LOCAL_USER = { id: userData.id, username: userData.username, color: userData.color };
-            state.localUserId = userData.id;
-
-            window.toastManager = new ToastManager();
-            window.nexusApp = new ParticleChatNexus();
-
-            window.nexusApp.addUser(LOCAL_USER);
-
-            const BOTS = [
-                { id: 'b1', username: 'Nova',   color: '#ff2a6d' },
-                { id: 'b2', username: 'Cipher', color: '#05d9e8' },
-                { id: 'b3', username: 'Aura',   color: '#ffd700' },
-                { id: 'b4', username: 'Vortex', color: '#ff00ff' },
-                { id: 'b5', username: 'Echo',   color: '#01ddc6' }
-            ];
-            BOTS.forEach(bot => window.nexusApp.addUser(bot));
-
-            const botPhrases = [
-                "Data stream looks clear on this node.",
-                "Syncing telemetry...",
-                "Has anyone mapped the outer bounds yet?",
-                "Packet loss detected. Rerouting.",
-                "This volume is incredibly calm today.",
-                "Drifting toward sector 7.",
-                "Aesthetic parameters accepted.",
-                "Connection stable."
-            ];
-
-            userCountEl.textContent = `${state.users.size} Entities Linked`;
-
-            window.pusherManager = new PusherManager(LOCAL_USER);
-
-            window.toastManager.show(`Welcome, ${LOCAL_USER.username}`, 'success');
-
-            setInterval(() => {
-                if (Math.random() > 0.5) {
-                    const bot = BOTS[Math.floor(Math.random() * BOTS.length)];
-                    const phrase = botPhrases[Math.floor(Math.random() * botPhrases.length)];
-                    appendChatMessage(bot.username, phrase, 'other', bot.color);
-                    window.nexusApp?.triggerChat(bot.id, phrase);
-                }
-            }, 3500);
-        }
-
         // ==================== STATE ====================
         class NexusState {
-            constructor() {
-                this.users = new Map();
-                this.messages = [];
-                this.listeners = [];
-                this.localUserId = null;
-            }
-            addUser(user) { this.users.set(user.id, user); this.notify('userAdded', user); }
-            addMessage(msg) { this.messages.push(msg); this.notify('messageAdded', msg); }
-            subscribe(cb) { this.listeners.push(cb); }
-            notify(event, data) { this.listeners.forEach(cb => cb(event, data)); }
-            removeUser(userId) {
-                const user = this.users.get(userId);
-                this.users.delete(userId);
-                this.notify('userRemoved', { id: userId, user });
-            }
-            connectionChanged(status) { this.notify('connectionChanged', status); }
+            constructor() { this.users = new Map(); }
+            addUser(user) { this.users.set(user.id, user); }
         }
-
         const state = new NexusState();
-
-        // ==================== PARTICLE SHADERS ====================
-        const PARTICLE_VERT = `
-            uniform float time;
-            uniform float baseSize;
-            attribute float aPhase;
-            void main() {
-                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                float pulse = 1.0 + 0.35 * sin(time * 2.5 + aPhase);
-                gl_PointSize = baseSize * pulse * (300.0 / -mvPosition.z);
-                gl_Position = projectionMatrix * mvPosition;
-            }
-        `;
-
-        const PARTICLE_FRAG = `
-            uniform vec3 color;
-            uniform float opacity;
-            void main() {
-                vec2 uv = gl_PointCoord - vec2(0.5);
-                float dist = length(uv);
-                if (dist > 0.5) discard;
-                float glow = pow(1.0 - smoothstep(0.0, 0.5, dist), 2.2);
-                float core = 1.0 - smoothstep(0.0, 0.12, dist);
-                float alpha = (glow * 0.9 + core * 0.3) * opacity;
-                vec3 finalColor = color + vec3(core * 0.5);
-                gl_FragColor = vec4(finalColor, alpha);
-            }
-        `;
 
         // ==================== 3D NEXUS CONTROLLER ====================
         class ParticleChatNexus {
             constructor() {
                 this.container = document.getElementById('canvas-container');
-                this.speechLayer = document.getElementById('speech-layer');
                 this.isActive = true;
 
                 this.scene = new THREE.Scene();
-                this.scene.background = null;
+                this.scene.background = new THREE.Color(0x000000);
                 this.scene.fog = null;
 
                 this.camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 300);
                 this.camera.position.set(0, 0, 26);
 
-                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
                 this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
                 this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 this.container.appendChild(this.renderer.domElement);
 
-                // Controls disabled — fish-tank: fixed camera, no user interaction
                 this.lookTarget = new THREE.Vector3();
-
                 this.clock = new THREE.Clock();
-                this.activeBubbles = new Map();
-                this.currentSpeakerId = null;
                 this.particleTexture = this.createParticleTexture();
                 this.volumeRadius = 18;
                 this.mouse = { x: 0, y: 0 };
@@ -599,6 +81,7 @@
 
             async init() {
                 this.createEnvironment();
+
                 window.addEventListener('resize', () => {
                     if (!this.isActive) return;
                     this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
@@ -758,69 +241,15 @@
                     ...userData,
                     mesh: userGroup,
                     particleSystems,
-                    baseParticleSize: 0.45,
-                    radius: 3.5 + Math.random() * 0.5, // collision radius
+                    radius: 3.5 + Math.random() * 0.5,
                     mass: 1 + Math.random() * 0.5,
-                    chatReact: null,
                     velocity: new THREE.Vector3((Math.random()-0.5)*3, (Math.random()-0.5)*3, (Math.random()-0.5)*2),
-                    presentExpires: 0,
                     flyTimer: Math.random() * 1.2,
                     flyTarget: new THREE.Vector3((Math.random()-0.5)*28, (Math.random()-0.5)*16, (Math.random()-0.5)*10),
                     isHovering: false,
                     phase: Math.random() * Math.PI * 2
                 };
                 state.addUser(user);
-            }
-
-            removeUser(userId) {
-                const user = Array.from(state.users.values()).find(u => u.id === userId);
-                if (user?.mesh) this.scene.remove(user.mesh);
-            }
-
-            triggerChat(userId, message) {
-                const user = Array.from(state.users.values()).find(u => u.id === userId);
-                if (!user) return;
-
-                if (this.currentSpeakerId && this.currentSpeakerId !== userId) {
-                    const oldSpeaker = Array.from(state.users.values()).find(u => u.id === this.currentSpeakerId);
-                    if (oldSpeaker && oldSpeaker.presentExpires > Date.now()) {
-                        oldSpeaker.presentExpires = 0;
-                        const bounceDir = new THREE.Vector3(
-                            (Math.random() > 0.5 ? 1 : -1) * (0.4 + Math.random() * 0.3),
-                            0.2 + Math.random() * 0.3,
-                            -(0.2 + Math.random() * 0.3)
-                        );
-                        oldSpeaker.velocity.copy(bounceDir);
-                        if (this.activeBubbles.has(this.currentSpeakerId)) {
-                            this.activeBubbles.get(this.currentSpeakerId).expires = 0;
-                        }
-                    }
-                }
-
-                this.currentSpeakerId = userId;
-                user.presentExpires = Date.now() + 6000;
-                user.chatReact = { startTime: Date.now(), duration: 1400 };
-                this.lastChatTime = Date.now();
-
-                // Flash character particles on chat
-                if (user.particleSystems) {
-                    user.particleSystems.forEach(p => { p.material.opacity = 1.0; });
-                    setTimeout(() => { if (user.particleSystems) user.particleSystems.forEach(p => { p.material.opacity = p.userData.baseOpacity; }); }, 300);
-                }
-
-                if (this.activeBubbles.has(userId)) {
-                    const oldBubble = this.activeBubbles.get(userId);
-                    oldBubble.element.classList.remove('visible');
-                    setTimeout(() => oldBubble.element.parentNode?.removeChild(oldBubble.element), 300);
-                }
-
-                const bubble = document.createElement('div');
-                bubble.className = 'speech-bubble';
-                bubble.innerHTML = `<span class="speech-username" style="color:${user.color}">${user.username}</span>${message}`;
-                this.speechLayer.appendChild(bubble);
-                requestAnimationFrame(() => bubble.classList.add('visible'));
-
-                this.activeBubbles.set(userId, { element: bubble, user, expires: Date.now() + 6000 });
             }
 
             animate() {
@@ -830,28 +259,20 @@
                 const deltaTime = Math.min(this.clock.getDelta(), 0.1);
                 const time = this.clock.elapsedTime;
                 const timeScale = deltaTime * 60;
-                const now = Date.now();
 
                 // Fish-tank glass parallax: mouse tilts the viewpoint slightly
                 this.lookTarget.x += (this.mouse.x * 4 - this.lookTarget.x) * 0.03;
                 this.lookTarget.y += (-this.mouse.y * 3 - this.lookTarget.y) * 0.03;
                 this.camera.lookAt(this.lookTarget);
 
-                // Slow idle bob — like watching from outside a tank
+                // Slow idle bob
                 this.camera.position.y += Math.sin(time * 0.25) * 0.0015;
                 this.camera.position.x += Math.cos(time * 0.18) * 0.0015;
 
-                const chatAge = now - (this.lastChatTime || 0);
-                const chatBoost = chatAge < 1400 ? Math.sin((chatAge / 1400) * Math.PI) : 0;
-                if (Math.random() < 0.002) {
-                    this.scene.fog.density = 0.018 + Math.random() * 0.006;
-                }
-
-                if (this.dust) this.dust.rotation.y = time * (0.015 + chatBoost * 0.06);
+                if (this.dust) this.dust.rotation.y = time * 0.015;
                 if (this.nexusCore) {
                     this.nexusCore.rotation.y -= deltaTime * 0.2;
                     this.nexusCore.rotation.x -= deltaTime * 0.1;
-                    // Glow flicker
                     this.nexusCore.material.opacity = 0.02 + Math.sin(time * 2) * 0.01;
                 }
                 if (this.stars) this.stars.rotation.y = time * 0.004;
@@ -863,32 +284,26 @@
                     for (let j = i + 1; j < usersArray.length; j++) {
                         const a = usersArray[i];
                         const b = usersArray[j];
-                        const posA = a.mesh.position;
-                        const posB = b.mesh.position;
-                        const diff = new THREE.Vector3().subVectors(posB, posA);
+                        const diff = new THREE.Vector3().subVectors(b.mesh.position, a.mesh.position);
                         const dist = diff.length();
                         const minDist = a.radius + b.radius;
 
                         if (dist < minDist && dist > 0.001) {
                             diff.normalize();
-                            const overlap = (minDist - dist);
+                            const overlap = minDist - dist;
                             const force = overlap * 0.02;
-                            const pushA = diff.clone().multiplyScalar(-force * (b.mass / (a.mass + b.mass)));
-                            const pushB = diff.clone().multiplyScalar(force * (a.mass / (a.mass + b.mass)));
-                            a.velocity.add(pushA);
-                            b.velocity.add(pushB);
+                            a.velocity.add(diff.clone().multiplyScalar(-force * (b.mass / (a.mass + b.mass))));
+                            b.velocity.add(diff.clone().multiplyScalar(force * (a.mass / (a.mass + b.mass))));
 
-                            const bounce = 0.15;
                             const relativeVel = new THREE.Vector3().subVectors(a.velocity, b.velocity);
                             const impact = relativeVel.dot(diff);
                             if (impact < 0) {
-                                const impulse = diff.clone().multiplyScalar(impact * bounce);
+                                const impulse = diff.clone().multiplyScalar(impact * 0.15);
                                 a.velocity.sub(impulse);
                                 b.velocity.add(impulse);
                             }
 
-                            // Collision reaction visual boost
-                                    if (a.particleSystems) a.particleSystems.forEach(p => { p.material.size = p.userData.baseSize * 1.4; });
+                            if (a.particleSystems) a.particleSystems.forEach(p => { p.material.size = p.userData.baseSize * 1.4; });
                             if (b.particleSystems) b.particleSystems.forEach(p => { p.material.size = p.userData.baseSize * 1.4; });
                             setTimeout(() => {
                                 if (a?.particleSystems) a.particleSystems.forEach(p => { p.material.size = p.userData.baseSize; });
@@ -899,11 +314,6 @@
                 }
 
                 state.users.forEach((user) => {
-                    // Vortex orbital animation — reference formula with chat-reactive expansion
-                    const chatBurst = user.chatReact
-                        ? Math.sin(((now - user.chatReact.startTime) / user.chatReact.duration) * Math.PI) : 0;
-                    const expansion = 1 + chatBurst * 0.2;
-
                     if (user.particleSystems) {
                         for (const pts of user.particleSystems) {
                             const positions = pts.geometry.attributes.position.array;
@@ -912,38 +322,18 @@
                                 const idx3 = i * 3, idx4 = i * 4;
                                 const bx = baseData[idx4], by = baseData[idx4+1], bz = baseData[idx4+2], phase = baseData[idx4+3];
                                 const dist = Math.sqrt(bx*bx + by*by + bz*bz);
-                                const spinSpeed = 0.15 + (1.0 / (dist + 1)) + (chatBurst * 0.05);
+                                const spinSpeed = 0.15 + (1.0 / (dist + 1));
                                 const angle = time * spinSpeed;
                                 const cosA = Math.cos(angle), sinA = Math.sin(angle);
-                                positions[idx3]   = (bx * cosA - bz * sinA) * expansion;
-                                positions[idx3+1] = (by * expansion) + Math.sin(time * 1.5 + phase) * 0.4;
-                                positions[idx3+2] = (bx * sinA + bz * cosA) * expansion;
+                                positions[idx3]   = bx * cosA - bz * sinA;
+                                positions[idx3+1] = by + Math.sin(time * 1.5 + phase) * 0.4;
+                                positions[idx3+2] = bx * sinA + bz * cosA;
                             }
                             pts.geometry.attributes.position.needsUpdate = true;
                         }
                     }
 
-                    if (user.chatReact) {
-                        const elapsed = now - user.chatReact.startTime;
-                        const progress = elapsed / user.chatReact.duration;
-                        if (progress >= 1) {
-                            user.chatReact = null;
-                            if (user.particleSystems) user.particleSystems.forEach(p => {
-                                p.material.opacity = p.userData.baseOpacity;
-                                p.material.size = p.userData.baseSize;
-                            });
-                        } else {
-                            const burst = Math.sin(progress * Math.PI) * (1 - progress * 0.4);
-                            if (user.particleSystems) user.particleSystems.forEach(p => {
-                                p.material.size = p.userData.baseSize * (1 + burst * 3.0);
-                                p.material.opacity = Math.min(1.0, p.userData.baseOpacity + burst * 0.4);
-                            });
-                        }
-                    }
-
-                    const chatReactBurst = user.chatReact
-                        ? Math.sin(((now - user.chatReact.startTime) / user.chatReact.duration) * Math.PI) * 0.5 : 0;
-                    const breathScale = (1 + Math.sin(time * 2 + user.phase) * 0.03) * (1 + chatReactBurst);
+                    const breathScale = 1 + Math.sin(time * 2 + user.phase) * 0.03;
                     user.mesh.scale.set(breathScale, breathScale, breathScale);
 
                     // --- FLY BEHAVIOR ---
@@ -963,10 +353,7 @@
                     }
 
                     let currentTarget, maxSpeed, maxForce;
-                    if (user.presentExpires && now < user.presentExpires) {
-                        currentTarget = new THREE.Vector3((Math.random()-0.5)*2, (Math.random()-0.5)*1.5, 5);
-                        maxSpeed = 3.5; maxForce = 0.5;
-                    } else if (user.isHovering) {
+                    if (user.isHovering) {
                         currentTarget = user.mesh.position.clone().add(
                             new THREE.Vector3((Math.random()-0.5)*0.2, (Math.random()-0.5)*0.2, (Math.random()-0.5)*0.2)
                         );
@@ -976,7 +363,7 @@
                         maxSpeed = 2.8 + Math.random() * 1.4; maxForce = 0.4;
                     }
 
-                    // Soft room boundaries
+                    // Soft z boundaries
                     if (user.mesh.position.z > 6)  user.velocity.z -= 0.1;
                     if (user.mesh.position.z < -6) user.velocity.z += 0.1;
 
@@ -988,14 +375,13 @@
                         user.velocity.add(steer);
                     }
 
-                    // Separation only — no cohesion so sprites roam independently
+                    // Separation
                     usersArray.forEach(other => {
                         if (other === user) return;
                         const diff = new THREE.Vector3().subVectors(user.mesh.position, other.mesh.position);
                         const dist = diff.length();
                         if (dist < 9 && dist > 0.001) {
-                            diff.normalize();
-                            user.velocity.add(diff.multiplyScalar(((9 - dist) / 9) * 0.06));
+                            user.velocity.add(diff.normalize().multiplyScalar(((9 - dist) / 9) * 0.06));
                         }
                     });
 
@@ -1006,235 +392,25 @@
 
                     user.velocity.multiplyScalar(user.isHovering ? 0.82 : 0.97);
                     user.velocity.clampLength(0, user.isHovering ? 0.15 : 3.5);
-
                     user.mesh.position.add(user.velocity.clone().multiplyScalar(timeScale));
-                });
-
-                this.activeBubbles.forEach((bubble, id) => {
-                    if (now > bubble.expires) {
-                        bubble.element.classList.remove('visible');
-                        setTimeout(() => bubble.element.parentNode?.removeChild(bubble.element), 300);
-                        this.activeBubbles.delete(id);
-                        if (this.currentSpeakerId === id) this.currentSpeakerId = null;
-                    } else {
-                        const vector = bubble.user.mesh.position.clone();
-                        vector.project(this.camera);
-                        if (vector.z > 1) {
-                            bubble.element.style.display = 'none';
-                        } else {
-                            bubble.element.style.display = 'block';
-                            bubble.element.style.left = `${(vector.x * 0.5 + 0.5) * this.container.clientWidth}px`;
-                            bubble.element.style.top  = `${(-(vector.y * 0.5) + 0.5) * this.container.clientHeight}px`;
-                        }
-                    }
                 });
 
                 this.renderer.render(this.scene, this.camera);
             }
         }
 
-        // ==================== TOAST MANAGER ====================
-        class ToastManager {
-            constructor() {
-                this.container = document.getElementById('nexus-toasts');
-                this.icons = { success: '◈', warning: '▲', error: '✕', info: '◉' };
-            }
-            show(message, type = 'info', duration = 4000) {
-                const toast = document.createElement('div');
-                toast.className = `nexus-toast toast-${type}`;
-                toast.innerHTML = `<span class="toast-icon">${this.icons[type] ?? '◉'}</span><span class="toast-message">${message}</span>`;
-                this.container.appendChild(toast);
-                const dismiss = () => {
-                    if (toast.classList.contains('toast-exit')) return;
-                    toast.classList.add('toast-exit');
-                    setTimeout(() => toast.parentNode?.removeChild(toast), 320);
-                };
-                setTimeout(dismiss, duration);
-                toast.addEventListener('click', dismiss);
-            }
-        }
+        // ==================== BOOT ====================
+        const nexusApp = new ParticleChatNexus();
 
-        // ==================== PUSHER MANAGER ====================
-        class PusherManager {
-            constructor(userData) {
-                this.userData = userData;
-                this.pusher = null; this.channel = null; this.jwt = null;
-                this._init();
-            }
-            async _init() {
-                try {
-                    const config = await fetch('/api/config').then(r => r.json());
-                    if (!config.pusherKey) {
-                        window.toastManager?.show('Running in local mode — no realtime sync', 'warning');
-                        return;
-                    }
-                    await this._fetchJWT();
-                    this.pusher = new window.Pusher(config.pusherKey, {
-                        cluster: config.pusherCluster,
-                        authEndpoint: '/api/pusher/auth',
-                        auth: { params: { user_id: this.userData.id, user_name: this.userData.username, user_color: this.userData.color } },
-                    });
-                    this.pusher.connection.bind('connected', () => {
-                        state.connectionChanged('connected');
-                        window.toastManager?.show('Nexus link established', 'success');
-                    });
-                    this.pusher.connection.bind('disconnected', () => {
-                        state.connectionChanged('disconnected');
-                        window.toastManager?.show('Nexus link severed', 'error');
-                    });
-                    this.pusher.connection.bind('error', () => window.toastManager?.show('Realtime connection error', 'error'));
-
-                    this.channel = this.pusher.subscribe('presence-chat-room');
-                    this.channel.bind('pusher:subscription_succeeded', (members) => {
-                        members.each(member => {
-                            if (member.id === this.userData.id) return;
-                            window.nexusApp?.addUser({ id: member.id, username: member.info.name, color: member.info.color });
-                            window.toastManager?.show(`${member.info.name} is online`, 'info');
-                        });
-                        userCountEl.textContent = `${state.users.size} Entities Linked`;
-                    });
-                    this.channel.bind('pusher:subscription_error', () => window.toastManager?.show('Presence channel auth failed', 'error'));
-                    this.channel.bind('pusher:member_added', (member) => {
-                        window.nexusApp?.addUser({ id: member.id, username: member.info.name, color: member.info.color });
-                        window.toastManager?.show(`${member.info.name} entered the Nexus`, 'success');
-                        userCountEl.textContent = `${state.users.size} Entities Linked`;
-                    });
-                    this.channel.bind('pusher:member_removed', (member) => {
-                        const name = member.info?.name ?? 'Unknown';
-                        window.nexusApp?.removeUser(member.id);
-                        state.removeUser(member.id);
-                        window.toastManager?.show(`${name} left the Nexus`, 'warning');
-                        userCountEl.textContent = `${state.users.size} Entities Linked`;
-                    });
-                    this.channel.bind('chat-message', (data) => {
-                        if (data.user?.id === this.userData.id) return;
-                        appendChatMessage(data.user.username, data.text, 'other', data.user.color);
-                        window.nexusApp?.triggerChat(data.user.id, data.text);
-                    });
-                    this.channel.bind('typing', (data) => {
-                        if (data.user_id === this.userData.id) return;
-                        window.toastManager?.show(`${data.username ?? 'Someone'} is typing…`, 'info', 2000);
-                    });
-                } catch (err) {
-                    console.error('[Pusher] init error:', err);
-                    window.toastManager?.show('Realtime init failed — local mode', 'error');
-                }
-            }
-            async _fetchJWT() {
-                try {
-                    const res = await fetch('/api/auth/token', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ user_id: this.userData.id, user_name: this.userData.username, user_color: this.userData.color }),
-                    });
-                    const data = await res.json();
-                    if (data.token) this.jwt = data.token;
-                } catch (err) { console.warn('[Auth] JWT fetch failed:', err); }
-            }
-            async sendMessage(text) {
-                if (!this.jwt || !this.channel) return false;
-                try {
-                    const res = await fetch('/api/chat/message', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.jwt}` },
-                        body: JSON.stringify({ user: this.userData, text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }),
-                    });
-                    return res.ok;
-                } catch { return false; }
-            }
-            async sendTyping(isTyping) {
-                if (!this.jwt || !this.channel) return;
-                fetch(isTyping ? '/api/chat/typing' : '/api/chat/typing-stop', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.jwt}` },
-                    body: JSON.stringify({ user_id: this.userData.id, username: this.userData.username }),
-                }).catch(() => {});
-            }
-        }
-
-        // ==================== CHAT PANEL ====================
-        const chatMessages = document.getElementById('chatMessages');
-        const chatForm = document.getElementById('chatForm');
-        const chatInput = document.getElementById('chatInput');
-        const userCountEl = document.getElementById('userCount');
-
-        function appendChatMessage(username, text, type, colorHex) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${type}`;
-            if (type !== 'system') {
-                msgDiv.innerHTML = `<div class="msg-author" style="color:${colorHex};text-shadow:0 0 10px ${colorHex}">${username}</div>${text}`;
-            } else {
-                msgDiv.textContent = text;
-            }
-            chatMessages.appendChild(msgDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            state.addMessage({ username, text, type, color: colorHex, time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) });
-        }
-
-        let _nexusChatTyping = null;
-        chatInput.addEventListener('input', () => {
-            window.pusherManager?.sendTyping(true);
-            clearTimeout(_nexusChatTyping);
-            _nexusChatTyping = setTimeout(() => window.pusherManager?.sendTyping(false), 1500);
-        });
-
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const text = chatInput.value.trim();
-            if (!text) return;
-            clearTimeout(_nexusChatTyping);
-            window.pusherManager?.sendTyping(false);
-            const localUser = state.users.get(state.localUserId);
-            appendChatMessage(localUser?.username ?? 'You', text, 'local', localUser?.color ?? '#00e5ff');
-            chatInput.value = '';
-            if (window.nexusApp && state.localUserId) window.nexusApp.triggerChat(state.localUserId, text);
-            window.pusherManager?.sendMessage(text);
-        });
-
-        setTimeout(() => appendChatMessage('System', 'Connection established. Welcome to the Nexus.', 'system'), 1800);
-
-        // ==================== MAGNETIC INPUT ====================
-        chatInput.addEventListener('mousemove', (e) => {
-            const rect = chatInput.getBoundingClientRect();
-            const dx = (e.clientX - rect.left) / rect.width - 0.5;
-            const dy = (e.clientY - rect.top) / rect.height - 0.5;
-            chatInput.style.transform = `translate(${dx * 4}px, ${dy * 4}px)`;
-        });
-        chatInput.addEventListener('mouseleave', () => {
-            chatInput.style.transform = 'translate(0,0)';
-        });
-
-        // ==================== BOOT SEQUENCE ====================
-        (function initBootSequence() {
-            const bootLines = [
-                "INIT KERNEL... OK", "MOUNTING NEURAL DRIVES... OK",
-                "CHECKING FIREWALL STATUS... WARNING: BREACH DETECTED",
-                "REROUTING MAINFRAME POWER...",
-                "DECRYPTING PROTOCOLS: [████████░░]",
-                "DECRYPTING PROTOCOLS: [██████████] DONE",
-                "ESTABLISHING SECURE HANDSHAKE...",
-                "ALLOCATING MEMORY BLOCKS...", "SYSTEM READY."
-            ];
-            const bootSeq = document.getElementById('authBootSeq');
-            const morph   = document.getElementById('authMorph');
-            const card    = document.getElementById('authCard');
-            if (!bootSeq || !morph || !card) return;
-            bootLines.forEach((line, i) => {
-                setTimeout(() => {
-                    const p = document.createElement('div');
-                    p.className = 'auth-boot-line';
-                    p.textContent = '> ' + line;
-                    bootSeq.appendChild(p);
-                }, i * 200);
-            });
-            setTimeout(() => { bootSeq.classList.add('auth-boot-glitch'); }, 2200);
-            setTimeout(() => { bootSeq.style.opacity = '0'; morph.className = 'auth-morph state-dot'; }, 2600);
-            setTimeout(() => { morph.className = 'auth-morph state-line'; }, 3000);
-            setTimeout(() => { morph.className = 'auth-morph state-box'; }, 3600);
-            setTimeout(() => { card.classList.add('content-visible'); }, 4200);
-        })();
-
-        new AuthManager();
+        const ENTITIES = [
+            { id: 'e1', username: 'Nova'   },
+            { id: 'e2', username: 'Cipher' },
+            { id: 'e3', username: 'Aura'   },
+            { id: 'e4', username: 'Vortex' },
+            { id: 'e5', username: 'Echo'   },
+            { id: 'e6', username: 'Flux'   },
+        ];
+        ENTITIES.forEach(e => nexusApp.addUser(e));
     </script>
 </body>
 </html>
