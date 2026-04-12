@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ether Nexus | Standard Chat</title>
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body {
+            display: flex;
+            background: linear-gradient(135deg, #02040a 0%, #0a0f1a 100%);
+        }
+
+        /* ==================== STANDARD VIEW ==================== */
+        .standard-layout {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .users-sidebar {
+            width: 280px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .sidebar-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #8899aa;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .user-item:hover { background: rgba(255,255,255,0.06); transform: translateX(5px); }
+
+        .user-item.active {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: rgba(0, 229, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+        }
+
+        .user-avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+            position: relative;
+        }
+
+        .user-avatar::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 50%;
+            padding: 2px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.5;
+        }
+
+        .user-status {
+            width: 8px; height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 2px; right: 2px;
+            border: 2px solid var(--bg-glass);
+        }
+
+        .user-info { flex: 1; }
+        .user-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+        .user-role { font-size: 11px; color: #667788; text-transform: uppercase; letter-spacing: 1px; }
+
+        .user-count {
+            background: rgba(0, 229, 255, 0.1);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--primary);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
+        }
+
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .chat-toolbar {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .room-title { font-size: 20px; font-weight: 300; letter-spacing: 2px; }
+
+        .news-ticker {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .news-ticker::-webkit-scrollbar { width: 6px; }
+        .news-ticker::-webkit-scrollbar-track { background: transparent; }
+        .news-ticker::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+
+        .news-item {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.2s;
+        }
+
+        .news-item:hover { transform: translateY(-2px); background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .news-avatar {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .news-content { flex: 1; }
+
+        .news-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .news-author { font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .news-time { font-size: 11px; color: #556677; font-family: monospace; }
+        .news-text { font-size: 15px; line-height: 1.6; color: #e2e8f0; }
+
+        .message.system {
+            opacity: 1;
+            transform: none;
+            color: #8899aa;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        /* Hero banner */
+        .hero-banner {
+            background: linear-gradient(90deg, rgba(0,229,255,0.05) 0%, transparent 100%);
+            border: 1px solid var(--border-glass);
+            border-left: 4px solid var(--primary);
+            padding: 24px;
+            margin-bottom: 4px;
+            border-radius: 4px 16px 16px 4px;
+        }
+
+        .hero-tag {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        /* Outer News Access Button */
+        .outer-access-btn {
+            margin-top: auto;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 42, 109, 0.1), rgba(255, 42, 109, 0.05));
+            border: 1px solid rgba(255, 42, 109, 0.3);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
+        .outer-access-btn:hover {
+            background: rgba(255, 42, 109, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(255, 42, 109, 0.2);
+        }
+
+        .outer-access-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--alert);
+            margin-bottom: 6px;
+        }
+
+        .outer-access-desc { font-size: 11px; color: #8899aa; line-height: 1.5; }
+
+        /* Chat input */
+        .chat-input-area {
+            padding: 24px 32px;
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid var(--border-glass);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .chat-input-wrapper:focus-within {
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.15), inset 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateY(-2px);
+        }
+
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 18px 24px;
+            color: #fff;
+            outline: none;
+            font-family: inherit;
+            font-size: 15px;
+        }
+
+        .chat-input::placeholder { color: #64748b; font-weight: 400; }
+
+        .chat-submit {
+            background: transparent;
+            border: none;
+            color: var(--primary);
+            padding: 0 24px;
+            cursor: pointer;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+
+        .chat-submit:hover { color: #fff; transform: scale(1.05); text-shadow: 0 0 10px var(--primary); }
+
+        @media (max-width: 1024px) {
+            .nav-buttons { right: 20px; top: 20px; flex-direction: column; }
+            .standard-layout { flex-direction: column; }
+            .users-sidebar { width: 100%; height: auto; max-height: 300px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <div class="nav-buttons">
+        <a class="nav-btn" href="index.html">Enter 3D Nexus</a>
+        <a class="nav-btn secondary" href="outer-news.html">OUTER- NEWS</a>
+    </div>
+
+    <!-- Toast notifications -->
+    <div id="nexus-toasts"></div>
+
+    <!-- STANDARD CHAT VIEW -->
+    <div class="standard-layout">
+        <aside class="users-sidebar">
+            <div class="sidebar-title">Connected Entities</div>
+            <div class="user-list" id="standardUserList"></div>
+
+            <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-glass);">
+                <div class="sidebar-title">System Status</div>
+                <div style="font-size: 12px; color: #556677; line-height: 1.8; margin-top: 8px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Latency:</span>
+                        <span style="color: var(--primary); font-family: monospace;">12ms</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Sync:</span>
+                        <span style="color: #00ff88;">Stable</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Dimension:</span>
+                        <span style="color: var(--secondary);">2D-Mode</span>
+                    </div>
+                </div>
+            </div>
+
+            <a class="outer-access-btn" href="outer-news.html">
+                <div class="outer-access-title">◉ OUTER- NEWS</div>
+                <div class="outer-access-desc">Access external intelligence feed and sector broadcasts</div>
+            </a>
+        </aside>
+
+        <main class="chat-main">
+            <div class="chat-toolbar">
+                <div>
+                    <div class="room-title">Global Stream</div>
+                    <div style="font-size: 12px; color: #556677; margin-top: 4px;">Internal backroom communications</div>
+                </div>
+                <div class="user-count" id="standardUserCount">0 Linked</div>
+            </div>
+            <div class="news-ticker" id="standardChatMessages">
+                <div class="hero-banner">
+                    <div class="hero-tag">System Intelligence Status</div>
+                    <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">Nexus Monitoring Active</h1>
+                    <p style="color: #8899aa; font-size: 14px; line-height: 1.5;">Welcome to the secure interface. All signals are currently within normal operational parameters. External feeds are available via the signal array.</p>
+                </div>
+                <div class="message system">Initializing standard interface...</div>
+            </div>
+            <div class="chat-input-area">
+                <form id="standardChatForm" class="chat-input-wrapper">
+                    <input type="text" id="standardChatInput" class="chat-input" placeholder="Transmit to backroom..." autocomplete="off">
+                    <button type="submit" class="chat-submit">SEND</button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- AUTHENTICATION OVERLAY -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-vignette"></div>
+        <div class="auth-crt"></div>
+        <div class="auth-boot-seq" id="authBootSeq"></div>
+        <div class="auth-morph state-hidden" id="authMorph">
+            <div class="auth-card" id="authCard">
+                <h2>NCPD_NET</h2>
+                <div class="auth-subtitle">SECURE AUTHENTICATION PROTOCOL v9.4</div>
+                <form id="authForm" class="auth-form">
+                    <div class="auth-input-group">
+                        <label class="auth-input-label">Operator ID</label>
+                        <input type="text" id="authUsername" class="auth-input" placeholder="Enter designation..." autocomplete="username" required>
+                    </div>
+                    <div class="auth-input-group">
+                        <label class="auth-input-label">Neural Passkey</label>
+                        <input type="password" id="authPassword" class="auth-input" placeholder="••••••••" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="auth-submit">Link</button>
+                </form>
+                <div id="authError" style="color:var(--cp-red);font-family:var(--font-mono-cp);font-size:12px;text-align:center;margin-top:16px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://js.pusher.com/8.2/pusher.min.js"></script>
+
+    <script type="module">
+
+        // ==================== AUTHENTICATION MANAGER ====================
+        class AuthManager {
+            constructor() {
+                this.overlay = document.getElementById('authOverlay');
+                this.form = document.getElementById('authForm');
+                this.error = document.getElementById('authError');
+                this.init();
+            }
+            init() {
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                const saved = localStorage.getItem('nexus_user');
+                if (saved) {
+                    try { this.finishAuth(JSON.parse(saved)); return; }
+                    catch (e) { localStorage.removeItem('nexus_user'); }
+                }
+            }
+            handleSubmit(e) {
+                e.preventDefault();
+                this.error.textContent = '';
+                const username = document.getElementById('authUsername').value.trim();
+                const password = document.getElementById('authPassword').value;
+                if (!username) { this.error.textContent = 'Operator ID required'; return; }
+                if (password.length < 4) { this.error.textContent = 'Passkey too short'; return; }
+                const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+                const user = { id: 'u_' + Date.now(), username, color };
+                localStorage.setItem('nexus_user', JSON.stringify(user));
+                this.finishAuth(user);
+            }
+            finishAuth(user) {
+                this.overlay.classList.add('hidden');
+                initApp(user);
+            }
+        }
+
+        // ==================== STATE ====================
+        class NexusState {
+            constructor() {
+                this.users = new Map();
+                this.messages = [];
+                this.listeners = [];
+                this.localUserId = null;
+            }
+            addUser(user) { this.users.set(user.id, user); this.notify('userAdded', user); }
+            addMessage(msg) { this.messages.push(msg); this.notify('messageAdded', msg); }
+            subscribe(cb) { this.listeners.push(cb); }
+            notify(event, data) { this.listeners.forEach(cb => cb(event, data)); }
+            removeUser(userId) {
+                const user = this.users.get(userId);
+                this.users.delete(userId);
+                this.notify('userRemoved', { id: userId, user });
+            }
+        }
+
+        const state = new NexusState();
+
+        // ==================== STANDARD VIEW CONTROLLER ====================
+        class StandardViewController {
+            constructor() {
+                this.userListEl  = document.getElementById('standardUserList');
+                this.messagesEl  = document.getElementById('standardChatMessages');
+                this.countEl     = document.getElementById('standardUserCount');
+
+                state.subscribe((event, data) => {
+                    if (event === 'userAdded')    this.renderUser(data);
+                    if (event === 'messageAdded') this.renderMessage(data);
+                    if (event === 'userRemoved')  this.removeUserEl(data.id);
+                });
+
+                this.setupInput();
+            }
+
+            setupInput() {
+                const form  = document.getElementById('standardChatForm');
+                const input = document.getElementById('standardChatInput');
+                let typingTimer = null;
+
+                input.addEventListener('input', () => {
+                    window.pusherManager?.sendTyping(true);
+                    clearTimeout(typingTimer);
+                    typingTimer = setTimeout(() => window.pusherManager?.sendTyping(false), 1500);
+                });
+
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const text = input.value.trim();
+                    if (!text) return;
+                    clearTimeout(typingTimer);
+                    window.pusherManager?.sendTyping(false);
+                    const localUser = state.users.get(state.localUserId);
+                    state.addMessage({
+                        id: Date.now(),
+                        username: localUser?.username ?? 'You',
+                        text,
+                        type: 'local',
+                        color: localUser?.color ?? '#00e5ff',
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    });
+                    input.value = '';
+                    window.pusherManager?.sendMessage(text);
+                });
+            }
+
+            renderUser(user) {
+                const isLocal = user.id === state.localUserId;
+                const el = document.createElement('div');
+                el.className = `user-item ${isLocal ? 'active' : ''}`;
+                el.id = `user-${user.id}`;
+                el.innerHTML = `
+                    <div class="user-avatar" style="color:${user.color};border-color:${user.color}">
+                        ${user.username[0]}
+                        ${!isLocal ? '<div class="user-status"></div>' : ''}
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name" style="color:${user.color}">${user.username}</div>
+                        <div class="user-role">${isLocal ? 'Operator' : 'Entity'}</div>
+                    </div>
+                `;
+                this.userListEl.appendChild(el);
+                this.countEl.textContent = `${state.users.size} Linked`;
+            }
+
+            removeUserEl(userId) {
+                document.getElementById(`user-${userId}`)?.remove();
+                this.countEl.textContent = `${state.users.size} Linked`;
+            }
+
+            renderMessage(msg) {
+                if (msg.type === 'system') {
+                    const div = document.createElement('div');
+                    div.className = 'message system';
+                    div.style.cssText = 'opacity:1;transform:none;text-align:center;padding:20px;color:#556677;';
+                    div.textContent = msg.text;
+                    this.messagesEl.appendChild(div);
+                } else {
+                    const item = document.createElement('div');
+                    item.className = 'news-item';
+                    item.innerHTML = `
+                        <div class="news-avatar" style="color:${msg.color};background:${msg.color}20;border:1px solid ${msg.color}40;">
+                            ${msg.username[0]}
+                        </div>
+                        <div class="news-content">
+                            <div class="news-header">
+                                <span class="news-author" style="color:${msg.color}">${msg.username}</span>
+                                <span class="news-time">${msg.time || new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+                            </div>
+                            <div class="news-text">${msg.text}</div>
+                        </div>
+                    `;
+                    this.messagesEl.appendChild(item);
+                }
+                this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+            }
+        }
+
+        // ==================== TOAST MANAGER ====================
+        class ToastManager {
+            constructor() {
+                this.container = document.getElementById('nexus-toasts');
+                this.icons = { success: '◈', warning: '▲', error: '✕', info: '◉' };
+            }
+            show(message, type = 'info', duration = 4000) {
+                const toast = document.createElement('div');
+                toast.className = `nexus-toast toast-${type}`;
+                toast.innerHTML = `<span class="toast-icon">${this.icons[type] ?? '◉'}</span><span class="toast-message">${message}</span>`;
+                this.container.appendChild(toast);
+                const dismiss = () => {
+                    if (toast.classList.contains('toast-exit')) return;
+                    toast.classList.add('toast-exit');
+                    setTimeout(() => toast.parentNode?.removeChild(toast), 320);
+                };
+                setTimeout(dismiss, duration);
+                toast.addEventListener('click', dismiss);
+            }
+        }
+
+        // ==================== PUSHER MANAGER ====================
+        class PusherManager {
+            constructor(userData) {
+                this.userData = userData;
+                this.pusher = null; this.channel = null; this.jwt = null;
+                this._init();
+            }
+            async _init() {
+                try {
+                    const config = await fetch('/api/config').then(r => r.json());
+                    if (!config.pusherKey) {
+                        window.toastManager?.show('Running in local mode — no realtime sync', 'warning');
+                        return;
+                    }
+                    await this._fetchJWT();
+                    this.pusher = new window.Pusher(config.pusherKey, {
+                        cluster: config.pusherCluster,
+                        authEndpoint: '/api/pusher/auth',
+                        auth: { params: { user_id: this.userData.id, user_name: this.userData.username, user_color: this.userData.color } },
+                    });
+                    this.pusher.connection.bind('connected', () => window.toastManager?.show('Nexus link established', 'success'));
+                    this.pusher.connection.bind('disconnected', () => window.toastManager?.show('Nexus link severed', 'error'));
+
+                    this.channel = this.pusher.subscribe('presence-chat-room');
+
+                    this.channel.bind('pusher:subscription_succeeded', (members) => {
+                        members.each(member => {
+                            if (member.id === this.userData.id) return;
+                            state.addUser({ id: member.id, username: member.info.name, color: member.info.color });
+                            window.toastManager?.show(`${member.info.name} is online`, 'info');
+                        });
+                    });
+                    this.channel.bind('pusher:subscription_error', () => window.toastManager?.show('Presence channel auth failed', 'error'));
+                    this.channel.bind('pusher:member_added', (member) => {
+                        state.addUser({ id: member.id, username: member.info.name, color: member.info.color });
+                        window.toastManager?.show(`${member.info.name} entered the Nexus`, 'success');
+                    });
+                    this.channel.bind('pusher:member_removed', (member) => {
+                        state.removeUser(member.id);
+                        window.toastManager?.show(`${member.info?.name ?? 'Unknown'} left the Nexus`, 'warning');
+                    });
+                    this.channel.bind('chat-message', (data) => {
+                        if (data.user?.id === this.userData.id) return;
+                        state.addMessage({
+                            id: Date.now(),
+                            username: data.user.username,
+                            text: data.text,
+                            type: 'other',
+                            color: data.user.color,
+                            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        });
+                    });
+                    this.channel.bind('typing', (data) => {
+                        if (data.user_id === this.userData.id) return;
+                        window.toastManager?.show(`${data.username ?? 'Someone'} is typing…`, 'info', 2000);
+                    });
+                } catch (err) {
+                    console.error('[Pusher] init error:', err);
+                    window.toastManager?.show('Realtime init failed — local mode', 'error');
+                }
+            }
+            async _fetchJWT() {
+                try {
+                    const res = await fetch('/api/auth/token', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: this.userData.id, user_name: this.userData.username, user_color: this.userData.color }),
+                    });
+                    const data = await res.json();
+                    if (data.token) this.jwt = data.token;
+                } catch (err) { console.warn('[Auth] JWT fetch failed:', err); }
+            }
+            async sendMessage(text) {
+                if (!this.jwt || !this.channel) return false;
+                try {
+                    const res = await fetch('/api/chat/message', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.jwt}` },
+                        body: JSON.stringify({ user: this.userData, text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }),
+                    });
+                    return res.ok;
+                } catch { return false; }
+            }
+            async sendTyping(isTyping) {
+                if (!this.jwt || !this.channel) return;
+                fetch(isTyping ? '/api/chat/typing' : '/api/chat/typing-stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.jwt}` },
+                    body: JSON.stringify({ user_id: this.userData.id, username: this.userData.username }),
+                }).catch(() => {});
+            }
+        }
+
+        // ==================== APP INIT ====================
+        let appInitialized = false;
+        function initApp(userData) {
+            if (appInitialized) return;
+            appInitialized = true;
+
+            const LOCAL_USER = { id: userData.id, username: userData.username, color: userData.color };
+            state.localUserId = userData.id;
+
+            window.toastManager = new ToastManager();
+            new StandardViewController();
+
+            state.addUser(LOCAL_USER);
+            window.pusherManager = new PusherManager(LOCAL_USER);
+            window.toastManager.show(`Welcome, ${LOCAL_USER.username}`, 'success');
+        }
+
+        // ==================== BOOT SEQUENCE ====================
+        (function initBootSequence() {
+            const bootLines = [
+                "INIT KERNEL... OK", "MOUNTING NEURAL DRIVES... OK",
+                "CHECKING FIREWALL STATUS... WARNING: BREACH DETECTED",
+                "REROUTING MAINFRAME POWER...",
+                "DECRYPTING PROTOCOLS: [████████░░]",
+                "DECRYPTING PROTOCOLS: [██████████] DONE",
+                "ESTABLISHING SECURE HANDSHAKE...",
+                "ALLOCATING MEMORY BLOCKS...", "SYSTEM READY."
+            ];
+            const bootSeq = document.getElementById('authBootSeq');
+            const morph   = document.getElementById('authMorph');
+            const card    = document.getElementById('authCard');
+            if (!bootSeq || !morph || !card) return;
+            bootLines.forEach((line, i) => {
+                setTimeout(() => {
+                    const p = document.createElement('div');
+                    p.className = 'auth-boot-line';
+                    p.textContent = '> ' + line;
+                    bootSeq.appendChild(p);
+                }, i * 200);
+            });
+            setTimeout(() => { bootSeq.classList.add('auth-boot-glitch'); }, 2200);
+            setTimeout(() => { bootSeq.style.opacity = '0'; morph.className = 'auth-morph state-dot'; }, 2600);
+            setTimeout(() => { morph.className = 'auth-morph state-line'; }, 3000);
+            setTimeout(() => { morph.className = 'auth-morph state-box'; }, 3600);
+            setTimeout(() => { card.classList.add('content-visible'); }, 4200);
+        })();
+
+        new AuthManager();
+    </script>
+</body>
+</html>

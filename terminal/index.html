@@ -3,76 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ether Nexus | Dual-Mode Chat</title>
+    <title>Ether Nexus | 3D Immersive</title>
+    <link rel="stylesheet" href="shared.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        :root {
-            --primary: #00e5ff;
-            --secondary: #b300ff;
-            --accent-glow: rgba(0, 229, 255, 0.3);
-            --alert: #ff2a6d;
-            --bg-dark: #010205;
-            --bg-glass: rgba(6, 10, 18, 0.88);
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --chat-width: 400px;
-            --font-main: 'Inter', -apple-system, sans-serif;
-            --font-mono: 'Share Tech Mono', monospace;
+        /* Nav override: shift left to clear the chat panel */
+        .nav-buttons { right: calc(var(--chat-width) + 40px); }
+
+        @media (max-width: 1024px) {
+            .nav-buttons { right: 20px; top: 20px; flex-direction: column; }
         }
 
-        body {
-            overflow: hidden;
-            background: var(--bg-dark);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
-            color: #fff;
-        }
-
-        /* ==================== VIEW CONTAINERS ==================== */
-        #nexus-view, #standard-view, #outer-news-view {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        #nexus-view {
-            opacity: 1;
-            visibility: visible;
-            z-index: 1;
-        }
-
-        #nexus-view.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        #standard-view, #outer-news-view {
-            opacity: 0;
-            visibility: hidden;
-            transform: translateX(30px);
-        }
-
-        #standard-view.active, #outer-news-view.active {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(0);
-        }
-
-        #standard-view {
-            display: flex;
-            background: linear-gradient(135deg, #02040a 0%, #0a0f1a 100%);
-        }
-
-        #outer-news-view {
-            display: flex;
-            background: linear-gradient(180deg, #0a0f1a 0%, #050810 100%);
-            z-index: 3;
-        }
-
-        /* ==================== NEXUS VIEW (3D) ==================== */
+        /* ==================== NEXUS VIEW ==================== */
         #canvas-container {
             width: 100%;
             height: 100%;
@@ -82,10 +23,8 @@
 
         #speech-layer {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             pointer-events: none;
             z-index: 15;
             overflow: hidden;
@@ -129,560 +68,7 @@
             text-shadow: 0 0 10px currentColor;
         }
 
-        /* ==================== STANDARD VIEW (Chat) ==================== */
-        .standard-layout {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-            gap: 20px;
-        }
-
-        .users-sidebar {
-            width: 280px;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-glass);
-            border-radius: 24px;
-            padding: 24px;
-            backdrop-filter: blur(20px);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            border-right: 1px solid var(--border-glass);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        }
-
-        .sidebar-title {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: #8899aa;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .user-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            overflow-y: auto;
-        }
-
-        .user-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .user-item:hover {
-            background: rgba(255,255,255,0.06);
-            transform: translateX(5px);
-        }
-
-        .user-item.active {
-            background: rgba(0, 229, 255, 0.1);
-            border-color: rgba(0, 229, 255, 0.3);
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 16px;
-            position: relative;
-        }
-
-        .user-avatar::after {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            border-radius: 50%;
-            padding: 2px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            opacity: 0.5;
-        }
-
-        .user-status {
-            width: 8px;
-            height: 8px;
-            background: #00ff88;
-            border-radius: 50%;
-            position: absolute;
-            bottom: 2px;
-            right: 2px;
-            border: 2px solid var(--bg-glass);
-        }
-
-        .user-info {
-            flex: 1;
-        }
-
-        .user-name {
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 2px;
-        }
-
-        .user-role {
-            font-size: 11px;
-            color: #667788;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .chat-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-glass);
-            border-radius: 24px;
-            backdrop-filter: blur(20px);
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        }
-
-        .chat-toolbar {
-            padding: 24px 32px;
-            border-bottom: 1px solid var(--border-glass);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255,255,255,0.02);
-        }
-
-        .room-title {
-            font-size: 20px;
-            font-weight: 300;
-            letter-spacing: 2px;
-        }
-
-        .news-ticker {
-            flex: 1;
-            padding: 32px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .news-item {
-            display: flex;
-            gap: 16px;
-            padding: 20px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.05);
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            transition: transform 0.2s;
-        }
-
-        .news-item:hover {
-            transform: translateY(-2px);
-            background: rgba(255,255,255,0.04);
-            border-color: rgba(255,255,255,0.1);
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .news-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
-
-        .news-content {
-            flex: 1;
-        }
-
-        .news-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .news-author {
-            font-weight: 700;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .news-time {
-            font-size: 11px;
-            color: #556677;
-            font-family: monospace;
-        }
-
-        .news-text {
-            font-size: 15px;
-            line-height: 1.6;
-            color: #e2e8f0;
-        }
-
-        /* ==================== OUTER- NEWS VIEW ==================== */
-        .outer-news-layout {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            padding: 0;
-        }
-
-        .outer-news-nav {
-            width: 300px;
-            background: rgba(5, 8, 15, 0.95);
-            border-right: 1px solid var(--border-glass);
-            padding: 40px 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-        }
-
-        .outer-logo {
-            font-size: 24px;
-            font-weight: 800;
-            letter-spacing: 4px;
-            color: var(--alert);
-            text-transform: uppercase;
-            text-shadow: 0 0 30px rgba(255, 42, 109, 0.4);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .outer-logo::before {
-            content: '◉';
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .nav-section {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .nav-title {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: #556677;
-            font-weight: 700;
-        }
-
-        .nav-item {
-            padding: 14px 18px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border: 1px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .nav-item.active {
-            background: rgba(255, 42, 109, 0.1);
-            border-color: rgba(255, 42, 109, 0.3);
-            color: var(--alert);
-        }
-
-        .nav-badge {
-            margin-left: auto;
-            background: var(--alert);
-            color: #fff;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 700;
-        }
-
-        .outer-news-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .outer-header {
-            padding: 30px 40px;
-            border-bottom: 1px solid var(--border-glass);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .outer-title {
-            font-size: 28px;
-            font-weight: 300;
-            letter-spacing: 3px;
-        }
-
-        .outer-subtitle {
-            font-size: 12px;
-            color: #667788;
-            margin-top: 4px;
-            letter-spacing: 1px;
-        }
-
-        .live-indicator {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--alert);
-            font-weight: 700;
-        }
-
-        .live-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--alert);
-            border-radius: 50%;
-            animation: blink 1s infinite;
-            box-shadow: 0 0 10px var(--alert);
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-
-        .outer-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 42, 109, 0.15);
-            border-radius: 16px;
-            overflow: hidden;
-            transition: all 0.3s;
-            animation: cardEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        @keyframes cardEnter {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .outer-card:hover {
-            border-color: rgba(255, 42, 109, 0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(255, 42, 109, 0.1);
-        }
-
-        .card-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            display: block;
-            background: rgba(255, 42, 109, 0.05);
-        }
-
-        .card-image-placeholder {
-            width: 100%;
-            height: 140px;
-            background: linear-gradient(135deg, rgba(255,42,109,0.08), rgba(0,0,0,0.2));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            color: rgba(255,42,109,0.3);
-        }
-
-        .card-body {
-            padding: 22px 24px 18px;
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-        }
-
-        .card-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .card-source {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 700;
-            color: var(--alert);
-        }
-
-        .card-timestamp {
-            font-family: monospace;
-            font-size: 11px;
-            color: #556677;
-        }
-
-        .card-headline {
-            font-size: 18px;
-            font-weight: 700;
-            line-height: 1.4;
-            margin-bottom: 10px;
-            color: #fff;
-        }
-
-        .card-excerpt {
-            font-size: 13px;
-            line-height: 1.7;
-            color: #8899aa;
-            margin-bottom: 16px;
-            flex: 1;
-        }
-
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: auto;
-        }
-
-        .card-category {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: #556677;
-            font-weight: 600;
-        }
-
-        .card-read-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--alert);
-            text-decoration: none;
-            padding: 6px 14px;
-            border: 1px solid rgba(255,42,109,0.3);
-            border-radius: 20px;
-            background: rgba(255, 42, 109, 0.05);
-            transition: all 0.2s;
-        }
-
-        .card-read-link:hover {
-            background: rgba(255,42,109,0.15);
-            border-color: var(--alert);
-        }
-
-        .outer-feed-loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 300px;
-            gap: 16px;
-            color: #556677;
-            font-size: 13px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .outer-feed-loading::before {
-            content: '';
-            width: 32px;
-            height: 32px;
-            border: 2px solid rgba(255,42,109,0.2);
-            border-top-color: var(--alert);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .outer-feed-error {
-            padding: 40px;
-            text-align: center;
-            color: #556677;
-            font-size: 13px;
-            line-height: 1.8;
-        }
-
-        .outer-feed-error strong { color: var(--alert); display: block; margin-bottom: 8px; font-size: 15px; }
-
-        /* Enhanced Hero Styling */
-        .hero-banner {
-            background: linear-gradient(90deg, rgba(0,229,255,0.05) 0%, transparent 100%);
-            border: 1px solid var(--border-glass);
-            border-left: 4px solid var(--primary);
-            padding: 24px;
-            margin-bottom: 24px;
-            border-radius: 4px 16px 16px 4px;
-        }
-        
-        .hero-tag {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 8px;
-        }
-
-        .outer-feed {
-            flex: 1;
-            overflow-y: auto;
-            padding: 30px 40px;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 20px;
-            align-content: start;
-        }
-
-        .outer-feed::-webkit-scrollbar { width: 8px; }
-        .outer-feed::-webkit-scrollbar-track { background: transparent; }
-        .outer-feed::-webkit-scrollbar-thumb { background: rgba(255, 42, 109, 0.3); border-radius: 4px; }
-
-        /* ==================== SHARED COMPONENTS ==================== */
+        /* ==================== AMBIENT UI ==================== */
         #ambient-ui {
             position: absolute;
             top: 40px;
@@ -710,116 +96,10 @@
             opacity: 0.8;
         }
 
-        /* Navigation Buttons */
-        .nav-buttons {
-            position: absolute;
-            top: 40px;
-            right: 440px;
-            z-index: 100;
-            display: flex;
-            gap: 12px;
-        }
-
-        .nav-btn {
-            background: rgba(0, 229, 255, 0.1);
-            border: 1px solid rgba(0, 229, 255, 0.3);
-            color: var(--primary);
-            padding: 12px 24px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: 700;
-            letter-spacing: 2px;
-            font-size: 12px;
-            text-transform: uppercase;
-            transition: all 0.3s;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
-        }
-
-        .nav-btn:hover {
-            background: rgba(0, 229, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 25px rgba(0, 229, 255, 0.3);
-        }
-
-        .nav-btn.secondary {
-            background: rgba(255, 42, 109, 0.1);
-            border-color: rgba(255, 42, 109, 0.3);
-            color: var(--alert);
-        }
-
-        .nav-btn.secondary:hover {
-            box-shadow: 0 5px 25px rgba(255, 42, 109, 0.3);
-        }
-
-        .nav-btn.in-standard {
-            right: 40px;
-            background: rgba(179, 0, 255, 0.1);
-            border-color: rgba(179, 0, 255, 0.3);
-            color: var(--secondary);
-        }
-
-        /* Outer News Access from Standard */
-        .outer-access-btn {
-            margin-top: auto;
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(255, 42, 109, 0.1), rgba(255, 42, 109, 0.05));
-            border: 1px solid rgba(255, 42, 109, 0.3);
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-        }
-
-        .outer-access-btn:hover {
-            background: rgba(255, 42, 109, 0.2);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(255, 42, 109, 0.2);
-        }
-
-        .outer-access-title {
-            font-size: 14px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--alert);
-            margin-bottom: 6px;
-        }
-
-        .outer-access-desc {
-            font-size: 11px;
-            color: #8899aa;
-            line-height: 1.5;
-        }
-
-        /* Back button for Outer News */
-        .back-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 13px;
-            font-weight: 600;
-            color: #fff;
-            width: fit-content;
-        }
-
-        .back-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateX(-5px);
-        }
-
-        /* Chat Panel (Shared) */
+        /* ==================== CHAT PANEL (3D Mode) ==================== */
         #chat-panel {
             position: absolute;
-            right: 0;
-            top: 0;
+            right: 0; top: 0;
             width: var(--chat-width);
             height: 100vh;
             background: var(--bg-glass);
@@ -829,12 +109,6 @@
             box-shadow: -20px 0 60px rgba(0, 0, 0, 0.8);
             z-index: 20;
             backdrop-filter: blur(24px) saturate(150%);
-            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        #standard-view.active ~ #chat-panel,
-        #outer-news-view.active ~ #chat-panel {
-            transform: translateX(100%);
         }
 
         .chat-header {
@@ -846,483 +120,142 @@
             background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
         }
 
-        .header-title { 
-            font-weight: 600; 
-            font-size: 15px; 
-            letter-spacing: 1.5px; 
-            text-transform: uppercase; 
+        .header-title {
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
         }
 
-        .user-count { 
-            background: rgba(0, 229, 255, 0.1); 
-            padding: 6px 14px; 
+        .user-count {
+            background: rgba(0, 229, 255, 0.1);
+            padding: 6px 14px;
             border-radius: 20px;
-            font-size: 11px; 
-            font-weight: 600; 
-            color: var(--primary); 
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--primary);
             border: 1px solid rgba(0, 229, 255, 0.3);
             box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
         }
 
-        .chat-messages { 
-            flex: 1; 
-            padding: 32px; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 24px; 
+        .chat-messages {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
         }
 
         .chat-messages::-webkit-scrollbar { width: 6px; }
         .chat-messages::-webkit-scrollbar-track { background: transparent; }
         .chat-messages::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
 
-        .message { 
-            padding: 16px 20px; 
-            border-radius: 18px; 
-            font-size: 14px; 
-            line-height: 1.6; 
-            max-width: 90%; 
+        .message {
+            padding: 16px 20px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 90%;
             position: relative;
-            animation: messagePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
-            opacity: 0; 
+            animation: messagePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
             transform: translateY(20px) scale(0.95);
         }
-        
+
         @keyframes messagePop { to { opacity: 1; transform: translateY(0) scale(1); } }
 
-        .message.system { 
-            background: transparent; 
-            color: #8899aa; 
-            align-self: center; 
-            font-size: 12px; 
-            font-weight: 500; 
-            letter-spacing: 0.5px; 
-        }
-        .message.other { 
-            background: rgba(255, 255, 255, 0.04); 
-            color: #e2e8f0; 
-            align-self: flex-start; 
-            border-bottom-left-radius: 6px; 
-            border: 1px solid var(--border-glass); 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
-        }
-        .message.local { 
-            background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(179, 0, 255, 0.15)); 
-            color: #fff; 
-            align-self: flex-end; 
-            border-bottom-right-radius: 6px; 
-            border: 1px solid rgba(0, 229, 255, 0.3); 
-            box-shadow: 0 8px 25px rgba(0, 229, 255, 0.1); 
-        }
-        .msg-author { 
-            font-size: 10px; 
-            margin-bottom: 8px; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            letter-spacing: 1.5px; 
-            opacity: 0.9; 
+        .message.system {
+            background: transparent;
+            color: #8899aa;
+            align-self: center;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
         }
 
-        .chat-input-area { 
-            padding: 32px; 
-            background: rgba(0, 0, 0, 0.4); 
-            border-top: 1px solid var(--border-glass); 
+        .message.other {
+            background: rgba(255, 255, 255, 0.04);
+            color: #e2e8f0;
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        
-        .chat-input-wrapper { 
-            display: flex; 
-            background: rgba(255,255,255,0.05); 
+
+        .message.local {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(179, 0, 255, 0.15));
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 229, 255, 0.1);
+        }
+
+        .msg-author {
+            font-size: 10px;
+            margin-bottom: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            opacity: 0.9;
+        }
+
+        .chat-input-area {
+            padding: 32px;
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 1px solid var(--border-glass);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px; 
-            overflow: hidden; 
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
         }
-        
+
         .chat-input-wrapper:focus-within {
-            border-color: var(--primary); 
+            border-color: var(--primary);
             background: rgba(255,255,255,0.08);
-            box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.15), inset 0 2px 10px rgba(0,0,0,0.2); 
+            box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.15), inset 0 2px 10px rgba(0,0,0,0.2);
             transform: translateY(-2px);
         }
 
-        .chat-input { 
-            flex: 1; 
-            background: transparent; 
-            border: none; 
-            padding: 18px 24px; 
-            color: #fff; 
-            outline: none; 
-            font-family: inherit; 
-            font-size: 15px; 
-        }
-        .chat-input::placeholder { color: #64748b; font-weight: 400; }
-        
-        .chat-submit { 
-            background: transparent; 
-            border: none; 
-            color: var(--primary); 
-            padding: 0 24px; 
-            cursor: pointer; 
-            font-weight: 800; 
-            letter-spacing: 1.5px; 
-            transition: all 0.2s; 
-            font-size: 13px; 
-        }
-        .chat-submit:hover { 
-            color: #fff; 
-            transform: scale(1.05); 
-            text-shadow: 0 0 10px var(--primary); 
-        }
-
-        @media (max-width: 1024px) {
-            #chat-panel { width: 100%; }
-            .nav-buttons { right: 20px; top: 20px; flex-direction: column; }
-            .standard-layout { flex-direction: column; }
-            .users-sidebar { width: 100%; height: auto; max-height: 300px; }
-            .outer-news-nav { width: 100%; height: auto; }
-            .outer-news-layout { flex-direction: column; }
-        }
-
-        /* ==================== AUTH OVERLAY (CYBERPUNK) ==================== */
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700;900&display=swap');
-
-        :root {
-            --cp-cyan: #00f0ff;
-            --cp-yellow: #fcee0a;
-            --cp-red: #ff003c;
-            --font-mono-cp: 'Share Tech Mono', monospace;
-            --font-display-cp: 'Orbitron', sans-serif;
-        }
-
-        .auth-overlay {
-            position: fixed;
-            inset: 0;
-            background: #040405;
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: var(--font-mono-cp);
-            transition: opacity 0.5s, visibility 0.5s;
-            overflow: hidden;
-        }
-
-        .auth-overlay.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        /* CRT + vignette overlays */
-        .auth-crt {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%),
-                        linear-gradient(90deg, rgba(255,0,0,0.06), rgba(0,255,0,0.02), rgba(0,0,255,0.06));
-            background-size: 100% 4px, 3px 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .auth-vignette {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.8) 100%);
-            pointer-events: none;
-            z-index: 9;
-        }
-
-        /* Boot sequence text */
-        .auth-boot-seq {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 13px;
-            line-height: 1.6;
-            color: var(--cp-cyan);
-            text-shadow: 0 0 5px var(--cp-cyan);
-            z-index: 15;
-            transition: opacity 0.3s;
-        }
-
-        .auth-boot-line {
-            opacity: 0;
-            animation: authTypeLine 0.1s forwards;
-        }
-
-        @keyframes authTypeLine {
-            to { opacity: 1; }
-        }
-
-        .auth-boot-glitch {
-            animation: authSevereGlitch 0.5s infinite;
-            filter: drop-shadow(2px 0 var(--cp-red)) drop-shadow(-2px 0 var(--cp-yellow));
-        }
-
-        @keyframes authSevereGlitch {
-            0%   { transform: translate(0); clip-path: inset(0 0 0 0); }
-            20%  { transform: translate(-5px, 2px); clip-path: inset(20% 0 80% 0); }
-            40%  { transform: translate(5px, -2px); clip-path: inset(80% 0 5% 0); }
-            60%  { transform: translate(-2px, 5px); clip-path: inset(40% 0 40% 0); }
-            80%  { transform: translate(2px, -5px); clip-path: inset(10% 0 60% 0); }
-            100% { transform: translate(0); clip-path: inset(0 0 0 0); }
-        }
-
-        /* Morphing container */
-        .auth-morph {
-            position: relative;
-            z-index: 20;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
-        .auth-morph.state-hidden  { width: 0; height: 0; opacity: 0; }
-        .auth-morph.state-dot     { width: 4px; height: 4px; background: var(--cp-cyan); box-shadow: 0 0 20px 5px var(--cp-cyan); opacity: 1; }
-        .auth-morph.state-line    { width: 400px; height: 2px; background: var(--cp-cyan); box-shadow: 0 0 15px var(--cp-cyan); opacity: 1; }
-
-        .auth-morph.state-box {
-            width: 400px;
-            height: 480px;
-            background: rgba(9,9,11,0.9);
-            border: 2px solid var(--cp-cyan);
-            box-shadow: 0 0 30px rgba(0,240,255,0.2), inset 0 0 20px rgba(0,240,255,0.1);
-            clip-path: polygon(0 20px, 20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
-            opacity: 1;
-        }
-
-        .auth-morph.state-box::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 4px;
-            background: var(--cp-yellow);
-            transform: scaleX(0);
-            transform-origin: left;
-            animation: authExpandBar 0.5s ease forwards 4.2s;
-        }
-
-        @keyframes authExpandBar {
-            to { transform: scaleX(1); }
-        }
-
-        /* Card inner content */
-        .auth-card {
-            width: 100%;
-            height: 100%;
-            padding: 36px 40px;
-            display: flex;
-            flex-direction: column;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .auth-card.content-visible {
-            animation: authGlitchIn 0.6s forwards;
-            pointer-events: all;
-        }
-
-        @keyframes authGlitchIn {
-            0%   { opacity: 0; transform: scale(0.98); filter: blur(4px); }
-            50%  { opacity: 0.5; filter: blur(0px) drop-shadow(2px 0 var(--cp-red)); }
-            55%  { opacity: 1; transform: translate(2px,0); }
-            60%  { opacity: 0; transform: translate(-2px,0); }
-            65%  { opacity: 1; transform: translate(0,0); filter: none; }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        .auth-card h2 {
-            font-family: var(--font-display-cp);
-            font-size: 22px;
-            font-weight: 700;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 4px;
-        }
-
-        .auth-subtitle {
-            font-size: 11px;
-            color: var(--cp-yellow);
-            letter-spacing: 1px;
-            margin-bottom: 32px;
-        }
-
-        .auth-form {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-        }
-
-        .auth-input-group {
-            margin-bottom: 18px;
-        }
-
-        .auth-input-label {
-            display: block;
-            font-size: 11px;
-            color: rgba(0,240,255,0.7);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .auth-input {
-            width: 100%;
-            background: rgba(0,240,255,0.05);
-            border: 1px solid rgba(0,240,255,0.3);
-            color: #fff;
-            font-family: var(--font-mono-cp);
-            font-size: 15px;
-            padding: 11px 14px;
-            outline: none;
-            border-radius: 0;
-            transition: all 0.2s ease;
-        }
-
-        .auth-input:focus {
-            border-color: var(--cp-cyan);
-            background: rgba(0,240,255,0.1);
-            box-shadow: inset 0 0 10px rgba(0,240,255,0.2);
-        }
-
-        .auth-input::placeholder { color: rgba(0,240,255,0.35); }
-
-        .auth-submit {
-            width: 100%;
-            margin-top: 8px;
-            padding: 14px;
-            background: var(--cp-yellow);
-            color: #09090b;
-            font-family: var(--font-display-cp);
-            font-size: 14px;
-            font-weight: 700;
+        .chat-input {
+            flex: 1;
+            background: transparent;
             border: none;
+            padding: 18px 24px;
+            color: #fff;
+            outline: none;
+            font-family: inherit;
+            font-size: 15px;
+        }
+
+        .chat-input::placeholder { color: #64748b; font-weight: 400; }
+
+        .chat-submit {
+            background: transparent;
+            border: none;
+            color: var(--primary);
+            padding: 0 24px;
             cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-            transition: all 0.2s ease;
-        }
-
-        .auth-submit:hover {
-            background: var(--cp-cyan);
-            box-shadow: 0 0 15px var(--cp-cyan);
-        }
-
-        .auth-submit::after {
-            content: '>>';
-            position: absolute;
-            right: 14px;
-            transition: right 0.2s ease;
-        }
-
-        .auth-submit:hover::after { right: 9px; }
-
-        .auth-footer {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 12px;
-            color: rgba(0,240,255,0.5);
-        }
-
-        .auth-toggle {
-            color: var(--cp-cyan);
-            cursor: pointer;
-            font-weight: 600;
-            margin-left: 6px;
-            text-shadow: 0 0 8px var(--cp-cyan);
-        }
-
-        .auth-toggle:hover { color: var(--cp-yellow); text-shadow: 0 0 8px var(--cp-yellow); }
-
-        @media (max-width: 500px) {
-            .auth-morph.state-line { width: 90vw; }
-            .auth-morph.state-box  { width: 90vw; height: 500px; }
-        }
-
-        /* ==================== TOAST NOTIFICATIONS ==================== */
-        #nexus-toasts {
-            position: fixed;
-            bottom: 32px;
-            left: 32px;
-            z-index: 3000;
-            display: flex;
-            flex-direction: column-reverse;
-            gap: 10px;
-            pointer-events: none;
-        }
-
-        .nexus-toast {
-            padding: 13px 18px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid var(--border-glass);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06);
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            transition: all 0.2s;
             font-size: 13px;
-            font-weight: 500;
-            letter-spacing: 0.4px;
-            color: #e2e8f0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 240px;
-            max-width: 360px;
-            animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            pointer-events: all;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
         }
 
-        .nexus-toast::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            width: 3px;
-            border-radius: 12px 0 0 12px;
+        .chat-submit:hover {
+            color: #fff;
+            transform: scale(1.05);
+            text-shadow: 0 0 10px var(--primary);
         }
 
-        .nexus-toast.toast-success { border-color: rgba(0,229,255,0.25); }
-        .nexus-toast.toast-success::before { background: var(--primary); box-shadow: 0 0 12px var(--primary); }
-        .nexus-toast.toast-success .toast-icon { color: var(--primary); }
-
-        .nexus-toast.toast-warning { border-color: rgba(252,238,10,0.25); }
-        .nexus-toast.toast-warning::before { background: #fcee0a; box-shadow: 0 0 12px #fcee0a; }
-        .nexus-toast.toast-warning .toast-icon { color: #fcee0a; }
-
-        .nexus-toast.toast-error { border-color: rgba(255,42,109,0.3); }
-        .nexus-toast.toast-error::before { background: var(--alert); box-shadow: 0 0 12px var(--alert); }
-        .nexus-toast.toast-error .toast-icon { color: var(--alert); }
-
-        .nexus-toast.toast-info { border-color: rgba(179,0,255,0.25); }
-        .nexus-toast.toast-info::before { background: var(--secondary); box-shadow: 0 0 12px var(--secondary); }
-        .nexus-toast.toast-info .toast-icon { color: var(--secondary); }
-
-        .nexus-toast.toast-exit {
-            animation: toastOut 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
-        }
-
-        @keyframes toastIn {
-            from { opacity: 0; transform: translateX(-28px) scale(0.94); filter: blur(3px); }
-            40%  { filter: blur(0); }
-            to   { opacity: 1; transform: translateX(0) scale(1); }
-        }
-
-        @keyframes toastOut {
-            from { opacity: 1; transform: translateX(0) scale(1); max-height: 80px; margin-bottom: 0; }
-            to   { opacity: 0; transform: translateX(-16px) scale(0.95); max-height: 0; margin-bottom: -10px; }
-        }
-
-        .toast-icon   { font-size: 13px; flex-shrink: 0; }
-        .toast-message { flex: 1; line-height: 1.4; font-family: var(--font-mono); }
-
-        /* ==================== GLITCH TEXT EFFECT ==================== */
-        /* Apply class="glitch-text" data-text="…" to any element */
+        /* ==================== GLITCH TEXT ==================== */
         .glitch-text { position: relative; }
         .glitch-text::before,
         .glitch-text::after {
@@ -1346,35 +279,33 @@
             0%, 80%, 100% { transform: translate(0); opacity: 0; }
             82% { transform: translate(-3px, 1px); opacity: 0.7; }
             84% { transform: translate(3px, -1px); opacity: 0.5; }
-            86% { transform: translate(0);          opacity: 0; }
+            86% { transform: translate(0); opacity: 0; }
         }
         @keyframes glitch-b {
             0%, 83%, 100% { transform: translate(0); opacity: 0; }
-            84% { transform: translate(4px,  1px); opacity: 0.6; }
-            86% { transform: translate(-2px, 0);   opacity: 0.3; }
-            88% { transform: translate(0);          opacity: 0; }
+            84% { transform: translate(4px, 1px); opacity: 0.6; }
+            86% { transform: translate(-2px, 0); opacity: 0.3; }
+            88% { transform: translate(0); opacity: 0; }
         }
 
-        /* ==================== NEON GRID OVERLAY ==================== */
-        /* Used by createNeonGrid() to add a scanline-style horizon tint */
         .nexus-grid-horizon {
             position: absolute;
             inset: 0;
-            background: linear-gradient(
-                to top,
-                rgba(0,229,255,0.04) 0%,
-                transparent 30%
-            );
+            background: linear-gradient(to top, rgba(0,229,255,0.04) 0%, transparent 30%);
             pointer-events: none;
             z-index: 2;
+        }
+
+        @media (max-width: 1024px) {
+            #chat-panel { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Navigation Buttons -->
-    <div class="nav-buttons" id="navButtons">
-        <button class="nav-btn" id="viewToggle">Standard View</button>
+    <!-- Navigation -->
+    <div class="nav-buttons">
+        <a class="nav-btn" href="standard.html">Standard View</a>
     </div>
 
     <!-- Ambient UI -->
@@ -1383,139 +314,17 @@
         <div class="nexus-subtitle" id="mode-indicator">IMMERSIVE INSTANCE</div>
     </div>
 
-    <!-- Toast notification container -->
+    <!-- Toast notifications -->
     <div id="nexus-toasts"></div>
 
     <!-- 3D NEXUS VIEW -->
-    <div id="nexus-view">
+    <div id="nexus-view" style="position:absolute;top:0;left:0;width:100%;height:100vh;">
         <div id="canvas-container"></div>
         <div id="speech-layer"></div>
-        <!-- Cyan horizon glow sitting above the 3D canvas -->
         <div class="nexus-grid-horizon"></div>
     </div>
 
-    <!-- STANDARD CHAT VIEW -->
-    <div id="standard-view">
-        <div class="standard-layout">
-            <aside class="users-sidebar">
-                <div class="sidebar-title">Connected Entities</div>
-                <div class="user-list" id="standardUserList"></div>
-                
-                <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-glass);">
-                    <div class="sidebar-title">System Status</div>
-                    <div style="font-size: 12px; color: #556677; line-height: 1.8; margin-top: 8px;">
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Latency:</span>
-                            <span style="color: var(--primary); font-family: monospace;">12ms</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Sync:</span>
-                            <span style="color: #00ff88;">Stable</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Dimension:</span>
-                            <span style="color: var(--secondary);" id="dimensionStatus">3D-Active</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- OUTER- NEWS Access Button -->
-                <div class="outer-access-btn" id="outerNewsBtn">
-                    <div class="outer-access-title">◉ OUTER- NEWS</div>
-                    <div class="outer-access-desc">Access external intelligence feed and sector broadcasts</div>
-                </div>
-            </aside>
-            
-            <main class="chat-main">
-                <div class="chat-toolbar">
-                    <div>
-                        <div class="room-title">Global Stream</div>
-                        <div style="font-size: 12px; color: #556677; margin-top: 4px;">Internal backroom communications</div>
-                    </div>
-                    <div class="user-count" id="standardUserCount">0 Linked</div>
-                </div>
-                <div class="news-ticker" id="standardChatMessages">
-                    <!-- Hero Section Added to Feed -->
-                    <div class="hero-banner">
-                        <div class="hero-tag">System Intelligence Status</div>
-                        <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">Nexus Monitoring Active</h1>
-                        <p style="color: #8899aa; font-size: 14px; line-height: 1.5;">Welcome to the secure interface. All signals are currently within normal operational parameters. External feeds are available via the signal array.</p>
-                    </div>
-                    
-                    <div class="message system" style="opacity: 1; transform: none;">Initializing standard interface...</div>
-                </div>
-                <div class="chat-input-area" style="background: rgba(0,0,0,0.3);">
-                    <form id="standardChatForm" class="chat-input-wrapper">
-                        <input type="text" id="standardChatInput" class="chat-input" placeholder="Transmit to backroom..." autocomplete="off">
-                        <button type="submit" class="chat-submit">SEND</button>
-                    </form>
-                </div>
-            </main>
-        </div>
-    </div>
-
-    <!-- OUTER- NEWS VIEW (Dedicated Page) -->
-    <div id="outer-news-view">
-        <div class="outer-news-layout">
-            <nav class="outer-news-nav">
-                <div class="outer-logo">OUTER-</div>
-
-                <div class="nav-section">
-                    <div class="nav-title">Feeds</div>
-                    <div class="nav-item active" data-category="">
-                        <span>◈</span> Top Stories
-                        <span class="nav-badge">LIVE</span>
-                    </div>
-                    <div class="nav-item" data-category="general">
-                        <span>▲</span> General
-                    </div>
-                    <div class="nav-item" data-category="business">
-                        <span>◎</span> Business
-                    </div>
-                    <div class="nav-item" data-category="technology">
-                        <span>◉</span> Technology
-                    </div>
-                    <div class="nav-item" data-category="science">
-                        <span>◫</span> Science
-                    </div>
-                    <div class="nav-item" data-category="health">
-                        <span>♦</span> Health
-                    </div>
-                    <div class="nav-item" data-category="entertainment">
-                        <span>★</span> Entertainment
-                    </div>
-                    <div class="nav-item" data-category="sports">
-                        <span>◐</span> Sports
-                    </div>
-                </div>
-
-                <div style="margin-top: auto;">
-                    <button class="back-btn" id="backFromOuter">
-                        <span>←</span> Return to Standard
-                    </button>
-                </div>
-            </nav>
-
-            <main class="outer-news-main">
-                <header class="outer-header">
-                    <div>
-                        <div class="outer-title">OUTER- NEWS</div>
-                        <div class="outer-subtitle">External intelligence network // Unfiltered sector broadcasts</div>
-                    </div>
-                    <div class="live-indicator">
-                        <div class="live-dot"></div>
-                        LIVE FEED
-                    </div>
-                </header>
-
-                <div class="outer-feed" id="outerFeed">
-                    <!-- News cards injected here -->
-                </div>
-            </main>
-        </div>
-    </div>
-
-    <!-- SHARED CHAT PANEL (3D Mode only) -->
+    <!-- SHARED CHAT PANEL -->
     <div id="chat-panel">
         <div class="chat-header">
             <span class="header-title">Global Stream</span>
@@ -1537,12 +346,10 @@
         <div class="auth-vignette"></div>
         <div class="auth-crt"></div>
         <div class="auth-boot-seq" id="authBootSeq"></div>
-
         <div class="auth-morph state-hidden" id="authMorph">
             <div class="auth-card" id="authCard">
                 <h2 id="authTitle">NCPD_NET</h2>
                 <div class="auth-subtitle">SECURE AUTHENTICATION PROTOCOL v9.4</div>
-
                 <form id="authForm" class="auth-form">
                     <div class="auth-input-group">
                         <label class="auth-input-label">Operator ID</label>
@@ -1554,13 +361,11 @@
                     </div>
                     <button type="submit" id="authSubmit" class="auth-submit">Link</button>
                 </form>
-
-                <div id="authError" class="auth-error" style="color: var(--cp-red); font-family: var(--font-mono-cp); font-size: 12px; text-align: center; margin-top: 16px;"></div>
+                <div id="authError" style="color:var(--cp-red);font-family:var(--font-mono-cp);font-size:12px;text-align:center;margin-top:16px;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Pusher JS client — loaded before the module so window.Pusher is available -->
     <script src="https://js.pusher.com/8.2/pusher.min.js"></script>
 
     <script type="importmap">
@@ -1587,16 +392,10 @@
 
             init() {
                 this.form.addEventListener('submit', (e) => this.handleSubmit(e));
-
-                // Resume session from localStorage
                 const saved = localStorage.getItem('nexus_user');
                 if (saved) {
-                    try {
-                        this.finishAuth(JSON.parse(saved));
-                        return;
-                    } catch (e) {
-                        localStorage.removeItem('nexus_user');
-                    }
+                    try { this.finishAuth(JSON.parse(saved)); return; }
+                    catch (e) { localStorage.removeItem('nexus_user'); }
                 }
             }
 
@@ -1605,10 +404,8 @@
                 this.error.textContent = '';
                 const username = document.getElementById('authUsername').value.trim();
                 const password = document.getElementById('authPassword').value;
-
                 if (!username) { this.error.textContent = 'Operator ID required'; return; }
                 if (password.length < 4) { this.error.textContent = 'Passkey too short'; return; }
-
                 const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
                 const user = { id: 'u_' + Date.now(), username, color };
                 localStorage.setItem('nexus_user', JSON.stringify(user));
@@ -1627,112 +424,95 @@
             appInitialized = true;
 
             const LOCAL_USER = { id: userData.id, username: userData.username, color: userData.color };
-
-            // State must know the local user id before controllers subscribe
             state.localUserId = userData.id;
 
-            window.toastManager   = new ToastManager();
-            window.nexusApp       = new ParticleChatNexus();
-            const standardController  = new StandardViewController();
-            const outerNewsController = new OuterNewsController();
+            window.toastManager = new ToastManager();
+            window.nexusApp = new ParticleChatNexus();
 
             window.nexusApp.addUser(LOCAL_USER);
+
+            const BOTS = [
+                { id: 'b1', username: 'Nova',   color: '#ff2a6d' },
+                { id: 'b2', username: 'Cipher', color: '#05d9e8' },
+                { id: 'b3', username: 'Aura',   color: '#ffd700' },
+                { id: 'b4', username: 'Vortex', color: '#ff00ff' },
+                { id: 'b5', username: 'Echo',   color: '#01ddc6' }
+            ];
+            BOTS.forEach(bot => window.nexusApp.addUser(bot));
+
+            const botPhrases = [
+                "Data stream looks clear on this node.",
+                "Syncing telemetry...",
+                "Has anyone mapped the outer bounds yet?",
+                "Packet loss detected. Rerouting.",
+                "This volume is incredibly calm today.",
+                "Drifting toward sector 7.",
+                "Aesthetic parameters accepted.",
+                "Connection stable."
+            ];
+
             userCountEl.textContent = `${state.users.size} Entities Linked`;
 
-            // Initialise realtime — gracefully degrades if Pusher keys are absent
             window.pusherManager = new PusherManager(LOCAL_USER);
 
             window.toastManager.show(`Welcome, ${LOCAL_USER.username}`, 'success');
+
+            setInterval(() => {
+                if (Math.random() > 0.5) {
+                    const bot = BOTS[Math.floor(Math.random() * BOTS.length)];
+                    const phrase = botPhrases[Math.floor(Math.random() * botPhrases.length)];
+                    appendChatMessage(bot.username, phrase, 'other', bot.color);
+                    window.nexusApp?.triggerChat(bot.id, phrase);
+                }
+            }, 3500);
         }
 
-        // ==================== STATE MANAGEMENT ====================
+        // ==================== STATE ====================
         class NexusState {
             constructor() {
-                this.users       = new Map();
-                this.messages    = [];
-                this.outerNews   = [];
-                this.currentMode = 'nexus'; // 'nexus' | 'standard' | 'outer-news'
-                this.listeners   = [];
-                this.localUserId = null;    // set by initApp after auth
+                this.users = new Map();
+                this.messages = [];
+                this.listeners = [];
+                this.localUserId = null;
             }
-
-            addUser(user) {
-                this.users.set(user.id, user);
-                this.notify('userAdded', user);
-            }
-
-            addMessage(msg) {
-                this.messages.push(msg);
-                this.notify('messageAdded', msg);
-            }
-
-            addOuterNews(news) {
-                this.outerNews.unshift(news);
-                this.notify('outerNewsAdded', news);
-            }
-
-            subscribe(callback) {
-                this.listeners.push(callback);
-            }
-
-            notify(event, data) {
-                this.listeners.forEach(cb => cb(event, data));
-            }
-
-            setMode(mode) {
-                this.currentMode = mode;
-                this.notify('modeChanged', mode);
-            }
-
+            addUser(user) { this.users.set(user.id, user); this.notify('userAdded', user); }
+            addMessage(msg) { this.messages.push(msg); this.notify('messageAdded', msg); }
+            subscribe(cb) { this.listeners.push(cb); }
+            notify(event, data) { this.listeners.forEach(cb => cb(event, data)); }
             removeUser(userId) {
                 const user = this.users.get(userId);
                 this.users.delete(userId);
                 this.notify('userRemoved', { id: userId, user });
             }
-
-            connectionChanged(status) {
-                this.notify('connectionChanged', status);
-            }
+            connectionChanged(status) { this.notify('connectionChanged', status); }
         }
 
         const state = new NexusState();
 
         // ==================== PARTICLE SHADERS ====================
-        // Vertex: per-particle phase attribute drives independent pulsing.
-        // gl_PointSize integrates linear depth attenuation so far particles shrink.
         const PARTICLE_VERT = `
             uniform float time;
             uniform float baseSize;
             attribute float aPhase;
-
             void main() {
                 vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                // Organic pulse: 35 % amplitude at ~2.5 Hz, offset per-particle
                 float pulse = 1.0 + 0.35 * sin(time * 2.5 + aPhase);
                 gl_PointSize = baseSize * pulse * (300.0 / -mvPosition.z);
-                gl_Position  = projectionMatrix * mvPosition;
+                gl_Position = projectionMatrix * mvPosition;
             }
         `;
 
-        // Fragment: radial soft-glow disc with a sharp white core.
-        // Discard outside radius keeps overdraw minimal.
         const PARTICLE_FRAG = `
-            uniform vec3  color;
+            uniform vec3 color;
             uniform float opacity;
-
             void main() {
-                vec2  uv   = gl_PointCoord - vec2(0.5);
+                vec2 uv = gl_PointCoord - vec2(0.5);
                 float dist = length(uv);
                 if (dist > 0.5) discard;
-
-                // Outer glow falloff
                 float glow = pow(1.0 - smoothstep(0.0, 0.5, dist), 2.2);
-                // Tight bright core
                 float core = 1.0 - smoothstep(0.0, 0.12, dist);
-
-                float alpha      = (glow * 0.9 + core * 0.3) * opacity;
-                vec3  finalColor = color + vec3(core * 0.5); // intensified white-hot centre
-
+                float alpha = (glow * 0.9 + core * 0.3) * opacity;
+                vec3 finalColor = color + vec3(core * 0.5);
                 gl_FragColor = vec4(finalColor, alpha);
             }
         `;
@@ -1743,11 +523,11 @@
                 this.container = document.getElementById('canvas-container');
                 this.speechLayer = document.getElementById('speech-layer');
                 this.isActive = true;
-                
+
                 this.scene = new THREE.Scene();
                 this.scene.background = new THREE.Color(0x010205);
                 this.scene.fog = new THREE.FogExp2(0x010205, 0.0025);
-                
+
                 this.camera = new THREE.PerspectiveCamera(45, this.container.clientWidth / this.container.clientHeight, 0.1, 2000);
                 this.camera.position.set(0, 400, 900);
 
@@ -1777,14 +557,12 @@
 
             async init() {
                 this.createEnvironment();
-                
                 window.addEventListener('resize', () => {
                     if (!this.isActive) return;
                     this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
                     this.camera.updateProjectionMatrix();
                     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
                 });
-
                 this.animate();
             }
 
@@ -1807,7 +585,7 @@
                 const dustCount = 2500;
                 const dustPos = new Float32Array(dustCount * 3);
                 for (let i = 0; i < dustCount; i++) {
-                    dustPos[i*3] = (Math.random() - 0.5) * 800;
+                    dustPos[i*3]   = (Math.random() - 0.5) * 800;
                     dustPos[i*3+1] = (Math.random() - 0.5) * 800;
                     dustPos[i*3+2] = (Math.random() - 0.5) * 800;
                 }
@@ -1829,63 +607,44 @@
             }
 
             createStarfield() {
-                const count     = 1400;
+                const count = 1400;
                 const positions = new Float32Array(count * 3);
-                const colors    = new Float32Array(count * 3);
-
+                const colors = new Float32Array(count * 3);
                 for (let i = 0; i < count; i++) {
-                    // Distribute uniformly on a large sphere shell
                     const theta = Math.random() * Math.PI * 2;
-                    const phi   = Math.acos(2 * Math.random() - 1);
-                    const r     = 800 + Math.random() * 500;
-
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    const r = 800 + Math.random() * 500;
                     positions[i*3]   = r * Math.sin(phi) * Math.cos(theta);
                     positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
                     positions[i*3+2] = r * Math.cos(phi);
-
-                    // Slight hue variation: cold-white → ice-blue → soft-violet
                     const t = Math.random();
                     colors[i*3]   = 0.72 + t * 0.28;
                     colors[i*3+1] = 0.82 + t * 0.12;
                     colors[i*3+2] = 1.0;
                 }
-
                 const geo = new THREE.BufferGeometry();
                 geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
                 geo.setAttribute('color',    new THREE.BufferAttribute(colors,    3));
-
-                const mat = new THREE.PointsMaterial({
-                    size: 1.6, vertexColors: true,
-                    transparent: true, opacity: 0.85,
-                    blending: THREE.AdditiveBlending, depthWrite: false,
-                    sizeAttenuation: true,
-                });
-
-                this.stars = new THREE.Points(geo, mat);
+                this.stars = new THREE.Points(geo, new THREE.PointsMaterial({
+                    size: 1.6, vertexColors: true, transparent: true, opacity: 0.85,
+                    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+                }));
                 this.scene.add(this.stars);
             }
 
             createNeonGrid() {
-                // Floor grid — 2 000-unit span, 60 divisions, cyan neon on dark teal
                 const grid = new THREE.GridHelper(2000, 60, 0x00e5ff, 0x001833);
                 grid.position.y = -180;
-                grid.material.transparent = true;
-                grid.material.opacity     = 0.35;
-                grid.material.blending    = THREE.AdditiveBlending;
-                grid.material.depthWrite  = false;
+                grid.material.transparent = true; grid.material.opacity = 0.35;
+                grid.material.blending = THREE.AdditiveBlending; grid.material.depthWrite = false;
                 this.scene.add(grid);
-                this.neonGrid = grid;
 
-                // Secondary coarser grid for the chunky retrowave lines
                 const gridCoarse = new THREE.GridHelper(2000, 12, 0xb300ff, 0x000000);
                 gridCoarse.position.y = -180;
-                gridCoarse.material.transparent = true;
-                gridCoarse.material.opacity     = 0.25;
-                gridCoarse.material.blending    = THREE.AdditiveBlending;
-                gridCoarse.material.depthWrite  = false;
+                gridCoarse.material.transparent = true; gridCoarse.material.opacity = 0.25;
+                gridCoarse.material.blending = THREE.AdditiveBlending; gridCoarse.material.depthWrite = false;
                 this.scene.add(gridCoarse);
 
-                // Horizon glow plane — a soft emissive strip at the vanishing line
                 const horizonGeo = new THREE.PlaneGeometry(2400, 320);
                 const horizonMat = new THREE.MeshBasicMaterial({
                     color: 0x00e5ff, transparent: true, opacity: 0.04,
@@ -1895,31 +654,26 @@
                 horizon.rotation.x = -Math.PI * 0.28;
                 horizon.position.set(0, -60, -500);
                 this.scene.add(horizon);
-                this.horizon = horizon;
             }
 
             addUser(userData) {
                 const pCount = 200;
                 const pPos = new Float32Array(pCount * 3);
-                
-                for(let i=0; i < pCount; i++) {
+                for (let i = 0; i < pCount; i++) {
                     const r = Math.random() * 12;
                     const theta = Math.random() * 2 * Math.PI;
                     const phi = Math.acos((Math.random() * 2) - 1);
-                    pPos[i*3] = r * Math.sin(phi) * Math.cos(theta);
+                    pPos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
                     pPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
                     pPos[i*3+2] = r * Math.cos(phi);
                 }
-                
-                // Per-particle random phase for independent pulsing
                 const pPhase = new Float32Array(pCount);
                 for (let i = 0; i < pCount; i++) pPhase[i] = Math.random() * Math.PI * 2;
 
                 const clusterGeo = new THREE.BufferGeometry();
-                clusterGeo.setAttribute('position', new THREE.BufferAttribute(pPos,   3));
+                clusterGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
                 clusterGeo.setAttribute('aPhase',   new THREE.BufferAttribute(pPhase, 1));
 
-                // Shader-based material: GPU-side pulsing, no canvas texture needed
                 const clusterUniforms = {
                     time:     { value: 0 },
                     baseSize: { value: 9 },
@@ -1927,35 +681,29 @@
                     color:    { value: new THREE.Color(userData.color) },
                 };
                 const clusterMat = new THREE.ShaderMaterial({
-                    uniforms:       clusterUniforms,
-                    vertexShader:   PARTICLE_VERT,
-                    fragmentShader: PARTICLE_FRAG,
-                    transparent:    true,
-                    blending:       THREE.AdditiveBlending,
-                    depthWrite:     false,
+                    uniforms: clusterUniforms,
+                    vertexShader: PARTICLE_VERT, fragmentShader: PARTICLE_FRAG,
+                    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
                 });
 
                 const cluster = new THREE.Points(clusterGeo, clusterMat);
-                
-                const coreMat = new THREE.SpriteMaterial({ 
-                    map: this.particleTexture, color: userData.color, blending: THREE.AdditiveBlending, opacity: 0.5 
+                const coreMat = new THREE.SpriteMaterial({
+                    map: this.particleTexture, color: userData.color,
+                    blending: THREE.AdditiveBlending, opacity: 0.5
                 });
                 const core = new THREE.Sprite(coreMat);
                 core.scale.set(40, 40, 1);
-                
+
                 const userGroup = new THREE.Group();
                 userGroup.add(cluster);
                 userGroup.add(core);
-
                 userGroup.position.set((Math.random()-0.5)*200, (Math.random()-0.5)*100, (Math.random()-0.5)*200);
                 this.scene.add(userGroup);
 
                 const user = {
                     ...userData,
                     mesh: userGroup,
-                    clusterMat:      clusterMat,
-                    clusterUniforms: clusterUniforms,
-                    coreMat: coreMat,
+                    clusterMat, clusterUniforms, coreMat,
                     baseParticleSize: 9,
                     chatReact: null,
                     velocity: new THREE.Vector3((Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2),
@@ -1964,13 +712,15 @@
                     presentExpires: 0,
                     wanderTime: Math.random() * 1000,
                     wanderSpeed: 0.1 + Math.random() * 0.1,
-                    wanderOffsets: {
-                        x: 0.5 + Math.random(), y: 0.3 + Math.random(), z: 0.4 + Math.random()
-                    },
+                    wanderOffsets: { x: 0.5 + Math.random(), y: 0.3 + Math.random(), z: 0.4 + Math.random() },
                     phase: Math.random() * Math.PI * 2
                 };
-
                 state.addUser(user);
+            }
+
+            removeUser(userId) {
+                const user = Array.from(state.users.values()).find(u => u.id === userId);
+                if (user?.mesh) this.scene.remove(user.mesh);
             }
 
             triggerChat(userId, message) {
@@ -1986,9 +736,7 @@
                             10 + Math.random() * 15,
                             -(15 + Math.random() * 15)
                         ).applyQuaternion(this.camera.quaternion);
-                        
                         oldSpeaker.velocity.copy(bounceDir);
-
                         if (this.activeBubbles.has(this.currentSpeakerId)) {
                             this.activeBubbles.get(this.currentSpeakerId).expires = 0;
                         }
@@ -2002,105 +750,61 @@
 
                 if (this.activeBubbles.has(userId)) {
                     const oldBubble = this.activeBubbles.get(userId);
-                    if (oldBubble.element.parentNode) {
-                        oldBubble.element.parentNode.removeChild(oldBubble.element);
-                    }
+                    oldBubble.element.classList.remove('visible');
+                    setTimeout(() => oldBubble.element.parentNode?.removeChild(oldBubble.element), 300);
                 }
 
                 const bubble = document.createElement('div');
                 bubble.className = 'speech-bubble';
-                bubble.innerHTML = `<span class="speech-username" style="color:${user.color}; text-shadow: 0 0 15px ${user.color}">${user.username}</span>${message}`;
+                bubble.innerHTML = `<span class="speech-username" style="color:${user.color}">${user.username}</span>${message}`;
                 this.speechLayer.appendChild(bubble);
+                requestAnimationFrame(() => bubble.classList.add('visible'));
 
-                void bubble.offsetWidth; 
-                bubble.classList.add('visible');
-
-                this.activeBubbles.set(userId, {
-                    element: bubble,
-                    user: user,
-                    expires: user.presentExpires
-                });
-            }
-
-            removeUser(userId) {
-                const user = state.users.get(userId);
-                if (!user) return;
-
-                // Remove speech bubble
-                if (this.activeBubbles.has(userId)) {
-                    const b = this.activeBubbles.get(userId);
-                    b.element.classList.remove('visible');
-                    setTimeout(() => b.element.parentNode?.removeChild(b.element), 300);
-                    this.activeBubbles.delete(userId);
-                }
-                if (this.currentSpeakerId === userId) this.currentSpeakerId = null;
-
-                // Remove Three.js group + dispose GPU resources
-                if (user.mesh) {
-                    this.scene.remove(user.mesh);
-                    user.mesh.traverse(obj => {
-                        obj.geometry?.dispose();
-                        if (obj.material) {
-                            if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
-                            else obj.material.dispose();
-                        }
-                    });
-                }
+                this.activeBubbles.set(userId, { element: bubble, user, expires: Date.now() + 6000 });
             }
 
             animate() {
                 requestAnimationFrame(() => this.animate());
-                
-                if (!this.isActive || state.currentMode !== 'nexus') {
-                    return;
-                }
+                if (!this.isActive) return;
 
                 const deltaTime = Math.min(this.clock.getDelta(), 0.1);
+                const time = this.clock.elapsedTime;
                 const timeScale = deltaTime * 60;
                 const now = Date.now();
-                const time = this.clock.getElapsedTime();
-                
-                this.camera.updateMatrixWorld();
 
                 if (this.introActive) {
                     this.camera.position.lerp(this.introTargetPos, 0.02);
                     if (this.camera.position.distanceTo(this.introTargetPos) < 5) this.introActive = false;
                 }
 
-                const chatAge = Date.now() - (this.lastChatTime || 0);
+                const chatAge = now - (this.lastChatTime || 0);
                 const chatBoost = chatAge < 1400 ? Math.sin((chatAge / 1400) * Math.PI) : 0;
                 if (this.dust) this.dust.rotation.y = time * (0.015 + chatBoost * 0.06);
                 if (this.nexusCore) {
                     this.nexusCore.rotation.y -= deltaTime * 0.2;
                     this.nexusCore.rotation.x -= deltaTime * 0.1;
                 }
-
-                // Slowly counter-rotate the starfield for a drifting cosmos feel
                 if (this.stars) this.stars.rotation.y = time * 0.004;
 
                 state.users.forEach((user) => {
-                    // Advance shader time uniform every frame
                     user.clusterUniforms.time.value = time;
 
-                    // Chat particle reaction — size burst via shader baseSize uniform
                     if (user.chatReact) {
-                        const elapsed = Date.now() - user.chatReact.startTime;
+                        const elapsed = now - user.chatReact.startTime;
                         const progress = elapsed / user.chatReact.duration;
                         if (progress >= 1) {
                             user.chatReact = null;
                             user.clusterUniforms.baseSize.value = user.baseParticleSize;
-                            user.clusterUniforms.opacity.value  = 0.8;
+                            user.clusterUniforms.opacity.value = 0.8;
                         } else {
-                            // Sharp burst then decay — sin envelope
                             const burst = Math.sin(progress * Math.PI) * (1 - progress * 0.4);
                             user.clusterUniforms.baseSize.value = user.baseParticleSize * (1 + burst * 3.0);
-                            user.clusterUniforms.opacity.value  = Math.min(1.0, 0.8 + burst * 0.4);
+                            user.clusterUniforms.opacity.value = Math.min(1.0, 0.8 + burst * 0.4);
                         }
                     }
 
                     const chatReactBurst = user.chatReact
-                        ? Math.sin(((Date.now() - user.chatReact.startTime) / user.chatReact.duration) * Math.PI) * 0.5
-                        : 0;
+                        ? Math.sin(((now - user.chatReact.startTime) / user.chatReact.duration) * Math.PI) * 0.5 : 0;
                     const breathScale = (1 + Math.sin(time * 2 + user.phase) * 0.15) * (1 + chatReactBurst);
                     user.mesh.scale.set(breathScale, breathScale, breathScale);
 
@@ -2108,15 +812,11 @@
                     user.mesh.children[0].rotation.y += deltaTime * 0.8 * reactSpin;
                     user.mesh.children[0].rotation.z += deltaTime * 0.4 * reactSpin;
 
-                    let currentTarget;
-                    let maxSpeed = user.baseMaxSpeed;
-                    let maxForce = user.baseMaxForce;
-
+                    let currentTarget, maxSpeed = user.baseMaxSpeed, maxForce = user.baseMaxForce;
                     if (user.presentExpires && now < user.presentExpires) {
-                        const offset = new THREE.Vector3(0, -10, -140); 
+                        const offset = new THREE.Vector3(0, -10, -140);
                         currentTarget = offset.applyMatrix4(this.camera.matrixWorld);
-                        maxSpeed = 5.0; 
-                        maxForce = 0.2;
+                        maxSpeed = 5.0; maxForce = 0.2;
                         const dist = user.mesh.position.distanceTo(currentTarget);
                         if (dist < 80) maxSpeed = Math.max(0.2, maxSpeed * (dist / 80));
                     } else {
@@ -2128,47 +828,37 @@
                     }
 
                     const desired = currentTarget.clone().sub(user.mesh.position);
-                    const distToTarget = desired.length();
-
-                    if (distToTarget > 0.5) {
+                    if (desired.length() > 0.5) {
                         desired.normalize().multiplyScalar(maxSpeed);
                         const steer = desired.sub(user.velocity);
                         steer.clampLength(0, maxForce * timeScale);
                         user.velocity.add(steer);
                     }
-
                     user.velocity.multiplyScalar(0.96);
-                    const velOffset = user.velocity.clone().multiplyScalar(timeScale);
-                    user.mesh.position.add(velOffset);
+                    user.mesh.position.add(user.velocity.clone().multiplyScalar(timeScale));
 
                     if (user.velocity.lengthSq() > 0.01) {
                         const lookTarget = user.mesh.position.clone().add(user.velocity);
                         const movementMatrix = new THREE.Matrix4().lookAt(user.mesh.position, lookTarget, this.camera.up);
-                        const targetQuat = new THREE.Quaternion().setFromRotationMatrix(movementMatrix);
-                        user.mesh.quaternion.slerp(targetQuat, 0.08);
+                        user.mesh.quaternion.slerp(new THREE.Quaternion().setFromRotationMatrix(movementMatrix), 0.08);
                     }
                 });
 
                 this.activeBubbles.forEach((bubble, id) => {
                     if (now > bubble.expires) {
                         bubble.element.classList.remove('visible');
-                        setTimeout(() => { 
-                            if (bubble.element.parentNode) bubble.element.parentNode.removeChild(bubble.element); 
-                        }, 300);
+                        setTimeout(() => bubble.element.parentNode?.removeChild(bubble.element), 300);
                         this.activeBubbles.delete(id);
-                        if(this.currentSpeakerId === id) this.currentSpeakerId = null;
+                        if (this.currentSpeakerId === id) this.currentSpeakerId = null;
                     } else {
                         const vector = bubble.user.mesh.position.clone();
                         vector.project(this.camera);
-                        
                         if (vector.z > 1) {
                             bubble.element.style.display = 'none';
                         } else {
                             bubble.element.style.display = 'block';
-                            const x = (vector.x * 0.5 + 0.5) * this.container.clientWidth;
-                            const y = (-(vector.y * 0.5) + 0.5) * this.container.clientHeight;
-                            bubble.element.style.left = `${x}px`;
-                            bubble.element.style.top = `${y}px`;
+                            bubble.element.style.left = `${(vector.x * 0.5 + 0.5) * this.container.clientWidth}px`;
+                            bubble.element.style.top  = `${(-(vector.y * 0.5) + 0.5) * this.container.clientHeight}px`;
                         }
                     }
                 });
@@ -2178,208 +868,17 @@
             }
         }
 
-        // ==================== STANDARD VIEW CONTROLLER ====================
-        class StandardViewController {
-            constructor() {
-                this.userListEl = document.getElementById('standardUserList');
-                this.messagesEl = document.getElementById('standardChatMessages');
-                this.countEl = document.getElementById('standardUserCount');
-                
-                state.subscribe((event, data) => {
-                    if (event === 'userAdded')   this.renderUser(data);
-                    if (event === 'messageAdded') this.renderMessage(data);
-                    if (event === 'userRemoved') this.removeUserEl(data.id);
-                });
-
-                this.setupInput();
-            }
-
-            setupInput() {
-                const form  = document.getElementById('standardChatForm');
-                const input = document.getElementById('standardChatInput');
-
-                // Typing indicator: debounce stop event at 1.5 s of inactivity
-                let typingTimer = null;
-                input.addEventListener('input', () => {
-                    window.pusherManager?.sendTyping(true);
-                    clearTimeout(typingTimer);
-                    typingTimer = setTimeout(() => window.pusherManager?.sendTyping(false), 1500);
-                });
-
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const text = input.value.trim();
-                    if (!text) return;
-
-                    clearTimeout(typingTimer);
-                    window.pusherManager?.sendTyping(false);
-
-                    const localUser = state.users.get(state.localUserId);
-                    const msg = {
-                        id:       Date.now(),
-                        username: localUser?.username ?? 'You',
-                        text,
-                        type:  'local',
-                        color: localUser?.color ?? '#00e5ff',
-                        time:  new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    };
-
-                    state.addMessage(msg);
-                    input.value = '';
-
-                    if (window.nexusApp && state.localUserId) {
-                        window.nexusApp.triggerChat(state.localUserId, text);
-                    }
-                    window.pusherManager?.sendMessage(text);
-                });
-            }
-
-            renderUser(user) {
-                const isLocal = user.id === state.localUserId;
-                const el = document.createElement('div');
-                el.className = `user-item ${isLocal ? 'active' : ''}`;
-                el.id = `user-${user.id}`;
-                el.innerHTML = `
-                    <div class="user-avatar" style="color: ${user.color}; border-color: ${user.color}">
-                        ${user.username[0]}
-                        ${!isLocal ? '<div class="user-status"></div>' : ''}
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name" style="color: ${user.color}">${user.username}</div>
-                        <div class="user-role">${isLocal ? 'Operator' : 'Entity'}</div>
-                    </div>
-                `;
-                this.userListEl.appendChild(el);
-                this.countEl.textContent = `${state.users.size} Linked`;
-            }
-
-            removeUserEl(userId) {
-                document.getElementById(`user-${userId}`)?.remove();
-                this.countEl.textContent = `${state.users.size} Linked`;
-            }
-
-            renderMessage(msg) {
-                if (msg.type === 'system') {
-                    const div = document.createElement('div');
-                    div.className = 'message system';
-                    div.style.cssText = 'opacity: 1; transform: none; text-align: center; padding: 20px; color: #556677;';
-                    div.textContent = msg.text;
-                    this.messagesEl.appendChild(div);
-                } else {
-                    const item = document.createElement('div');
-                    item.className = 'news-item';
-                    item.innerHTML = `
-                        <div class="news-avatar" style="color: ${msg.color}; background: ${msg.color}20; border: 1px solid ${msg.color}40;">
-                            ${msg.username[0]}
-                        </div>
-                        <div class="news-content">
-                            <div class="news-header">
-                                <span class="news-author" style="color: ${msg.color}">${msg.username}</span>
-                                <span class="news-time">${msg.time || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                            </div>
-                            <div class="news-text">${msg.text}</div>
-                        </div>
-                    `;
-                    this.messagesEl.appendChild(item);
-                }
-                this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
-            }
-        }
-
-        // ==================== OUTER- NEWS CONTROLLER ====================
-        class OuterNewsController {
-            constructor() {
-                this.feedEl = document.getElementById('outerFeed');
-                this.navItems = document.querySelectorAll('#outer-news-view .nav-item');
-                this.currentCategory = '';
-                this.setupNavigation();
-                this.fetchNews('');
-            }
-
-            setupNavigation() {
-                this.navItems.forEach(item => {
-                    item.addEventListener('click', () => {
-                        this.navItems.forEach(n => n.classList.remove('active'));
-                        item.classList.add('active');
-                        this.currentCategory = item.dataset.category;
-                        this.fetchNews(this.currentCategory);
-                    });
-                });
-            }
-
-            async fetchNews(category) {
-                this.feedEl.innerHTML = '<div class="outer-feed-loading">Fetching live feed...</div>';
-                try {
-                    const url = '/api/news' + (category ? `?category=${category}` : '');
-                    const res = await fetch(url);
-                    const data = await res.json();
-
-                    if (!res.ok || data.status !== 'ok') {
-                        throw new Error(data.message || data.error || 'Feed unavailable');
-                    }
-
-                    this.feedEl.innerHTML = '';
-                    const articles = (data.articles || []).filter(a => a.title && a.title !== '[Removed]');
-                    if (articles.length === 0) {
-                        this.feedEl.innerHTML = '<div class="outer-feed-error"><strong>No articles found</strong>Try a different category.</div>';
-                        return;
-                    }
-                    articles.forEach(article => this.renderCard(article, category));
-                } catch (err) {
-                    this.feedEl.innerHTML = `<div class="outer-feed-error"><strong>Feed Unavailable</strong>${err.message}</div>`;
-                }
-            }
-
-            renderCard(article, category) {
-                const card = document.createElement('div');
-                card.className = 'outer-card';
-
-                const source = article.source?.name || 'Unknown Source';
-                const time = article.publishedAt
-                    ? new Date(article.publishedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                    : '';
-                const desc = article.description || '';
-                const cat = category || 'top stories';
-
-                card.innerHTML = `
-                    ${article.urlToImage
-                        ? `<img class="card-image" src="${article.urlToImage}" alt="" loading="lazy" onerror="this.style.display='none'">`
-                        : `<div class="card-image-placeholder">◈</div>`
-                    }
-                    <div class="card-body">
-                        <div class="card-meta">
-                            <div class="card-source">${source}</div>
-                            <div class="card-timestamp">${time}</div>
-                        </div>
-                        <div class="card-headline">${article.title}</div>
-                        ${desc ? `<div class="card-excerpt">${desc}</div>` : ''}
-                        <div class="card-footer">
-                            <span class="card-category">${cat}</span>
-                            ${article.url ? `<a class="card-read-link" href="${article.url}" target="_blank" rel="noopener">Read →</a>` : ''}
-                        </div>
-                    </div>
-                `;
-
-                this.feedEl.appendChild(card);
-            }
-        }
-
         // ==================== TOAST MANAGER ====================
         class ToastManager {
             constructor() {
                 this.container = document.getElementById('nexus-toasts');
                 this.icons = { success: '◈', warning: '▲', error: '✕', info: '◉' };
             }
-
             show(message, type = 'info', duration = 4000) {
                 const toast = document.createElement('div');
                 toast.className = `nexus-toast toast-${type}`;
-                toast.innerHTML = `
-                    <span class="toast-icon">${this.icons[type] ?? '◉'}</span>
-                    <span class="toast-message">${message}</span>
-                `;
+                toast.innerHTML = `<span class="toast-icon">${this.icons[type] ?? '◉'}</span><span class="toast-message">${message}</span>`;
                 this.container.appendChild(toast);
-
                 const dismiss = () => {
                     if (toast.classList.contains('toast-exit')) return;
                     toast.classList.add('toast-exit');
@@ -2394,36 +893,22 @@
         class PusherManager {
             constructor(userData) {
                 this.userData = userData;
-                this.pusher   = null;
-                this.channel  = null;
-                this.jwt      = null;
+                this.pusher = null; this.channel = null; this.jwt = null;
                 this._init();
             }
-
             async _init() {
                 try {
                     const config = await fetch('/api/config').then(r => r.json());
                     if (!config.pusherKey) {
-                        console.info('[Pusher] No key configured — local mode only.');
                         window.toastManager?.show('Running in local mode — no realtime sync', 'warning');
                         return;
                     }
-
-                    // Obtain JWT before opening realtime channel
                     await this._fetchJWT();
-
                     this.pusher = new window.Pusher(config.pusherKey, {
-                        cluster:      config.pusherCluster,
+                        cluster: config.pusherCluster,
                         authEndpoint: '/api/pusher/auth',
-                        auth: {
-                            params: {
-                                user_id:    this.userData.id,
-                                user_name:  this.userData.username,
-                                user_color: this.userData.color,
-                            },
-                        },
+                        auth: { params: { user_id: this.userData.id, user_name: this.userData.username, user_color: this.userData.color } },
                     });
-
                     this.pusher.connection.bind('connected', () => {
                         state.connectionChanged('connected');
                         window.toastManager?.show('Nexus link established', 'success');
@@ -2432,36 +917,23 @@
                         state.connectionChanged('disconnected');
                         window.toastManager?.show('Nexus link severed', 'error');
                     });
-                    this.pusher.connection.bind('error', () => {
-                        window.toastManager?.show('Realtime connection error', 'error');
-                    });
+                    this.pusher.connection.bind('error', () => window.toastManager?.show('Realtime connection error', 'error'));
 
                     this.channel = this.pusher.subscribe('presence-chat-room');
-
-                    // ── Presence: sync existing members on subscribe ──
                     this.channel.bind('pusher:subscription_succeeded', (members) => {
                         members.each(member => {
-                            if (member.id === this.userData.id) return; // skip self
-                            const u = { id: member.id, username: member.info.name, color: member.info.color };
-                            window.nexusApp?.addUser(u);
+                            if (member.id === this.userData.id) return;
+                            window.nexusApp?.addUser({ id: member.id, username: member.info.name, color: member.info.color });
                             window.toastManager?.show(`${member.info.name} is online`, 'info');
                         });
                         userCountEl.textContent = `${state.users.size} Entities Linked`;
                     });
-
-                    this.channel.bind('pusher:subscription_error', () => {
-                        window.toastManager?.show('Presence channel auth failed', 'error');
-                    });
-
-                    // ── Presence: new user joins ──
+                    this.channel.bind('pusher:subscription_error', () => window.toastManager?.show('Presence channel auth failed', 'error'));
                     this.channel.bind('pusher:member_added', (member) => {
-                        const u = { id: member.id, username: member.info.name, color: member.info.color };
-                        window.nexusApp?.addUser(u);
+                        window.nexusApp?.addUser({ id: member.id, username: member.info.name, color: member.info.color });
                         window.toastManager?.show(`${member.info.name} entered the Nexus`, 'success');
                         userCountEl.textContent = `${state.users.size} Entities Linked`;
                     });
-
-                    // ── Presence: user leaves ──
                     this.channel.bind('pusher:member_removed', (member) => {
                         const name = member.info?.name ?? 'Unknown';
                         window.nexusApp?.removeUser(member.id);
@@ -2469,83 +941,53 @@
                         window.toastManager?.show(`${name} left the Nexus`, 'warning');
                         userCountEl.textContent = `${state.users.size} Entities Linked`;
                     });
-
-                    // ── Realtime chat ──
                     this.channel.bind('chat-message', (data) => {
-                        if (data.user?.id === this.userData.id) return; // already shown locally
+                        if (data.user?.id === this.userData.id) return;
                         appendChatMessage(data.user.username, data.text, 'other', data.user.color);
                         window.nexusApp?.triggerChat(data.user.id, data.text);
                     });
-
-                    // ── Typing indicators ──
                     this.channel.bind('typing', (data) => {
                         if (data.user_id === this.userData.id) return;
-                        // Surface as a brief toast — unobtrusive
                         window.toastManager?.show(`${data.username ?? 'Someone'} is typing…`, 'info', 2000);
                     });
-
                 } catch (err) {
                     console.error('[Pusher] init error:', err);
                     window.toastManager?.show('Realtime init failed — local mode', 'error');
                 }
             }
-
             async _fetchJWT() {
                 try {
-                    const res  = await fetch('/api/auth/token', {
-                        method:  'POST',
+                    const res = await fetch('/api/auth/token', {
+                        method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body:    JSON.stringify({
-                            user_id:    this.userData.id,
-                            user_name:  this.userData.username,
-                            user_color: this.userData.color,
-                        }),
+                        body: JSON.stringify({ user_id: this.userData.id, user_name: this.userData.username, user_color: this.userData.color }),
                     });
                     const data = await res.json();
-                    if (data.token) {
-                        this.jwt = data.token;
-                    }
-                } catch (err) {
-                    console.warn('[Auth] JWT fetch failed:', err);
-                }
+                    if (data.token) this.jwt = data.token;
+                } catch (err) { console.warn('[Auth] JWT fetch failed:', err); }
             }
-
             async sendMessage(text) {
                 if (!this.jwt || !this.channel) return false;
                 try {
                     const res = await fetch('/api/chat/message', {
-                        method:  'POST',
-                        headers: {
-                            'Content-Type':  'application/json',
-                            'Authorization': `Bearer ${this.jwt}`,
-                        },
-                        body: JSON.stringify({
-                            user: this.userData,
-                            text,
-                            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        }),
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.jwt}` },
+                        body: JSON.stringify({ user: this.userData, text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }),
                     });
                     return res.ok;
-                } catch {
-                    return false;
-                }
+                } catch { return false; }
             }
-
             async sendTyping(isTyping) {
                 if (!this.jwt || !this.channel) return;
-                const endpoint = isTyping ? '/api/chat/typing' : '/api/chat/typing-stop';
-                fetch(endpoint, {
-                    method:  'POST',
-                    headers: {
-                        'Content-Type':  'application/json',
-                        'Authorization': `Bearer ${this.jwt}`,
-                    },
+                fetch(isTyping ? '/api/chat/typing' : '/api/chat/typing-stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.jwt}` },
                     body: JSON.stringify({ user_id: this.userData.id, username: this.userData.username }),
-                }).catch(() => {}); // fire-and-forget
+                }).catch(() => {});
             }
         }
 
-        // ==================== SHARED CHAT PANEL (3D Mode) ====================
+        // ==================== CHAT PANEL ====================
         const chatMessages = document.getElementById('chatMessages');
         const chatForm = document.getElementById('chatForm');
         const chatInput = document.getElementById('chatInput');
@@ -2555,20 +997,15 @@
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${type}`;
             if (type !== 'system') {
-                msgDiv.innerHTML = `<div class="msg-author" style="color:${colorHex}; text-shadow: 0 0 10px ${colorHex}">${username}</div>${text}`;
+                msgDiv.innerHTML = `<div class="msg-author" style="color:${colorHex};text-shadow:0 0 10px ${colorHex}">${username}</div>${text}`;
             } else {
                 msgDiv.textContent = text;
             }
             chatMessages.appendChild(msgDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            state.addMessage({
-                username, text, type, color: colorHex,
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            });
+            state.addMessage({ username, text, type, color: colorHex, time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) });
         }
 
-        // Typing indicators on the 3D-mode chat panel
         let _nexusChatTyping = null;
         chatInput.addEventListener('input', () => {
             window.pusherManager?.sendTyping(true);
@@ -2580,116 +1017,32 @@
             e.preventDefault();
             const text = chatInput.value.trim();
             if (!text) return;
-
             clearTimeout(_nexusChatTyping);
             window.pusherManager?.sendTyping(false);
-
             const localUser = state.users.get(state.localUserId);
-            const color    = localUser?.color    ?? '#00e5ff';
-            const username = localUser?.username ?? 'You';
-
-            appendChatMessage(username, text, 'local', color);
+            appendChatMessage(localUser?.username ?? 'You', text, 'local', localUser?.color ?? '#00e5ff');
             chatInput.value = '';
-
-            if (window.nexusApp && state.localUserId) {
-                window.nexusApp.triggerChat(state.localUserId, text);
-            }
+            if (window.nexusApp && state.localUserId) window.nexusApp.triggerChat(state.localUserId, text);
             window.pusherManager?.sendMessage(text);
         });
 
-        setTimeout(() => {
-            appendChatMessage('System', 'Connection established. Welcome to the Nexus.', 'system');
-        }, 1800);
+        setTimeout(() => appendChatMessage('System', 'Connection established. Welcome to the Nexus.', 'system'), 1800);
 
-        // ==================== VIEW NAVIGATION ====================
-        const viewToggle = document.getElementById('viewToggle');
-        const outerNewsBtn = document.getElementById('outerNewsBtn');
-        const backFromOuter = document.getElementById('backFromOuter');
-        const nexusView = document.getElementById('nexus-view');
-        const standardView = document.getElementById('standard-view');
-        const outerNewsView = document.getElementById('outer-news-view');
-        const modeIndicator = document.getElementById('mode-indicator');
-        const dimensionStatus = document.getElementById('dimensionStatus');
-        const navButtons = document.getElementById('navButtons');
-
-        function showNexus() {
-            state.setMode('nexus');
-            nexusView.classList.remove('hidden');
-            standardView.classList.remove('active');
-            outerNewsView.classList.remove('active');
-            viewToggle.textContent = 'Standard View';
-            viewToggle.classList.remove('secondary');
-            modeIndicator.textContent = 'IMMERSIVE INSTANCE';
-            dimensionStatus.textContent = '3D-Active';
-            window.nexusApp.isActive = true;
-            window.nexusApp.clock.start();
-            
-            // Show only standard toggle in nav
-            navButtons.innerHTML = '<button class="nav-btn" id="viewToggle">Standard View</button>';
-            document.getElementById('viewToggle').addEventListener('click', showStandard);
-        }
-
-        function showStandard() {
-            state.setMode('standard');
-            nexusView.classList.add('hidden');
-            standardView.classList.add('active');
-            outerNewsView.classList.remove('active');
-            modeIndicator.textContent = 'STANDARD INTERFACE';
-            dimensionStatus.textContent = '2D-Mode';
-            window.nexusApp.isActive = false;
-            
-            // Show both toggles
-            navButtons.innerHTML = `
-                <button class="nav-btn" id="viewToggle">Enter 3D Nexus</button>
-                <button class="nav-btn secondary" id="outerNewsNavBtn">OUTER- NEWS</button>
-            `;
-            document.getElementById('viewToggle').addEventListener('click', showNexus);
-            document.getElementById('outerNewsNavBtn').addEventListener('click', showOuterNews);
-        }
-
-        function showOuterNews() {
-            state.setMode('outer-news');
-            nexusView.classList.add('hidden');
-            standardView.classList.remove('active');
-            outerNewsView.classList.add('active');
-            modeIndicator.textContent = 'EXTERNAL INTELLIGENCE';
-            dimensionStatus.textContent = 'Feed-Active';
-            window.nexusApp.isActive = false;
-            
-            // Only show back options
-            navButtons.innerHTML = '<button class="nav-btn" id="backToStandard">← Back to Standard</button>';
-            document.getElementById('backToStandard').addEventListener('click', showStandard);
-        }
-
-        // Initial setup
-        viewToggle.addEventListener('click', showStandard);
-        outerNewsBtn.addEventListener('click', showOuterNews);
-        backFromOuter.addEventListener('click', showStandard);
-
-        // Start Auth
-        new AuthManager();
-
-        // ==================== CYBERPUNK BOOT SEQUENCE ====================
+        // ==================== BOOT SEQUENCE ====================
         (function initBootSequence() {
             const bootLines = [
-                "INIT KERNEL... OK",
-                "MOUNTING NEURAL DRIVES... OK",
+                "INIT KERNEL... OK", "MOUNTING NEURAL DRIVES... OK",
                 "CHECKING FIREWALL STATUS... WARNING: BREACH DETECTED",
                 "REROUTING MAINFRAME POWER...",
                 "DECRYPTING PROTOCOLS: [████████░░]",
                 "DECRYPTING PROTOCOLS: [██████████] DONE",
                 "ESTABLISHING SECURE HANDSHAKE...",
-                "ALLOCATING MEMORY BLOCKS...",
-                "SYSTEM READY."
+                "ALLOCATING MEMORY BLOCKS...", "SYSTEM READY."
             ];
-
-            const bootSeq   = document.getElementById('authBootSeq');
-            const morph     = document.getElementById('authMorph');
-            const card      = document.getElementById('authCard');
-
-            // Only run if the overlay is visible (not already authed)
+            const bootSeq = document.getElementById('authBootSeq');
+            const morph   = document.getElementById('authMorph');
+            const card    = document.getElementById('authCard');
             if (!bootSeq || !morph || !card) return;
-
             bootLines.forEach((line, i) => {
                 setTimeout(() => {
                     const p = document.createElement('div');
@@ -2698,16 +1051,14 @@
                     bootSeq.appendChild(p);
                 }, i * 200);
             });
-
             setTimeout(() => { bootSeq.classList.add('auth-boot-glitch'); }, 2200);
-            setTimeout(() => {
-                bootSeq.style.opacity = '0';
-                morph.className = 'auth-morph state-dot';
-            }, 2600);
+            setTimeout(() => { bootSeq.style.opacity = '0'; morph.className = 'auth-morph state-dot'; }, 2600);
             setTimeout(() => { morph.className = 'auth-morph state-line'; }, 3000);
             setTimeout(() => { morph.className = 'auth-morph state-box'; }, 3600);
             setTimeout(() => { card.classList.add('content-visible'); }, 4200);
         })();
+
+        new AuthManager();
     </script>
 </body>
 </html>
