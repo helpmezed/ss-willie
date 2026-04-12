@@ -74,22 +74,8 @@
             50% { opacity: 0.3; }
         }
 
-        .nav-section {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .nav-title {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: #556677;
-            font-weight: 700;
-        }
-
         .nav-item {
-            padding: 14px 18px;
+            padding: 12px 16px;
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s;
@@ -171,27 +157,33 @@
         .outer-feed {
             flex: 1;
             overflow-y: auto;
-            padding: 30px 40px;
+            padding: 30px;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-auto-rows: minmax(280px, auto);
+            gap: 24px;
+            grid-auto-flow: dense;
             align-content: start;
         }
-
-        .outer-feed::-webkit-scrollbar { width: 8px; }
-        .outer-feed::-webkit-scrollbar-track { background: transparent; }
-        .outer-feed::-webkit-scrollbar-thumb { background: rgba(255, 42, 109, 0.3); border-radius: 4px; }
 
         .outer-card {
             background: rgba(15, 20, 30, 0.7);
             border: 1px solid rgba(255, 42, 109, 0.15);
-            border-radius: 16px;
+            border-radius: 24px;
             overflow: hidden;
-            transition: all 0.3s;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s;
             animation: cardEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             flex-direction: column;
             backdrop-filter: blur(12px);
+            cursor: pointer;
+        }
+
+        /* Bento Variants */
+        .outer-card.featured { grid-column: span 1; grid-row: span 2; }
+        @media (min-width: 1400px) {
+            .outer-card.featured { grid-column: span 2; grid-row: span 2; }
+            .outer-card.wide { grid-column: span 2; }
         }
 
         @keyframes cardEnter {
@@ -200,35 +192,40 @@
         }
 
         .outer-card:hover {
-            border-color: rgba(255, 42, 109, 0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(255, 42, 109, 0.1);
+            transform: translateY(-6px) scale(1.01);
+            border-color: var(--alert);
+            z-index: 10;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px rgba(255, 42, 109, 0.1);
         }
+
+        .card-image-box {
+            position: relative;
+            width: 100%;
+            height: 160px;
+            flex-shrink: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        .featured .card-image-box { height: 320px; }
+        .wide .card-image-box { height: 200px; }
 
         .card-image {
             width: 100%;
-            height: 200px;
+            height: 100%;
             object-fit: cover;
-            display: block;
-            background: rgba(255, 42, 109, 0.05);
+            opacity: 0.8;
+            transition: 0.6s ease;
         }
+        .outer-card:hover .card-image { opacity: 1; transform: scale(1.05); }
 
-        .card-image-placeholder {
-            width: 100%;
-            height: 140px;
-            background: linear-gradient(135deg, rgba(255,42,109,0.08), rgba(0,0,0,0.2));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            color: rgba(255,42,109,0.3);
-        }
+        .card-image-placeholder { width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; font-size: 32px; color: rgba(255,42,109,0.2); }
 
         .card-body {
-            padding: 22px 24px 18px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
             flex: 1;
+            background: linear-gradient(to bottom, rgba(20, 25, 35, 1), rgba(10, 12, 18, 1));
         }
 
         .card-meta {
@@ -301,6 +298,135 @@
         .outer-feed-error { padding: 40px; text-align: center; color: #556677; font-size: 13px; line-height: 1.8; }
         .outer-feed-error strong { color: var(--alert); display: block; margin-bottom: 8px; font-size: 15px; }
 
+        /* ==================== NAV SECTION ==================== */
+        .nav-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .nav-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #556677;
+            font-weight: 700;
+        }
+
+        /* ==================== FEED CONTAINER ==================== */
+        .outer-feed-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            pointer-events: auto;
+        }
+
+        /* ==================== AMBIENT REVEAL ==================== */
+        #ambient-reveal {
+            position: fixed;
+            inset: 0;
+            z-index: 5000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        #ambient-reveal.is-active { opacity: 1; }
+
+        .scanline {
+            position: absolute;
+            top: -2%;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(to right, transparent, var(--alert), transparent);
+            box-shadow: 0 0 40px 10px rgba(255, 42, 109, 0.5);
+        }
+
+        .scanline.animate {
+            animation: scanDown 1.5s ease-in-out forwards;
+        }
+
+        @keyframes scanDown {
+            from { top: -2%; }
+            to   { top: 102%; }
+        }
+
+        /* ==================== LAYOUT REVEAL ==================== */
+        #mainLayout {
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        #mainLayout.is-synced { opacity: 1; }
+
+        /* ==================== DETAIL OVERLAY ==================== */
+        #news-detail-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 4000;
+            background: rgba(1, 2, 5, 0.95);
+            backdrop-filter: blur(25px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s, visibility 0.4s;
+        }
+
+        #news-detail-overlay.is-active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .detail-window {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            background: rgba(10, 12, 20, 0.98);
+            border: 1px solid var(--alert);
+            border-radius: 32px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding: 40px;
+            transform: scale(0.95);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #news-detail-overlay.is-active .detail-window {
+            transform: scale(1);
+        }
+
+        .detail-window::-webkit-scrollbar { width: 6px; }
+        .detail-window::-webkit-scrollbar-track { background: transparent; }
+        .detail-window::-webkit-scrollbar-thumb { background: rgba(255,42,109,0.3); border-radius: 3px; }
+
+        .close-btn {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: rgba(255, 42, 109, 0.1);
+            border: 1px solid rgba(255, 42, 109, 0.3);
+            color: var(--alert);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 42, 109, 0.2);
+            border-color: var(--alert);
+        }
+
         @media (max-width: 1024px) {
             .nav-buttons { right: 20px; top: 20px; }
             .outer-news-nav { width: 100%; height: auto; }
@@ -312,6 +438,17 @@
 
     <!-- Toast notifications -->
     <div id="nexus-toasts"></div>
+
+    <div id="ambient-reveal">
+        <div class="scanline"></div>
+    </div>
+
+    <div id="news-detail-overlay">
+        <div class="detail-window">
+            <button class="close-btn" onclick="closeDetail()">EXIT [ESC]</button>
+            <div id="detailContent"></div>
+        </div>
+    </div>
 
     <!-- 3D BACKGROUND LAYER -->
     <div id="canvas-container"></div>
@@ -327,7 +464,7 @@
     </script>
 
     <!-- OUTER NEWS VIEW -->
-    <div class="outer-news-layout">
+    <div class="outer-news-layout" id="mainLayout">
         <nav class="outer-news-nav">
             <div class="outer-logo">OUTER-</div>
 
@@ -346,14 +483,18 @@
                 <div class="nav-item" data-category="sports"><span>◐</span> Sports</div>
             </div>
 
-            <div style="margin-top: auto;">
+            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px;">
+                <div style="padding: 16px; background: rgba(0,229,255,0.05); border: 1px solid rgba(0,229,255,0.2); border-radius: 16px;">
+                    <p style="font-size: 10px; color: #00e5ff; letter-spacing: 1px; margin: 0 0 5px;">OPERATOR_LINK</p>
+                    <div id="userNameDisplay" style="font-size: 14px; font-weight: 800;">GUEST_USER</div>
+                </div>
                 <a class="back-btn" href="standard.html">
                     <span>←</span> Return to Standard
                 </a>
             </div>
         </nav>
 
-        <main class="outer-news-main">
+        <main class="outer-feed-container">
             <header class="outer-header">
                 <div>
                     <div class="outer-title">OUTER- NEWS</div>
@@ -443,6 +584,9 @@
                 this.targetColor = new THREE.Color(0xff2a6d);
                 this.pulseStartTime = null;
                 this.clock = new THREE.Clock();
+
+                this.mouse = new THREE.Vector2(0, 0);
+                window.addEventListener('mousemove', (e) => this.onMouseMove(e));
                 this.init();
             }
 
@@ -494,6 +638,11 @@
                 this.animate();
             }
 
+            onMouseMove(event) {
+                this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            }
+
             updateTheme(category) {
                 const themes = {
                     '': 0xff2a6d,           // Top Stories (Alert Pink)
@@ -515,6 +664,11 @@
                 this.pMat.uniforms.time.value = time;
                 this.particles.rotation.y = time * 0.05;
 
+                // Subtle camera tilt based on mouse
+                this.camera.position.x += (this.mouse.x * 40 - this.camera.position.x) * 0.05;
+                this.camera.position.y += (-(this.mouse.y * 40 - 100) - this.camera.position.y) * 0.05;
+                this.camera.lookAt(0, 0, 0);
+
                 // Smooth color transition
                 this.pMat.uniforms.color.value.lerp(this.targetColor, 0.05);
 
@@ -533,6 +687,36 @@
                 this.renderer.render(this.scene, this.camera);
             }
         }
+
+        // ==================== DETAIL MODAL ====================
+        window.openDetail = (article) => {
+            const overlay = document.getElementById('news-detail-overlay');
+            const content = document.getElementById('detailContent');
+            content.innerHTML = `
+                <p style="color: var(--alert); font-weight: 800; letter-spacing: 4px; margin-bottom: 10px;" id="typewriter-tag">DECRYPTED_INTEL</p>
+                <h1 style="font-size: 36px; line-height: 1.1; margin-bottom: 20px;" id="typewriter-title">${article.title}</h1>
+                <p style="color: #64748b; font-size: 14px; margin-bottom: 30px;">SOURCE: ${article.source?.name} // RELAY: SECTOR_0${Math.floor(Math.random()*9)}</p>
+                <div style="font-size: 18px; line-height: 1.8; color: #cbd5e1;" id="typewriter-body"></div>
+                <div style="margin-top: 40px; padding: 25px; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid var(--border-glass);">
+                    <p style="font-size: 13px; color: #8899aa; margin-bottom: 15px;">Uplink established. You are viewing the decrypted summary of this broadcast.</p>
+                    <a href="${article.url}" target="_blank" rel="noopener noreferrer" style="color: var(--alert); text-decoration: none; font-weight: 700; font-size: 14px;">CONTINUE TO FULL SOURCE →</a>
+                </div>
+            `;
+            overlay.classList.add('is-active');
+
+            // Typewriter effect trigger for body content
+            const bodyEl = document.getElementById('typewriter-body');
+            const text = article.description || article.content || 'No detailed transmission available.';
+            let i = 0;
+            const interval = setInterval(() => {
+                bodyEl.textContent += text[i];
+                i++;
+                if (i >= text.length) clearInterval(interval);
+            }, 12);
+        };
+
+        window.closeDetail = () => document.getElementById('news-detail-overlay').classList.remove('is-active');
+        document.addEventListener('keydown', (e) => e.key === "Escape" && closeDetail());
 
         // ==================== AUTHENTICATION MANAGER ====================
         class AuthManager {
@@ -563,9 +747,23 @@
                 this.finishAuth(user);
             }
             finishAuth(user) {
-                this.overlay.classList.add('hidden');
+                if(this.overlay) this.overlay.classList.add('hidden');
+                document.getElementById('userNameDisplay').textContent = user.username.toUpperCase();
+                triggerAmbientReveal();
                 initApp(user);
             }
+        }
+
+        function triggerAmbientReveal() {
+            const layout = document.getElementById('mainLayout');
+            const reveal = document.getElementById('ambient-reveal');
+            const scanline = reveal.querySelector('.scanline');
+
+            reveal.classList.add('is-active');
+            scanline.classList.add('animate');
+
+            setTimeout(() => { layout.classList.add('is-synced'); }, 1000);
+            setTimeout(() => { reveal.classList.remove('is-active'); }, 3500);
         }
 
         // ==================== TOAST MANAGER ====================
@@ -628,26 +826,35 @@
                         this.feedEl.innerHTML = '<div class="outer-feed-error"><strong>No articles found</strong>Try a different category.</div>';
                         return;
                     }
-                    articles.forEach(article => this.renderCard(article, category));
+                    articles.forEach((article, index) => this.renderCard(article, category, index));
                 } catch (err) {
                     this.feedEl.innerHTML = `<div class="outer-feed-error"><strong>Feed Unavailable</strong>${err.message}</div>`;
                 }
             }
 
-            renderCard(article, category) {
+            renderCard(article, category, index) {
                 const card = document.createElement('div');
-                card.className = 'outer-card';
+                
+                // Bento grid logic
+                let variant = '';
+                if (index % 10 === 0 || index % 10 === 7) variant = 'featured';
+                else if (index % 10 === 3 || index % 10 === 8) variant = 'wide';
+                card.className = `outer-card ${variant}`;
+
                 const source = article.source?.name || 'Unknown Source';
                 const time = article.publishedAt
                     ? new Date(article.publishedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                     : '';
                 const desc = article.description || '';
                 const cat = category || 'top stories';
+
                 card.innerHTML = `
-                    ${article.urlToImage
+                    <div class="card-image-box">
+                    ${article.urlToImage 
                         ? `<img class="card-image" src="${article.urlToImage}" alt="" loading="lazy" onerror="this.style.display='none'">`
                         : `<div class="card-image-placeholder">◈</div>`
                     }
+                    </div>
                     <div class="card-body">
                         <div class="card-meta">
                             <div class="card-source">${source}</div>
@@ -657,10 +864,10 @@
                         ${desc ? `<div class="card-excerpt">${desc}</div>` : ''}
                         <div class="card-footer">
                             <span class="card-category">${cat}</span>
-                            ${article.url ? `<a class="card-read-link" href="${article.url}" target="_blank" rel="noopener">Read →</a>` : ''}
                         </div>
                     </div>
                 `;
+                card.onclick = () => openDetail(article);
                 this.feedEl.appendChild(card);
             }
         }
