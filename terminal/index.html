@@ -487,136 +487,176 @@
             50% { opacity: 0.3; }
         }
 
-        .outer-feed {
-            flex: 1;
-            overflow-y: auto;
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .outer-feed::-webkit-scrollbar { width: 8px; }
-        .outer-feed::-webkit-scrollbar-track { background: transparent; }
-        .outer-feed::-webkit-scrollbar-thumb { background: rgba(255, 42, 109, 0.3); border-radius: 4px; }
 
         .outer-card {
             background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 42, 109, 0.2);
-            border-radius: 20px;
-            padding: 30px;
-            position: relative;
+            border: 1px solid rgba(255, 42, 109, 0.15);
+            border-radius: 16px;
             overflow: hidden;
             transition: all 0.3s;
             animation: cardEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
         }
 
         @keyframes cardEnter {
-            from { opacity: 0; transform: translateY(30px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .outer-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--alert), transparent);
-            opacity: 0.5;
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .outer-card:hover {
             border-color: rgba(255, 42, 109, 0.4);
-            transform: translateY(-3px);
-            box-shadow: 0 20px 40px rgba(255, 42, 109, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(255, 42, 109, 0.1);
         }
 
-        .outer-card.priority-high {
-            border-color: rgba(255, 42, 109, 0.6);
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
             background: rgba(255, 42, 109, 0.05);
         }
 
-        .outer-card.priority-high::before {
-            opacity: 1;
-            animation: scan 2s linear infinite;
+        .card-image-placeholder {
+            width: 100%;
+            height: 140px;
+            background: linear-gradient(135deg, rgba(255,42,109,0.08), rgba(0,0,0,0.2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: rgba(255,42,109,0.3);
         }
 
-        @keyframes scan {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        .card-body {
+            padding: 22px 24px 18px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
         }
 
         .card-meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .card-source {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 2px;
             font-weight: 700;
-        }
-
-        .source-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: rgba(255, 42, 109, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
+            color: var(--alert);
         }
 
         .card-timestamp {
             font-family: monospace;
-            font-size: 12px;
+            font-size: 11px;
             color: #556677;
         }
 
         .card-headline {
-            font-size: 22px;
-            font-weight: 600;
+            font-size: 18px;
+            font-weight: 700;
             line-height: 1.4;
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            color: #fff;
         }
 
         .card-excerpt {
-            font-size: 15px;
+            font-size: 13px;
             line-height: 1.7;
-            color: #aabbcc;
-            margin-bottom: 20px;
+            color: #8899aa;
+            margin-bottom: 16px;
+            flex: 1;
         }
 
-        .card-tags {
+        .card-footer {
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
         }
 
-        .tag {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 11px;
+        .card-category {
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            color: #556677;
             font-weight: 600;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .tag.alert { background: rgba(255, 42, 109, 0.15); border-color: rgba(255, 42, 109, 0.3); color: var(--alert); }
-        .tag.tech { background: rgba(0, 229, 255, 0.15); border-color: rgba(0, 229, 255, 0.3); color: var(--primary); }
-        .tag.net { background: rgba(179, 0, 255, 0.15); border-color: rgba(179, 0, 255, 0.3); color: var(--secondary); }
+        .card-read-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--alert);
+            text-decoration: none;
+            padding: 6px 14px;
+            border: 1px solid rgba(255,42,109,0.3);
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .card-read-link:hover {
+            background: rgba(255,42,109,0.15);
+            border-color: var(--alert);
+        }
+
+        .outer-feed-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            gap: 16px;
+            color: #556677;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .outer-feed-loading::before {
+            content: '';
+            width: 32px;
+            height: 32px;
+            border: 2px solid rgba(255,42,109,0.2);
+            border-top-color: var(--alert);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .outer-feed-error {
+            padding: 40px;
+            text-align: center;
+            color: #556677;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .outer-feed-error strong { color: var(--alert); display: block; margin-bottom: 8px; font-size: 15px; }
+
+        .outer-feed {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+            align-content: start;
+        }
+
+        .outer-feed::-webkit-scrollbar { width: 8px; }
+        .outer-feed::-webkit-scrollbar-track { background: transparent; }
+        .outer-feed::-webkit-scrollbar-thumb { background: rgba(255, 42, 109, 0.3); border-radius: 4px; }
 
         /* ==================== SHARED COMPONENTS ==================== */
         #ambient-ui {
@@ -1258,31 +1298,33 @@
         <div class="outer-news-layout">
             <nav class="outer-news-nav">
                 <div class="outer-logo">OUTER-</div>
-                
-                <div class="nav-section">
-                    <div class="nav-title">Feeds</div>
-                    <div class="nav-item active" data-feed="all">
-                        <span>◈</span> All Broadcasts
-                        <span class="nav-badge">LIVE</span>
-                    </div>
-                    <div class="nav-item" data-feed="alerts">
-                        <span>▲</span> Priority Alerts
-                    </div>
-                    <div class="nav-item" data-feed="sector">
-                        <span>◎</span> Sector Reports
-                    </div>
-                    <div class="nav-item" data-feed="tech">
-                        <span>◉</span> Tech Intel
-                    </div>
-                </div>
 
                 <div class="nav-section">
-                    <div class="nav-title">Archives</div>
-                    <div class="nav-item" data-feed="archive">
-                        <span>◫</span> Last 24 Hours
+                    <div class="nav-title">Feeds</div>
+                    <div class="nav-item active" data-category="">
+                        <span>◈</span> Top Stories
+                        <span class="nav-badge">LIVE</span>
                     </div>
-                    <div class="nav-item" data-feed="week">
-                        <span>◫</span> Weekly Digest
+                    <div class="nav-item" data-category="general">
+                        <span>▲</span> General
+                    </div>
+                    <div class="nav-item" data-category="business">
+                        <span>◎</span> Business
+                    </div>
+                    <div class="nav-item" data-category="technology">
+                        <span>◉</span> Technology
+                    </div>
+                    <div class="nav-item" data-category="science">
+                        <span>◫</span> Science
+                    </div>
+                    <div class="nav-item" data-category="health">
+                        <span>♦</span> Health
+                    </div>
+                    <div class="nav-item" data-category="entertainment">
+                        <span>★</span> Entertainment
+                    </div>
+                    <div class="nav-item" data-category="sports">
+                        <span>◐</span> Sports
                     </div>
                 </div>
 
@@ -1858,14 +1900,10 @@
         class OuterNewsController {
             constructor() {
                 this.feedEl = document.getElementById('outerFeed');
-                this.navItems = document.querySelectorAll('.nav-item');
-                this.currentFilter = 'all';
-                
+                this.navItems = document.querySelectorAll('#outer-news-view .nav-item');
+                this.currentCategory = '';
                 this.setupNavigation();
-                this.generateInitialNews();
-                
-                // Auto-generate new news every 8 seconds
-                setInterval(() => this.generateNewsItem(), 8000);
+                this.fetchNews('');
             }
 
             setupNavigation() {
@@ -1873,145 +1911,66 @@
                     item.addEventListener('click', () => {
                         this.navItems.forEach(n => n.classList.remove('active'));
                         item.classList.add('active');
-                        this.currentFilter = item.dataset.feed;
-                        this.filterNews();
+                        this.currentCategory = item.dataset.category;
+                        this.fetchNews(this.currentCategory);
                     });
                 });
             }
 
-            generateInitialNews() {
-                const initialNews = [
-                    {
-                        source: 'SECTOR-7 RELAY',
-                        icon: '7',
-                        headline: 'Anomalous energy signatures detected in sub-level maintenance tunnels',
-                        excerpt: 'Maintenance crews report fluctuating electromagnetic fields consistent with unregistered server activity. Investigation ongoing. All personnel advised to avoid Sector 7-B until cleared.',
-                        priority: 'high',
-                        tags: ['alert', 'sector'],
-                        time: new Date(Date.now() - 120000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                    },
-                    {
-                        source: 'NETWATCH INTEL',
-                        icon: '◉',
-                        headline: 'New routing protocol deployed across backbone nodes',
-                        excerpt: 'Packet efficiency increased by 34% following midnight update. Some legacy terminals experiencing handshake delays. Recommend immediate firmware verification for pre-2049 hardware.',
-                        priority: 'normal',
-                        tags: ['tech', 'net'],
-                        time: new Date(Date.now() - 300000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                    },
-                    {
-                        source: 'PERIMETER SCAN',
-                        icon: '◎',
-                        headline: 'Unauthorized access attempt blocked at Gate 4',
-                        excerpt: 'Automated defense systems engaged. Trace signatures suggest automated probe rather than human operator. Perimeter integrity maintained. No further action required.',
-                        priority: 'normal',
-                        tags: ['alert'],
-                        time: new Date(Date.now() - 600000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            async fetchNews(category) {
+                this.feedEl.innerHTML = '<div class="outer-feed-loading">Fetching live feed...</div>';
+                try {
+                    const url = '/api/news' + (category ? `?category=${category}` : '');
+                    const res = await fetch(url);
+                    const data = await res.json();
+
+                    if (!res.ok || data.status !== 'ok') {
+                        throw new Error(data.message || data.error || 'Feed unavailable');
                     }
-                ];
 
-                initialNews.forEach(news => this.renderNewsCard(news));
-            }
-
-            generateNewsItem() {
-                const sources = [
-                    { name: 'SECTOR-7 RELAY', icon: '7' },
-                    { name: 'NETWATCH INTEL', icon: '◉' },
-                    { name: 'PERIMETER SCAN', icon: '◎' },
-                    { name: 'DATA HARVEST', icon: '◈' },
-                    { name: 'SIGNAL DECODE', icon: '△' }
-                ];
-
-                const headlines = [
-                    'Quantum encryption keys rotated successfully',
-                    'Atmospheric pressure variance detected in server farm',
-                    'Unauthorized drone signature spotted in outer rim',
-                    'Neural net training cycle completed ahead of schedule',
-                    'Backup generators online following grid fluctuation',
-                    'New entity detected in 3D nexus space',
-                    'Packet loss anomaly resolved in District 12',
-                    'Cryogenic cooling efficiency at 97% capacity'
-                ];
-
-                const excerpts = [
-                    'Routine maintenance completed without incident. All systems nominal.',
-                    'Anomalous readings suggest potential hardware degradation. Monitoring increased.',
-                    'External probe repelled by automated countermeasures. No breach detected.',
-                    'Performance metrics exceed projections for Q2 cycle. Optimization continuing.',
-                    'Personnel advised to report any unusual auditory phenomena in server corridors.',
-                    'Synchronization with primary nexus maintained. Latency within acceptable parameters.',
-                    'Emergency protocols stand ready. Civilian traffic rerouted through secondary nodes.'
-                ];
-
-                const source = sources[Math.floor(Math.random() * sources.length)];
-                const news = {
-                    source: source.name,
-                    icon: source.icon,
-                    headline: headlines[Math.floor(Math.random() * headlines.length)],
-                    excerpt: excerpts[Math.floor(Math.random() * excerpts.length)],
-                    priority: Math.random() > 0.7 ? 'high' : 'normal',
-                    tags: this.getRandomTags(),
-                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                };
-
-                this.renderNewsCard(news, true);
-            }
-
-            getRandomTags() {
-                const allTags = ['alert', 'tech', 'net', 'sector'];
-                const count = 1 + Math.floor(Math.random() * 2);
-                const shuffled = allTags.sort(() => 0.5 - Math.random());
-                return shuffled.slice(0, count);
-            }
-
-            renderNewsCard(news, prepend = false) {
-                const card = document.createElement('div');
-                card.className = `outer-card ${news.priority === 'high' ? 'priority-high' : ''}`;
-                card.dataset.tags = news.tags.join(' ');
-                
-                card.innerHTML = `
-                    <div class="card-meta">
-                        <div class="card-source">
-                            <div class="source-icon">${news.icon}</div>
-                            <span>${news.source}</span>
-                        </div>
-                        <div class="card-timestamp">${news.time}</div>
-                    </div>
-                    <div class="card-headline">${news.headline}</div>
-                    <div class="card-excerpt">${news.excerpt}</div>
-                    <div class="card-tags">
-                        ${news.tags.map(tag => `<span class="tag ${tag}">${tag}</span>`).join('')}
-                    </div>
-                `;
-
-                if (prepend && this.currentFilter === 'all' || this.matchesFilter(news.tags)) {
-                    card.style.animation = 'cardEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-                    this.feedEl.insertBefore(card, this.feedEl.firstChild);
-                    
-                    // Keep max 20 items
-                    if (this.feedEl.children.length > 20) {
-                        this.feedEl.removeChild(this.feedEl.lastChild);
+                    this.feedEl.innerHTML = '';
+                    const articles = (data.articles || []).filter(a => a.title && a.title !== '[Removed]');
+                    if (articles.length === 0) {
+                        this.feedEl.innerHTML = '<div class="outer-feed-error"><strong>No articles found</strong>Try a different category.</div>';
+                        return;
                     }
-                } else if (!prepend) {
-                    this.feedEl.appendChild(card);
+                    articles.forEach(article => this.renderCard(article, category));
+                } catch (err) {
+                    this.feedEl.innerHTML = `<div class="outer-feed-error"><strong>Feed Unavailable</strong>${err.message}</div>`;
                 }
             }
 
-            matchesFilter(tags) {
-                if (this.currentFilter === 'all') return true;
-                if (this.currentFilter === 'alerts') return tags.includes('alert');
-                if (this.currentFilter === 'sector') return tags.includes('sector');
-                if (this.currentFilter === 'tech') return tags.includes('tech');
-                return true;
-            }
+            renderCard(article, category) {
+                const card = document.createElement('div');
+                card.className = 'outer-card';
 
-            filterNews() {
-                const cards = this.feedEl.querySelectorAll('.outer-card');
-                cards.forEach(card => {
-                    const tags = card.dataset.tags || '';
-                    const matches = this.matchesFilter(tags.split(' '));
-                    card.style.display = matches ? 'block' : 'none';
-                });
+                const source = article.source?.name || 'Unknown Source';
+                const time = article.publishedAt
+                    ? new Date(article.publishedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : '';
+                const desc = article.description || '';
+                const cat = category || 'top stories';
+
+                card.innerHTML = `
+                    ${article.urlToImage
+                        ? `<img class="card-image" src="${article.urlToImage}" alt="" loading="lazy" onerror="this.style.display='none'">`
+                        : `<div class="card-image-placeholder">◈</div>`
+                    }
+                    <div class="card-body">
+                        <div class="card-meta">
+                            <div class="card-source">${source}</div>
+                            <div class="card-timestamp">${time}</div>
+                        </div>
+                        <div class="card-headline">${article.title}</div>
+                        ${desc ? `<div class="card-excerpt">${desc}</div>` : ''}
+                        <div class="card-footer">
+                            <span class="card-category">${cat}</span>
+                            ${article.url ? `<a class="card-read-link" href="${article.url}" target="_blank" rel="noopener">Read →</a>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                this.feedEl.appendChild(card);
             }
         }
 
