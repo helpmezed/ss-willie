@@ -388,13 +388,15 @@
                 blending: THREE.AdditiveBlending
             });
 
+            const startY = (Math.random() - 0.5) * 4;
             const sprite = new THREE.Sprite(material);
-            sprite.position.set(4, (Math.random() - 0.5) * 4, Math.random());
+            sprite.position.set(4, startY, 0);
             sprite.scale.set(0.3, 0.3, 0.3);
             scene.add(sprite);
-            
+
             transmissionParticles.push({
                 sprite: sprite,
+                start: new THREE.Vector3(4, startY, 0),
                 speed: 0.03 + Math.random() * 0.02,
                 progress: 0
             });
@@ -454,10 +456,7 @@
                 }
                 
                 const t = tp.progress;
-                const start = new THREE.Vector3(4, tp.sprite.position.y, 0);
-                const end = spriteGroup.position;
-                
-                tp.sprite.position.lerpVectors(start, end, t);
+                tp.sprite.position.lerpVectors(tp.start, spriteGroup.position, t);
                 tp.sprite.material.opacity = 1 - t;
             }
             
@@ -482,13 +481,23 @@
             const div = document.createElement('div');
             div.className = `message ${type}`;
             const time = new Date().toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute: '2-digit'});
-            
-            if (type === 'system') {
-                div.innerHTML = `<span class="timestamp">[${time}]</span> ${text}`;
-            } else {
-                div.innerHTML = `<span class="timestamp">[${time}]</span> <span class="username">${user}:</span> ${text}`;
+
+            const ts = document.createElement('span');
+            ts.className = 'timestamp';
+            ts.textContent = `[${time}]`;
+            div.appendChild(ts);
+            div.appendChild(document.createTextNode(' '));
+
+            if (type !== 'system') {
+                const uSpan = document.createElement('span');
+                uSpan.className = 'username';
+                uSpan.textContent = `${user}:`;
+                div.appendChild(uSpan);
+                div.appendChild(document.createTextNode(' '));
             }
-            
+
+            div.appendChild(document.createTextNode(text));
+
             messagesContainer.appendChild(div);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
@@ -496,15 +505,15 @@
         sendBtn.addEventListener('click', () => {
             const text = messageInput.value.trim();
             if (!text) return;
-            
+
+            // Clear immediately so rapid clicks/Enter can't duplicate the message
+            messageInput.value = '';
+
             for (let i = 0; i < 12; i++) {
                 setTimeout(() => createTransmissionParticle(), i * 50);
             }
-            
-            setTimeout(() => {
-                addMessage('user', text, username);
-                messageInput.value = '';
-            }, 300);
+
+            setTimeout(() => addMessage('user', text, username), 300);
         });
 
         messageInput.addEventListener('keypress', (e) => {
