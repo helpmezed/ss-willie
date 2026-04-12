@@ -4,12 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Backroom Chat - Matrix Core</title>
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --green:       #00ff41;
+            --green-dim:   rgba(0, 255, 65, 0.15);
+            --green-glow:  rgba(0, 255, 65, 0.08);
+            --panel-bg:    rgba(2, 8, 2, 0.92);
+            --border:      rgba(0, 255, 65, 0.2);
+            --border-mid:  rgba(0, 255, 65, 0.35);
+            --text-dim:    rgba(0, 255, 65, 0.45);
         }
 
         /* Page transition */
@@ -18,11 +24,11 @@
             to   { opacity: 1; transform: translateY(0); }
         }
         body {
-            margin: 0;
             overflow: hidden;
-            background-color: #000;
+            background: #000;
             font-family: 'Share Tech Mono', monospace;
             animation: pageIn 0.35s ease forwards;
+            color: var(--green);
         }
         body.page-exit {
             animation: none !important;
@@ -32,482 +38,416 @@
             pointer-events: none;
         }
 
-        /* Nav */
+        /* Canvas sits behind everything */
+        canvas {
+            display: block;
+            position: fixed;
+            top: 0; left: 0;
+            z-index: 1;
+        }
+
+        /* ── Nav (top-left, clear of the chat panel) ── */
         #page-nav {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 24px;
+            left: 28px;
             z-index: 100;
             display: flex;
             gap: 10px;
         }
         .page-nav-btn {
-            background: rgba(0, 20, 0, 0.85);
-            border: 1px solid #0f0;
-            color: #0f0;
+            background: rgba(0, 10, 0, 0.85);
+            border: 1px solid var(--border-mid);
+            color: var(--green);
             padding: 8px 18px;
             font-family: 'Share Tech Mono', monospace;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 2px;
             text-transform: uppercase;
             text-decoration: none;
-            cursor: pointer;
+            backdrop-filter: blur(10px);
             transition: background 0.2s, box-shadow 0.2s;
-            box-shadow: 0 0 8px rgba(0,255,0,0.15);
+            box-shadow: 0 0 8px var(--green-glow);
         }
         .page-nav-btn:hover {
-            background: rgba(0, 40, 0, 0.95);
-            box-shadow: 0 0 18px rgba(0,255,0,0.35);
+            background: var(--green-dim);
+            box-shadow: 0 0 18px rgba(0,255,65,0.3);
         }
 
-        canvas {
-            display: block;
+        /* ── Full-height chat panel on the right ── */
+        #chat-panel {
             position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-
-        #chat-container {
-            position: absolute;
-            top: 50%;
-            right: 40px;
-            transform: translateY(-50%);
-            width: 400px;
-            max-height: 85vh;
-            z-index: 10;
-            background: rgba(0, 10, 0, 0.9);
-            border: 1px solid #0f0;
-            border-radius: 4px;
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
-            backdrop-filter: blur(10px);
+            right: 0; top: 0;
+            width: 380px;
+            height: 100vh;
+            z-index: 20;
             display: flex;
             flex-direction: column;
+            background: var(--panel-bg);
+            border-left: 1px solid var(--border);
+            backdrop-filter: blur(24px) saturate(160%);
+            box-shadow: -16px 0 48px rgba(0,0,0,0.7);
         }
 
+        /* Subtle scanline texture */
+        #chat-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,255,65,0.015) 2px,
+                rgba(0,255,65,0.015) 4px
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+        #chat-panel > * { position: relative; z-index: 1; }
+
         .chat-header {
-            background: rgba(0, 40, 0, 0.95);
-            padding: 12px 15px;
-            border-bottom: 1px solid #0f0;
+            padding: 24px 28px;
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            background: rgba(0, 20, 0, 0.6);
+            flex-shrink: 0;
         }
 
         .status-dot {
-            width: 10px;
-            height: 10px;
-            background: #0f0;
+            width: 9px; height: 9px;
+            background: var(--green);
             border-radius: 50%;
-            box-shadow: 0 0 10px #0f0;
+            box-shadow: 0 0 8px var(--green);
+            flex-shrink: 0;
             animation: pulse 2s infinite;
         }
-
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
+            50%       { opacity: 0.4; transform: scale(0.75); }
         }
 
         .chat-title {
-            color: #0f0;
-            font-size: 14px;
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 3px;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+            text-shadow: 0 0 12px var(--green);
+        }
+        .chat-subtitle {
+            margin-left: auto;
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
         }
 
+        /* Messages */
         #messages {
             flex: 1;
             overflow-y: auto;
-            padding: 15px;
+            padding: 24px 28px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            min-height: 300px;
-            max-height: 400px;
-            scrollbar-width: thin;
-            scrollbar-color: #0f0 #001000;
+            gap: 14px;
+            scroll-behavior: smooth;
         }
-
-        #messages::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        #messages::-webkit-scrollbar-track {
-            background: #001000;
-        }
-
-        #messages::-webkit-scrollbar-thumb {
-            background: #0f0;
-        }
+        #messages::-webkit-scrollbar { width: 4px; }
+        #messages::-webkit-scrollbar-track { background: transparent; }
+        #messages::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 4px; }
 
         .message {
-            color: #0f0;
             font-size: 13px;
-            line-height: 1.4;
-            padding: 8px 12px;
-            background: rgba(0, 50, 0, 0.3);
-            border-left: 2px solid #0f0;
-            animation: slideIn 0.3s ease-out;
-            text-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+            line-height: 1.55;
+            padding: 10px 14px;
+            background: rgba(0, 40, 0, 0.25);
+            border-left: 2px solid var(--border-mid);
+            border-radius: 0 6px 6px 0;
+            animation: msgIn 0.28s ease-out forwards;
+            opacity: 0;
         }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateX(16px); }
+            to   { opacity: 1; transform: translateX(0); }
         }
 
         .message.system {
-            color: #0a0;
+            background: transparent;
+            border-left-color: var(--text-dim);
+            color: var(--text-dim);
             font-style: italic;
-            border-left-color: #0a0;
+            font-size: 12px;
         }
 
         .message .timestamp {
-            color: #050;
-            font-size: 11px;
+            color: rgba(0,255,65,0.3);
+            font-size: 10px;
             margin-right: 8px;
         }
-
         .message .username {
             color: #fff;
             font-weight: bold;
-            margin-right: 5px;
+            margin-right: 6px;
+            text-shadow: 0 0 8px rgba(0,255,65,0.4);
         }
 
-        .input-container {
+        /* Divider line */
+        .chat-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 0;
+            flex-shrink: 0;
+        }
+
+        /* Input area */
+        .input-area {
+            padding: 20px 28px;
+            background: rgba(0, 12, 0, 0.8);
+            flex-shrink: 0;
+        }
+
+        .input-wrapper {
             display: flex;
-            padding: 15px;
-            background: rgba(0, 20, 0, 0.9);
-            border-top: 1px solid #0f0;
-            gap: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-wrapper:focus-within {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(0,255,65,0.1), 0 0 16px rgba(0,255,65,0.12);
         }
 
         #message-input {
             flex: 1;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid #0f0;
-            color: #0f0;
-            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            color: var(--green);
+            padding: 12px 16px;
             font-family: 'Share Tech Mono', monospace;
-            font-size: 14px;
+            font-size: 13px;
             outline: none;
+            caret-color: var(--green);
         }
-
-        #message-input::placeholder {
-            color: #050;
-        }
+        #message-input::placeholder { color: rgba(0,255,65,0.2); }
 
         #send-btn {
-            background: transparent;
-            border: 1px solid #0f0;
-            color: #0f0;
-            padding: 10px 20px;
+            background: rgba(0, 30, 0, 0.8);
+            border: none;
+            border-left: 1px solid var(--border);
+            color: var(--green);
+            padding: 12px 20px;
             font-family: 'Share Tech Mono', monospace;
-            font-size: 14px;
-            cursor: pointer;
+            font-size: 12px;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            transition: all 0.3s;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
         }
-
         #send-btn:hover {
-            background: rgba(0, 255, 0, 0.2);
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4);
+            background: var(--green-dim);
+            box-shadow: inset 0 0 12px rgba(0,255,65,0.15);
         }
+        #send-btn:active { opacity: 0.7; }
 
         @media (max-width: 768px) {
-            #chat-container {
-                width: calc(100% - 40px);
-                right: 20px;
-                left: 20px;
-                top: auto;
-                bottom: 20px;
-                transform: none;
+            #chat-panel {
+                width: 100%;
+                height: 45vh;
+                top: auto; bottom: 0;
+                border-left: none;
+                border-top: 1px solid var(--border);
             }
+            #page-nav { top: 12px; left: 12px; }
         }
     </style>
 </head>
 <body>
+
+    <!-- Nav top-left, well clear of the chat panel -->
     <nav id="page-nav">
         <a class="page-nav-btn" href="standard.html">Standard</a>
         <a class="page-nav-btn" href="outer-news.html">Outer News</a>
     </nav>
 
-    <div id="chat-container">
+    <!-- Full-height chat panel -->
+    <div id="chat-panel">
         <div class="chat-header">
             <div class="status-dot"></div>
-            <div class="chat-title">BACKROOM_TERM</div>
+            <div class="chat-title">Backroom</div>
+            <span class="chat-subtitle">LOCAL_NODE</span>
         </div>
-        
+
         <div id="messages">
             <div class="message system">
                 <span class="timestamp">[SYS]</span> Connection established...
             </div>
         </div>
 
-        <div class="input-container">
-            <input type="text" id="message-input" placeholder="Enter message..." maxlength="200">
-            <button id="send-btn">SEND</button>
+        <div class="chat-divider"></div>
+        <div class="input-area">
+            <div class="input-wrapper">
+                <input type="text" id="message-input" placeholder="Transmit sequence..." maxlength="200" autocomplete="off">
+                <button id="send-btn">Send</button>
+            </div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
-    <script>
-        // --- 3D Scene Setup ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x000000);
-        scene.fog = new THREE.FogExp2(0x000000, 0.02);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    <script>
+        // ── 3D Scene ──
+        const scene    = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        scene.fog        = new THREE.FogExp2(0x000000, 0.02);
+
+        const camera   = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 10;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.insertBefore(renderer.domElement, document.body.firstChild);
 
-        // Sprite Group
+        // Sprite group
         const spriteGroup = new THREE.Group();
         scene.add(spriteGroup);
 
-        // Create Matrix Sprite
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ';
-        
+
         for (let i = 0; i < 60; i++) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 64;
-            canvas.height = 64;
-            const ctx = canvas.getContext('2d');
+            const cvs = document.createElement('canvas');
+            cvs.width = cvs.height = 64;
+            const ctx = cvs.getContext('2d');
             const char = chars[Math.floor(Math.random() * chars.length)];
-            
             ctx.fillStyle = `hsl(120, 100%, ${Math.floor(Math.random() * 30 + 40)}%)`;
             ctx.font = 'bold 48px monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.shadowColor = '#00FF00';
+            ctx.shadowColor = '#00FF41';
             ctx.shadowBlur = 15;
             ctx.fillText(char, 32, 32);
 
-            const texture = new THREE.CanvasTexture(canvas);
-            const material = new THREE.PointsMaterial({
-                size: 0.25 + Math.random() * 0.2,
-                map: texture,
-                transparent: true,
-                opacity: Math.random() * 0.5 + 0.3,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false
-            });
-
-            const geometry = new THREE.BufferGeometry();
+            const geo = new THREE.BufferGeometry();
             const positions = new Float32Array(25 * 3);
-            const baseData = new Float32Array(25 * 4);
+            const baseData  = new Float32Array(25 * 4);
 
             for (let j = 0; j < 25; j++) {
                 const radius = 2.0 * Math.pow(Math.random(), 0.4);
-                const theta = Math.random() * 2 * Math.PI;
-                const phi = Math.acos(2 * Math.random() - 1);
-                
+                const theta  = Math.random() * 2 * Math.PI;
+                const phi    = Math.acos(2 * Math.random() - 1);
                 const bx = radius * Math.sin(phi) * Math.cos(theta);
                 const by = radius * Math.sin(phi) * Math.sin(theta);
                 const bz = radius * Math.cos(phi);
-
-                positions[j * 3] = bx;
-                positions[j * 3 + 1] = by;
-                positions[j * 3 + 2] = bz;
-                
-                baseData[j * 4] = bx;
-                baseData[j * 4 + 1] = by;
-                baseData[j * 4 + 2] = bz;
-                baseData[j * 4 + 3] = Math.random() * Math.PI * 2;
+                positions[j*3]=bx; positions[j*3+1]=by; positions[j*3+2]=bz;
+                baseData[j*4]=bx;  baseData[j*4+1]=by;  baseData[j*4+2]=bz;
+                baseData[j*4+3] = Math.random() * Math.PI * 2;
             }
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const points = new THREE.Points(geometry, material);
-            points.userData = { baseData: baseData };
-            spriteGroup.add(points);
+            const pts = new THREE.Points(geo, new THREE.PointsMaterial({
+                size: 0.25 + Math.random() * 0.2,
+                map: new THREE.CanvasTexture(cvs),
+                transparent: true,
+                opacity: Math.random() * 0.5 + 0.3,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+            }));
+            pts.userData.baseData = baseData;
+            spriteGroup.add(pts);
         }
 
-        // --- Bouncing Flight Movement ---
+        // Flyer
         const flyer = {
             pos: new THREE.Vector3(-3, 0, 0),
-            vel: new THREE.Vector3(2.0, 1.5, 0.8), // Initial velocity - noticeable speed
-            bounds: {
-                x: [-5, 4],
-                y: [-3, 3],
-                z: [-2, 2]
-            },
-            time: 0
+            vel: new THREE.Vector3(2.0, 1.5, 0.8),
+            bounds: { x: [-5, 4], y: [-3, 3], z: [-2, 2] },
         };
 
-        camera.position.z = 10;
-
         function updateFlight(delta, time) {
-            flyer.time += delta;
-            
-            // Add fluid sine wave motion to velocity (swimming/flying effect)
-            const fluidX = Math.sin(time * 0.5) * 0.3 + Math.sin(time * 1.3) * 0.2;
-            const fluidY = Math.cos(time * 0.7) * 0.3 + Math.sin(time * 2.0) * 0.15;
-            const fluidZ = Math.sin(time * 0.4) * 0.2;
-            
-            // Apply fluid motion
-            flyer.vel.x += fluidX * delta;
-            flyer.vel.y += fluidY * delta;
-            flyer.vel.z += fluidZ * delta;
-            
-            // Damping to prevent infinite acceleration
+            flyer.vel.x += (Math.sin(time * 0.5) * 0.3 + Math.sin(time * 1.3) * 0.2) * delta;
+            flyer.vel.y += (Math.cos(time * 0.7) * 0.3 + Math.sin(time * 2.0) * 0.15) * delta;
+            flyer.vel.z += Math.sin(time * 0.4) * 0.2 * delta;
             flyer.vel.multiplyScalar(0.995);
-            
-            // Minimum speed to keep it moving
-            if (flyer.vel.length() < 1.0) {
-                flyer.vel.normalize().multiplyScalar(1.0);
-            }
-            
-            // Update position
+            if (flyer.vel.length() < 1.0) flyer.vel.normalize().multiplyScalar(1.0);
             flyer.pos.add(flyer.vel.clone().multiplyScalar(delta));
-            
-            // BOUNCE off boundaries (keep it on screen)
-            if (flyer.pos.x > flyer.bounds.x[1]) {
-                flyer.pos.x = flyer.bounds.x[1];
-                flyer.vel.x *= -0.8; // Bounce with energy loss
-            }
-            if (flyer.pos.x < flyer.bounds.x[0]) {
-                flyer.pos.x = flyer.bounds.x[0];
-                flyer.vel.x *= -0.8;
-            }
-            if (flyer.pos.y > flyer.bounds.y[1]) {
-                flyer.pos.y = flyer.bounds.y[1];
-                flyer.vel.y *= -0.8;
-            }
-            if (flyer.pos.y < flyer.bounds.y[0]) {
-                flyer.pos.y = flyer.bounds.y[0];
-                flyer.vel.y *= -0.8;
-            }
-            if (flyer.pos.z > flyer.bounds.z[1]) {
-                flyer.pos.z = flyer.bounds.z[1];
-                flyer.vel.z *= -0.8;
-            }
-            if (flyer.pos.z < flyer.bounds.z[0]) {
-                flyer.pos.z = flyer.bounds.z[0];
-                flyer.vel.z *= -0.8;
-            }
-            
-            // Apply position
+
+            ['x','y','z'].forEach(ax => {
+                const [lo, hi] = flyer.bounds[ax];
+                if (flyer.pos[ax] > hi) { flyer.pos[ax] = hi; flyer.vel[ax] *= -0.8; }
+                if (flyer.pos[ax] < lo) { flyer.pos[ax] = lo; flyer.vel[ax] *= -0.8; }
+            });
+
             spriteGroup.position.copy(flyer.pos);
-            
-            // Rotation: face direction of movement + tumble
-            if (flyer.vel.length() > 0.1) {
-                const lookTarget = flyer.pos.clone().add(flyer.vel);
-                spriteGroup.lookAt(lookTarget);
-            }
-            
-            // Add constant tumble for energy
+            if (flyer.vel.length() > 0.1) spriteGroup.lookAt(flyer.pos.clone().add(flyer.vel));
             spriteGroup.rotateX(0.02);
             spriteGroup.rotateY(0.015);
-            
-            // Breathing scale
-            const scale = 1 + Math.sin(time * 3) * 0.08;
-            spriteGroup.scale.setScalar(scale);
+            spriteGroup.scale.setScalar(1 + Math.sin(time * 3) * 0.08);
         }
 
-        // Transmission Particles
+        // Transmission particles
         const transmissionParticles = [];
         const codeChars = '01<>[]{}//;';
 
         function createTransmissionParticle() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 32;
-            canvas.height = 32;
-            const ctx = canvas.getContext('2d');
-            const char = codeChars[Math.floor(Math.random() * codeChars.length)];
-            
-            ctx.fillStyle = '#0f0';
+            const cvs = document.createElement('canvas');
+            cvs.width = cvs.height = 32;
+            const ctx = cvs.getContext('2d');
+            ctx.fillStyle = '#00ff41';
             ctx.font = 'bold 24px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.shadowColor = '#0f0';
-            ctx.shadowBlur = 10;
-            ctx.fillText(char, 16, 16);
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.shadowColor = '#00ff41'; ctx.shadowBlur = 10;
+            ctx.fillText(codeChars[Math.floor(Math.random() * codeChars.length)], 16, 16);
 
-            const material = new THREE.SpriteMaterial({
-                map: new THREE.CanvasTexture(canvas),
-                transparent: true,
-                opacity: 1,
-                blending: THREE.AdditiveBlending
-            });
-
+            const mat  = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cvs), transparent: true, opacity: 1, blending: THREE.AdditiveBlending });
             const startY = (Math.random() - 0.5) * 4;
-            const sprite = new THREE.Sprite(material);
+            const sprite = new THREE.Sprite(mat);
             sprite.position.set(4, startY, 0);
             sprite.scale.set(0.3, 0.3, 0.3);
             scene.add(sprite);
-
-            transmissionParticles.push({
-                sprite: sprite,
-                start: new THREE.Vector3(4, startY, 0),
-                speed: 0.03 + Math.random() * 0.02,
-                progress: 0
-            });
+            transmissionParticles.push({ sprite, start: new THREE.Vector3(4, startY, 0), speed: 0.03 + Math.random() * 0.02, progress: 0 });
         }
 
-        // Animation Loop
+        // Animate
         const clock = new THREE.Clock();
-
         function animate() {
             requestAnimationFrame(animate);
-            
-            const delta = Math.min(clock.getDelta(), 0.05); // Cap for stability
-            const time = clock.getElapsedTime();
-            
-            // Update bouncing flight
+            const delta = Math.min(clock.getDelta(), 0.05);
+            const time  = clock.getElapsedTime();
+
             updateFlight(delta, time);
-            
-            // Camera gently follows
+
             camera.position.x += (flyer.pos.x * 0.3 - camera.position.x) * 0.05;
             camera.position.y += (flyer.pos.y * 0.3 - camera.position.y) * 0.05;
             camera.lookAt(flyer.pos);
-            
-            // Update internal particles
-            spriteGroup.children.forEach(points => {
-                const positions = points.geometry.attributes.position.array;
-                const baseData = points.userData.baseData;
-                
+
+            spriteGroup.children.forEach(pts => {
+                const pos  = pts.geometry.attributes.position.array;
+                const base = pts.userData.baseData;
                 for (let i = 0; i < 25; i++) {
-                    const idx3 = i * 3;
-                    const idx4 = i * 4;
-                    
-                    const bx = baseData[idx4];
-                    const by = baseData[idx4 + 1];
-                    const bz = baseData[idx4 + 2];
-                    const phase = baseData[idx4 + 3];
-                    
-                    const angle = time * 0.5 + phase;
-                    const cosA = Math.cos(angle);
-                    const sinA = Math.sin(angle);
-                    
-                    positions[idx3] = bx * cosA - bz * sinA;
-                    positions[idx3 + 1] = by + Math.sin(time * 2 + phase) * 0.2;
-                    positions[idx3 + 2] = bx * sinA + bz * cosA;
+                    const i3 = i*3, i4 = i*4;
+                    const bx = base[i4], by = base[i4+1], bz = base[i4+2], ph = base[i4+3];
+                    const a = time * 0.5 + ph;
+                    pos[i3]   = bx * Math.cos(a) - bz * Math.sin(a);
+                    pos[i3+1] = by + Math.sin(time * 2 + ph) * 0.2;
+                    pos[i3+2] = bx * Math.sin(a) + bz * Math.cos(a);
                 }
-                points.geometry.attributes.position.needsUpdate = true;
+                pts.geometry.attributes.position.needsUpdate = true;
             });
-            
-            // Update transmission particles
+
             for (let i = transmissionParticles.length - 1; i >= 0; i--) {
                 const tp = transmissionParticles[i];
                 tp.progress += tp.speed;
-                
-                if (tp.progress >= 1) {
-                    scene.remove(tp.sprite);
-                    transmissionParticles.splice(i, 1);
-                    continue;
-                }
-                
-                const t = tp.progress;
-                tp.sprite.position.lerpVectors(tp.start, spriteGroup.position, t);
-                tp.sprite.material.opacity = 1 - t;
+                if (tp.progress >= 1) { scene.remove(tp.sprite); transmissionParticles.splice(i, 1); continue; }
+                tp.sprite.position.lerpVectors(tp.start, spriteGroup.position, tp.progress);
+                tp.sprite.material.opacity = 1 - tp.progress;
             }
-            
+
             renderer.render(scene, camera);
         }
+        animate();
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -515,18 +455,16 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        animate();
-
-        // --- Chat System ---
-        const messageInput = document.getElementById('message-input');
-        const sendBtn = document.getElementById('send-btn');
+        // ── Chat ──
+        const messageInput     = document.getElementById('message-input');
+        const sendBtn          = document.getElementById('send-btn');
         const messagesContainer = document.getElementById('messages');
         const username = 'User_' + Math.floor(Math.random() * 999);
 
         function addMessage(type, text, user) {
-            const div = document.createElement('div');
+            const div  = document.createElement('div');
             div.className = `message ${type}`;
-            const time = new Date().toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute: '2-digit'});
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
             const ts = document.createElement('span');
             ts.className = 'timestamp';
@@ -535,15 +473,13 @@
             div.appendChild(document.createTextNode(' '));
 
             if (type !== 'system') {
-                const uSpan = document.createElement('span');
-                uSpan.className = 'username';
-                uSpan.textContent = `${user}:`;
-                div.appendChild(uSpan);
+                const u = document.createElement('span');
+                u.className = 'username';
+                u.textContent = `${user}:`;
+                div.appendChild(u);
                 div.appendChild(document.createTextNode(' '));
             }
-
             div.appendChild(document.createTextNode(text));
-
             messagesContainer.appendChild(div);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
@@ -551,24 +487,15 @@
         sendBtn.addEventListener('click', () => {
             const text = messageInput.value.trim();
             if (!text) return;
-
-            // Clear immediately so rapid clicks/Enter can't duplicate the message
             messageInput.value = '';
-
-            for (let i = 0; i < 12; i++) {
-                setTimeout(() => createTransmissionParticle(), i * 50);
-            }
-
+            for (let i = 0; i < 12; i++) setTimeout(() => createTransmissionParticle(), i * 50);
             setTimeout(() => addMessage('user', text, username), 300);
         });
 
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendBtn.click();
-        });
-
+        messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
         messageInput.focus();
 
-        // Page transition: fade out before navigating
+        // ── Page transitions ──
         document.querySelectorAll('a[href]').forEach(a => {
             const href = a.getAttribute('href');
             if (!href || href.startsWith('http') || href.startsWith('#') || a.target === '_blank') return;
