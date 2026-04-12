@@ -3,10 +3,6 @@ const Pusher = require('pusher');
 const fetch = require('node-fetch');
 const path = require('path');
 require('dotenv').config();
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
 
 // Startup env check — logs true/false only, never the actual values
 console.log('[relay] env vars present:', {
@@ -15,8 +11,6 @@ console.log('[relay] env vars present:', {
   PUSHER_SECRET:  !!process.env.PUSHER_SECRET,
   PUSHER_CLUSTER: !!process.env.PUSHER_CLUSTER,
   NEWS_API_KEY:   !!process.env.NEWS_API_KEY,
-  MONGODB_URI:    !!process.env.MONGODB_URI,
-  JWT_SECRET:     !!process.env.JWT_SECRET,
 });
 
 const app = express();
@@ -24,42 +18,6 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true })); // required for Pusher auth requests
-app.use(cookieParser());
-
-// Database Setup
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('[relay] Connected to MongoDB'))
-  .catch(err => console.error('[relay] MongoDB connection error:', err));
-
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  color: { type: String, default: '#00e5ff' }
-}, { timestamps: true });
-
-const User = mongoose.model('User', userSchema);
-
-// Auth Middleware
-const authenticate = async (req, res, next) => {
-  const token = req.cookies.token;
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('-password');
-    if (!user) return res.status(401).json({ error: 'Unauthorized' });
-    req.user = user;
-    next();
-  } catch (err) {
-    res.status(401).json({ error: 'Unauthorized' });
-  }
-};
-
-const generateTokenAndSetCookie = (res, userId) => {
-  const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
-  res.cookie('token', token, {
-    httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000
-  });
-};
 
 const pusher = new Pusher({
   appId:   process.env.PUSHER_APP_ID,
@@ -90,62 +48,16 @@ app.get('/api/config', (_req, res) => {
   });
 });
 
-// Authentication Endpoints
-app.post('/api/auth/register', async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) return res.status(400).json({ error: 'Username already in use' });
-
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const user = new User({
-      username,
-      password: hashedPassword,
-      color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')
-    });
-    await user.save();
-
-    generateTokenAndSetCookie(res, user._id);
-    res.status(201).json({ id: user._id, username: user.username, color: user.color });
-  } catch (err) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.post('/api/auth/login', async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const user = await User.findOne({ username });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(400).json({ error: 'Invalid credentials' });
-    }
-
-    generateTokenAndSetCookie(res, user._id);
-    res.json({ id: user._id, username: user.username, color: user.color });
-  } catch (err) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.get('/api/auth/me', authenticate, (req, res) => {
-  res.json({ id: req.user._id, username: req.user.username, color: req.user.color });
-});
-
-app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('token');
-  res.json({ ok: true });
-});
-
 // Pusher auth endpoint — required for presence channels (user lists)
-app.post('/api/pusher/auth', authenticate, (req, res) => {
-  const { socket_id, channel_name } = req.body;
+app.post('/api/pusher/auth', (req, res) => {
+  const { socket_id, channel_name, user_id, user_name, user_color } = req.body;
   if (!socket_id || !channel_name) {
     return res.status(400).json({ error: 'Missing socket_id or channel_name' });
   }
   try {
     const auth = pusher.authorizeChannel(socket_id, channel_name, {
-      user_id:   req.user._id.toString(),
-      user_info: { name: req.user.username, color: req.user.color }
+      user_id:   user_id   || 'anonymous',
+      user_info: { name: user_name || 'Unknown', color: user_color || '#00e5ff' }
     });
     res.json(auth);
   } catch (e) {

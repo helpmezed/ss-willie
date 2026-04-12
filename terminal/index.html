@@ -1373,59 +1373,45 @@
         // ==================== AUTHENTICATION MANAGER ====================
         class AuthManager {
             constructor() {
-                this.user = null;
                 this.overlay = document.getElementById('authOverlay');
                 this.form = document.getElementById('authForm');
-                this.title = document.getElementById('authTitle');
                 this.error = document.getElementById('authError');
                 this.init();
             }
 
-            async init() {
+            init() {
                 this.form.addEventListener('submit', (e) => this.handleSubmit(e));
-                
-                // Initial session check
-                try {
-                    const res = await fetch('/api/auth/me');
-                    if (res.ok) {
-                        this.user = await res.json();
-                        this.finishAuth();
+
+                // Resume session from localStorage
+                const saved = localStorage.getItem('nexus_user');
+                if (saved) {
+                    try {
+                        this.finishAuth(JSON.parse(saved));
+                        return;
+                    } catch (e) {
+                        localStorage.removeItem('nexus_user');
                     }
-                } catch (err) {
-                    console.log('No active session');
                 }
             }
 
-            async handleSubmit(e) {
+            handleSubmit(e) {
                 e.preventDefault();
                 this.error.textContent = '';
-                const username = document.getElementById('authUsername').value;
+                const username = document.getElementById('authUsername').value.trim();
                 const password = document.getElementById('authPassword').value;
 
-                const endpoint = '/api/auth/login';
-                const body = { username, password };
+                if (!username) { this.error.textContent = 'Operator ID required'; return; }
+                if (password.length < 4) { this.error.textContent = 'Passkey too short'; return; }
 
-                try {
-                    const res = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(body)
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                        this.user = data;
-                        this.finishAuth();
-                    } else {
-                        this.error.textContent = data.error || 'Protocol Error';
-                    }
-                } catch (err) {
-                    this.error.textContent = 'System Connectivity Error';
-                }
+                const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+                const user = { id: 'u_' + Date.now(), username, color };
+                localStorage.setItem('nexus_user', JSON.stringify(user));
+                this.finishAuth(user);
             }
 
-            finishAuth() {
+            finishAuth(user) {
                 this.overlay.classList.add('hidden');
-                initApp(this.user);
+                initApp(user);
             }
         }
 
