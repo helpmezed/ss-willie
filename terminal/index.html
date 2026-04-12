@@ -10,11 +10,14 @@
         :root {
             --primary: #00e5ff;
             --secondary: #b300ff;
+            --accent-glow: rgba(0, 229, 255, 0.3);
             --alert: #ff2a6d;
             --bg-dark: #010205;
             --bg-glass: rgba(10, 15, 25, 0.85);
             --border-glass: rgba(255, 255, 255, 0.08);
             --chat-width: 400px;
+            --font-main: 'Inter', -apple-system, sans-serif;
+            --font-mono: 'Share Tech Mono', monospace;
         }
 
         body {
@@ -147,6 +150,7 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
+            border-right: 1px solid var(--border-glass);
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
 
@@ -601,6 +605,7 @@
             padding: 6px 14px;
             border: 1px solid rgba(255,42,109,0.3);
             border-radius: 20px;
+            background: rgba(255, 42, 109, 0.05);
             transition: all 0.2s;
         }
 
@@ -643,6 +648,25 @@
         }
 
         .outer-feed-error strong { color: var(--alert); display: block; margin-bottom: 8px; font-size: 15px; }
+
+        /* Enhanced Hero Styling */
+        .hero-banner {
+            background: linear-gradient(90deg, rgba(0,229,255,0.05) 0%, transparent 100%);
+            border: 1px solid var(--border-glass);
+            border-left: 4px solid var(--primary);
+            padding: 24px;
+            margin-bottom: 24px;
+            border-radius: 4px 16px 16px 4px;
+        }
+        
+        .hero-tag {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
 
         .outer-feed {
             flex: 1;
@@ -1281,6 +1305,13 @@
                     <div class="user-count" id="standardUserCount">0 Linked</div>
                 </div>
                 <div class="news-ticker" id="standardChatMessages">
+                    <!-- Hero Section Added to Feed -->
+                    <div class="hero-banner">
+                        <div class="hero-tag">System Intelligence Status</div>
+                        <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">Nexus Monitoring Active</h1>
+                        <p style="color: #8899aa; font-size: 14px; line-height: 1.5;">Welcome to the secure interface. All signals are currently within normal operational parameters. External feeds are available via the signal array.</p>
+                    </div>
+                    
                     <div class="message system" style="opacity: 1; transform: none;">Initializing standard interface...</div>
                 </div>
                 <div class="chat-input-area" style="background: rgba(0,0,0,0.3);">
@@ -1640,6 +1671,10 @@
                 const user = {
                     ...userData,
                     mesh: userGroup,
+                    clusterMat: clusterMat,
+                    coreMat: coreMat,
+                    baseParticleSize: 9,
+                    chatReact: null,
                     velocity: new THREE.Vector3((Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2),
                     baseMaxSpeed: 1.2 + Math.random() * 0.8,
                     baseMaxForce: 0.04 + Math.random() * 0.02,
@@ -1679,6 +1714,8 @@
 
                 this.currentSpeakerId = userId;
                 user.presentExpires = Date.now() + 6000;
+                user.chatReact = { startTime: Date.now(), duration: 1400 };
+                this.lastChatTime = Date.now();
 
                 if (this.activeBubbles.has(userId)) {
                     const oldBubble = this.activeBubbles.get(userId);
@@ -1721,18 +1758,40 @@
                     if (this.camera.position.distanceTo(this.introTargetPos) < 5) this.introActive = false;
                 }
 
-                if (this.dust) this.dust.rotation.y = time * 0.015;
+                const chatAge = Date.now() - (this.lastChatTime || 0);
+                const chatBoost = chatAge < 1400 ? Math.sin((chatAge / 1400) * Math.PI) : 0;
+                if (this.dust) this.dust.rotation.y = time * (0.015 + chatBoost * 0.06);
                 if (this.nexusCore) {
                     this.nexusCore.rotation.y -= deltaTime * 0.2;
                     this.nexusCore.rotation.x -= deltaTime * 0.1;
                 }
 
                 state.users.forEach((user) => {
-                    const breathScale = 1 + Math.sin(time * 2 + user.phase) * 0.15;
+                    // Chat particle reaction
+                    if (user.chatReact) {
+                        const elapsed = Date.now() - user.chatReact.startTime;
+                        const progress = elapsed / user.chatReact.duration;
+                        if (progress >= 1) {
+                            user.chatReact = null;
+                            user.clusterMat.size = user.baseParticleSize;
+                            user.clusterMat.opacity = 0.8;
+                        } else {
+                            // Sharp burst then decay — sin envelope
+                            const burst = Math.sin(progress * Math.PI) * (1 - progress * 0.4);
+                            user.clusterMat.size = user.baseParticleSize * (1 + burst * 3.0);
+                            user.clusterMat.opacity = Math.min(1.0, 0.8 + burst * 0.4);
+                        }
+                    }
+
+                    const chatReactBurst = user.chatReact
+                        ? Math.sin(((Date.now() - user.chatReact.startTime) / user.chatReact.duration) * Math.PI) * 0.5
+                        : 0;
+                    const breathScale = (1 + Math.sin(time * 2 + user.phase) * 0.15) * (1 + chatReactBurst);
                     user.mesh.scale.set(breathScale, breathScale, breathScale);
 
-                    user.mesh.children[0].rotation.y += deltaTime * 0.8;
-                    user.mesh.children[0].rotation.z += deltaTime * 0.4;
+                    const reactSpin = user.chatReact ? 3.5 : 1;
+                    user.mesh.children[0].rotation.y += deltaTime * 0.8 * reactSpin;
+                    user.mesh.children[0].rotation.z += deltaTime * 0.4 * reactSpin;
 
                     let currentTarget;
                     let maxSpeed = user.baseMaxSpeed;
