@@ -575,10 +575,10 @@
 
                 this.scene = new THREE.Scene();
                 this.scene.background = new THREE.Color(0x010205);
-                this.scene.fog = new THREE.FogExp2(0x010205, 0.0025);
+                this.scene.fog = new THREE.FogExp2(0x010205, 0.04);
 
-                this.camera = new THREE.PerspectiveCamera(45, this.container.clientWidth / this.container.clientHeight, 0.1, 2000);
-                this.camera.position.set(0, 400, 900);
+                this.camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 200);
+                this.camera.position.set(0, 0, 14);
 
                 this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
                 this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
@@ -588,18 +588,16 @@
                 this.controls = new OrbitControls(this.camera, this.renderer.domElement);
                 this.controls.enableDamping = true;
                 this.controls.dampingFactor = 0.05;
-                this.controls.autoRotate = true;
-                this.controls.autoRotateSpeed = 0.5;
-                this.controls.maxDistance = 800;
+                this.controls.autoRotate = false;
+                this.controls.maxDistance = 25;
+                this.controls.minDistance = 3;
                 this.controls.enablePan = false;
 
                 this.clock = new THREE.Clock();
                 this.activeBubbles = new Map();
                 this.currentSpeakerId = null;
                 this.particleTexture = this.createParticleTexture();
-                this.volumeRadius = 250;
-                this.introActive = true;
-                this.introTargetPos = new THREE.Vector3(0, 150, 450);
+                this.volumeRadius = 9;
                 this.mouse = { x: 0, y: 0 };
 
                 this.init();
@@ -638,23 +636,23 @@
 
             createEnvironment() {
                 const dustGeo = new THREE.BufferGeometry();
-                const dustCount = 2500;
+                const dustCount = 1200;
                 const dustPos = new Float32Array(dustCount * 3);
                 for (let i = 0; i < dustCount; i++) {
-                    dustPos[i*3]   = (Math.random() - 0.5) * 800;
-                    dustPos[i*3+1] = (Math.random() - 0.5) * 800;
-                    dustPos[i*3+2] = (Math.random() - 0.5) * 800;
+                    dustPos[i*3]   = (Math.random() - 0.5) * 40;
+                    dustPos[i*3+1] = (Math.random() - 0.5) * 40;
+                    dustPos[i*3+2] = (Math.random() - 0.5) * 40;
                 }
                 dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
                 const dustMat = new THREE.PointsMaterial({
-                    color: 0x557799, size: 2.5, map: this.particleTexture,
+                    color: 0x557799, size: 0.06, map: this.particleTexture,
                     transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false
                 });
                 this.dust = new THREE.Points(dustGeo, dustMat);
                 this.scene.add(this.dust);
 
-                const coreGeo = new THREE.IcosahedronGeometry(40, 2);
-                const coreMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, wireframe: true, transparent: true, opacity: 0.03 });
+                const coreGeo = new THREE.IcosahedronGeometry(1.5, 2);
+                const coreMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, wireframe: true, transparent: true, opacity: 0.06 });
                 this.nexusCore = new THREE.Mesh(coreGeo, coreMat);
                 this.scene.add(this.nexusCore);
 
@@ -669,7 +667,7 @@
                 for (let i = 0; i < count; i++) {
                     const theta = Math.random() * Math.PI * 2;
                     const phi = Math.acos(2 * Math.random() - 1);
-                    const r = 800 + Math.random() * 500;
+                    const r = 20 + Math.random() * 15;
                     positions[i*3]   = r * Math.sin(phi) * Math.cos(theta);
                     positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
                     positions[i*3+2] = r * Math.cos(phi);
@@ -682,40 +680,30 @@
                 geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
                 geo.setAttribute('color',    new THREE.BufferAttribute(colors,    3));
                 this.stars = new THREE.Points(geo, new THREE.PointsMaterial({
-                    size: 1.6, vertexColors: true, transparent: true, opacity: 0.85,
+                    size: 0.06, vertexColors: true, transparent: true, opacity: 0.85,
                     blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
                 }));
                 this.scene.add(this.stars);
             }
 
             createNeonGrid() {
-                const grid = new THREE.GridHelper(2000, 60, 0x00e5ff, 0x001833);
-                grid.position.y = -180;
-                grid.material.transparent = true; grid.material.opacity = 0.35;
+                const grid = new THREE.GridHelper(60, 40, 0x00e5ff, 0x001833);
+                grid.position.y = -7;
+                grid.material.transparent = true; grid.material.opacity = 0.3;
                 grid.material.blending = THREE.AdditiveBlending; grid.material.depthWrite = false;
                 this.scene.add(grid);
 
-                const gridCoarse = new THREE.GridHelper(2000, 12, 0xb300ff, 0x000000);
-                gridCoarse.position.y = -180;
-                gridCoarse.material.transparent = true; gridCoarse.material.opacity = 0.25;
+                const gridCoarse = new THREE.GridHelper(60, 8, 0xb300ff, 0x000000);
+                gridCoarse.position.y = -7;
+                gridCoarse.material.transparent = true; gridCoarse.material.opacity = 0.2;
                 gridCoarse.material.blending = THREE.AdditiveBlending; gridCoarse.material.depthWrite = false;
                 this.scene.add(gridCoarse);
-
-                const horizonGeo = new THREE.PlaneGeometry(2400, 320);
-                const horizonMat = new THREE.MeshBasicMaterial({
-                    color: 0x00e5ff, transparent: true, opacity: 0.04,
-                    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
-                });
-                const horizon = new THREE.Mesh(horizonGeo, horizonMat);
-                horizon.rotation.x = -Math.PI * 0.28;
-                horizon.position.set(0, -60, -500);
-                this.scene.add(horizon);
             }
 
             addUser(userData) {
-                const numSystems = 14;
-                const particlesPerSystem = 30;
-                const cloudRadius = 40;
+                const numSystems = 12;
+                const particlesPerSystem = 40;
+                const cloudRadius = 3.0;
                 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ'.split('');
 
                 const userGroup = new THREE.Group();
@@ -723,33 +711,24 @@
 
                 for (let s = 0; s < numSystems; s++) {
                     const cvs = document.createElement('canvas');
-                    cvs.width = 128; cvs.height = 128;
+                    cvs.width = 64; cvs.height = 64;
                     const ctx = cvs.getContext('2d');
                     const char = chars[Math.floor(Math.random() * chars.length)];
-                    // Fill entire canvas with a dim color base so the whole point quad is tinted
-                    ctx.fillStyle = userData.color + '22';
-                    ctx.fillRect(0, 0, 128, 128);
-                    // Large glow halo
-                    ctx.shadowColor = userData.color;
-                    ctx.shadowBlur = 32;
                     ctx.fillStyle = userData.color;
-                    ctx.font = 'bold 88px monospace';
+                    ctx.font = 'bold 48px monospace';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(char, 64, 64);
-                    // Bright white core on top
-                    ctx.shadowBlur = 0;
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 68px monospace';
-                    ctx.fillText(char, 64, 64);
+                    ctx.shadowColor = userData.color;
+                    ctx.shadowBlur = 10;
+                    ctx.fillText(char, 32, 32);
 
                     const texture = new THREE.CanvasTexture(cvs);
-                    const baseOpacity = 0.85 + Math.random() * 0.15;
-                    const baseSize = 40 + Math.random() * 20;
+                    const baseOpacity = Math.random() * 0.4 + 0.4;
+                    const baseSize = 0.3 + Math.random() * 0.3;
                     const material = new THREE.PointsMaterial({
                         size: baseSize, map: texture,
                         transparent: true, opacity: baseOpacity,
-                        blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+                        blending: THREE.AdditiveBlending, depthWrite: false,
                     });
 
                     const geometry = new THREE.BufferGeometry();
@@ -778,15 +757,15 @@
                     particleSystems.push(points);
                 }
 
-                userGroup.position.set((Math.random()-0.5)*200, (Math.random()-0.5)*100, (Math.random()-0.5)*200);
+                userGroup.position.set((Math.random()-0.5)*16, (Math.random()-0.5)*8, (Math.random()-0.5)*1);
                 this.scene.add(userGroup);
 
                 const user = {
                     ...userData,
                     mesh: userGroup,
                     particleSystems,
-                    baseParticleSize: 9,
-                    radius: 35 + Math.random() * 10, // collision radius
+                    baseParticleSize: 0.45,
+                    radius: 3.5 + Math.random() * 0.5, // collision radius
                     mass: 1 + Math.random() * 0.5,
                     chatReact: null,
                     velocity: new THREE.Vector3((Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2),
@@ -861,24 +840,18 @@
                 const timeScale = deltaTime * 60;
                 const now = Date.now();
 
-                if (this.introActive) {
-                    this.camera.position.lerp(this.introTargetPos, 0.04);
-                    if (this.camera.position.distanceTo(this.introTargetPos) < 5) this.introActive = false;
-                } else {
-                    // Cursor-based depth parallax via orbit target nudge
-                    this.controls.target.x += (this.mouse.x * 20 - this.controls.target.x) * 0.02;
-                    this.controls.target.y += (-this.mouse.y * 15 - this.controls.target.y) * 0.02;
-                }
+                // Cursor parallax — subtle tilt to give the 2D plane a 3D feel
+                this.controls.target.x += (this.mouse.x * 2 - this.controls.target.x) * 0.02;
+                this.controls.target.y += (-this.mouse.y * 1.5 - this.controls.target.y) * 0.02;
 
-                // Idle camera drift
-                this.camera.position.y += Math.sin(time * 0.3) * 0.05;
-                this.camera.position.x += Math.cos(time * 0.2) * 0.05;
+                // Gentle idle drift
+                this.camera.position.y += Math.sin(time * 0.3) * 0.002;
+                this.camera.position.x += Math.cos(time * 0.2) * 0.002;
 
                 const chatAge = now - (this.lastChatTime || 0);
                 const chatBoost = chatAge < 1400 ? Math.sin((chatAge / 1400) * Math.PI) : 0;
-                // Subtle fog fluctuation — makes the world feel alive
                 if (Math.random() < 0.002) {
-                    this.scene.fog.density = 0.0025 + Math.random() * 0.002;
+                    this.scene.fog.density = 0.04 + Math.random() * 0.02;
                 }
 
                 if (this.dust) this.dust.rotation.y = time * (0.015 + chatBoost * 0.06);
@@ -922,8 +895,8 @@
                             }
 
                             // Collision reaction visual boost
-                            if (a.particleSystems) a.particleSystems.forEach(p => { p.material.size = p.userData.baseSize * 1.2; });
-                            if (b.particleSystems) b.particleSystems.forEach(p => { p.material.size = p.userData.baseSize * 1.2; });
+                                    if (a.particleSystems) a.particleSystems.forEach(p => { p.material.size = p.userData.baseSize * 1.4; });
+                            if (b.particleSystems) b.particleSystems.forEach(p => { p.material.size = p.userData.baseSize * 1.4; });
                             setTimeout(() => {
                                 if (a?.particleSystems) a.particleSystems.forEach(p => { p.material.size = p.userData.baseSize; });
                                 if (b?.particleSystems) b.particleSystems.forEach(p => { p.material.size = p.userData.baseSize; });
@@ -933,7 +906,11 @@
                 }
 
                 state.users.forEach((user) => {
-                    // Vortex orbital animation for matrix character cloud
+                    // Vortex orbital animation — reference formula with chat-reactive expansion
+                    const chatBurst = user.chatReact
+                        ? Math.sin(((now - user.chatReact.startTime) / user.chatReact.duration) * Math.PI) : 0;
+                    const expansion = 1 + chatBurst * 0.2;
+
                     if (user.particleSystems) {
                         for (const pts of user.particleSystems) {
                             const positions = pts.geometry.attributes.position.array;
@@ -942,12 +919,12 @@
                                 const idx3 = i * 3, idx4 = i * 4;
                                 const bx = baseData[idx4], by = baseData[idx4+1], bz = baseData[idx4+2], phase = baseData[idx4+3];
                                 const dist = Math.sqrt(bx*bx + by*by + bz*bz);
-                                const spinSpeed = 0.15 + (3.0 / (dist + 3));
+                                const spinSpeed = 0.05 + (0.5 / (dist + 2)) + (chatBurst * 0.02);
                                 const angle = time * spinSpeed;
                                 const cosA = Math.cos(angle), sinA = Math.sin(angle);
-                                positions[idx3]   = bx * cosA - bz * sinA;
-                                positions[idx3+1] = by + Math.sin(time * 1.5 + phase) * 5.0;
-                                positions[idx3+2] = bx * sinA + bz * cosA;
+                                positions[idx3]   = (bx * cosA - bz * sinA) * expansion;
+                                positions[idx3+1] = (by * expansion) + Math.sin(time * 0.8 + phase) * 0.5;
+                                positions[idx3+2] = (bx * sinA + bz * cosA) * expansion;
                             }
                             pts.geometry.attributes.position.needsUpdate = true;
                         }
@@ -978,84 +955,75 @@
 
                     let currentTarget, maxSpeed = user.baseMaxSpeed, maxForce = user.baseMaxForce;
                     if (user.presentExpires && now < user.presentExpires) {
-                        const offset = new THREE.Vector3(0, -10, -140);
+                        const offset = new THREE.Vector3(0, -1, -5);
                         currentTarget = offset.applyMatrix4(this.camera.matrixWorld);
-                        maxSpeed = 5.0; maxForce = 0.2;
+                        maxSpeed = 0.8; maxForce = 0.05;
                         const dist = user.mesh.position.distanceTo(currentTarget);
-                        if (dist < 80) maxSpeed = Math.max(0.2, maxSpeed * (dist / 80));
+                        if (dist < 4) maxSpeed = Math.max(0.05, maxSpeed * (dist / 4));
                     } else {
                         user.wanderTime += deltaTime * user.wanderSpeed;
                         const nx = Math.sin(user.wanderTime * user.wanderOffsets.x) * Math.cos(user.wanderTime * 0.5);
                         const ny = Math.sin(user.wanderTime * user.wanderOffsets.y) * 0.4;
                         const nz = Math.cos(user.wanderTime * user.wanderOffsets.z) * Math.sin(user.wanderTime * 0.6);
-                        currentTarget = new THREE.Vector3(nx, ny, nz).multiplyScalar(this.volumeRadius);
+                        // Flatten Z movement — keep sprites in the 2D plane
+                        currentTarget = new THREE.Vector3(nx, ny, nz * 0.1).multiplyScalar(this.volumeRadius);
                     }
 
+                    // Gently restore Z to 0 to keep everything in the 2D plane
+                    user.velocity.z -= user.mesh.position.z * 0.04;
+
                     const desired = currentTarget.clone().sub(user.mesh.position);
-                    if (desired.length() > 0.5) {
+                    if (desired.length() > 0.1) {
                         desired.normalize().multiplyScalar(maxSpeed);
                         const steer = desired.sub(user.velocity);
                         steer.clampLength(0, maxForce * timeScale);
                         user.velocity.add(steer);
                     }
 
-                    // Cohesion + Flow (prevents chaos)
+                    // Cohesion
                     let center = new THREE.Vector3();
                     let count = 0;
                     usersArray.forEach(other => {
                         if (other === user) return;
                         const dist = user.mesh.position.distanceTo(other.mesh.position);
-                        if (dist < 200) {
-                            center.add(other.mesh.position);
-                            count++;
-                        }
+                        if (dist < 15) { center.add(other.mesh.position); count++; }
                     });
                     if (count > 0) {
                         center.divideScalar(count);
-                        const cohesionForce = center.sub(user.mesh.position).multiplyScalar(0.002);
-                        user.velocity.add(cohesionForce);
+                        user.velocity.add(center.sub(user.mesh.position).multiplyScalar(0.002));
                     }
 
-                    // Separation (tight anti-clumping)
+                    // Separation
                     usersArray.forEach(other => {
                         if (other === user) return;
                         const diff = new THREE.Vector3().subVectors(user.mesh.position, other.mesh.position);
                         const dist = diff.length();
-                        if (dist < 80 && dist > 0.001) {
+                        if (dist < 6 && dist > 0.001) {
                             diff.normalize();
-                            const strength = (80 - dist) / 80;
-                            user.velocity.add(diff.multiplyScalar(strength * 0.03));
+                            user.velocity.add(diff.multiplyScalar(((6 - dist) / 6) * 0.03));
                         }
                     });
 
-                    // Swirl Interaction (makes it look intelligent)
+                    // Swirl
                     usersArray.forEach(other => {
                         if (other === user) return;
                         const diff = new THREE.Vector3().subVectors(other.mesh.position, user.mesh.position);
                         const dist = diff.length();
-                        if (dist < 150) {
+                        if (dist < 12) {
                             const tangent = new THREE.Vector3(-diff.z, 0, diff.x).normalize();
-                            user.velocity.add(tangent.multiplyScalar(0.01));
+                            user.velocity.add(tangent.multiplyScalar(0.008));
                         }
                     });
 
-                    // Boundary Physics (keep inside volume)
-                    const boundaryLimit = this.volumeRadius;
-                    if (user.mesh.position.length() > boundaryLimit) {
-                        const dir = user.mesh.position.clone().normalize();
-                        user.velocity.add(dir.multiplyScalar(-0.5));
+                    // Boundary
+                    if (user.mesh.position.length() > this.volumeRadius) {
+                        user.velocity.add(user.mesh.position.clone().normalize().multiplyScalar(-0.05));
                     }
 
                     user.velocity.multiplyScalar(0.92);
-                    user.velocity.clampLength(0, 6);
+                    user.velocity.clampLength(0, 0.8);
 
                     user.mesh.position.add(user.velocity.clone().multiplyScalar(timeScale));
-
-                    if (user.velocity.lengthSq() > 0.01) {
-                        const lookTarget = user.mesh.position.clone().add(user.velocity);
-                        const movementMatrix = new THREE.Matrix4().lookAt(user.mesh.position, lookTarget, this.camera.up);
-                        user.mesh.quaternion.slerp(new THREE.Quaternion().setFromRotationMatrix(movementMatrix), 0.08);
-                    }
                 });
 
                 this.activeBubbles.forEach((bubble, id) => {
