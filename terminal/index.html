@@ -713,54 +713,72 @@
             }
 
             addUser(userData) {
-                const pCount = 200;
-                const pPos = new Float32Array(pCount * 3);
-                for (let i = 0; i < pCount; i++) {
-                    const r = Math.random() * 12;
-                    const theta = Math.random() * 2 * Math.PI;
-                    const phi = Math.acos((Math.random() * 2) - 1);
-                    pPos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
-                    pPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-                    pPos[i*3+2] = r * Math.cos(phi);
-                }
-                const pPhase = new Float32Array(pCount);
-                for (let i = 0; i < pCount; i++) pPhase[i] = Math.random() * Math.PI * 2;
-
-                const clusterGeo = new THREE.BufferGeometry();
-                clusterGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-                clusterGeo.setAttribute('aPhase',   new THREE.BufferAttribute(pPhase, 1));
-
-                const clusterUniforms = {
-                    time:     { value: 0 },
-                    baseSize: { value: 9 },
-                    opacity:  { value: 0.8 },
-                    color:    { value: new THREE.Color(userData.color) },
-                };
-                const clusterMat = new THREE.ShaderMaterial({
-                    uniforms: clusterUniforms,
-                    vertexShader: PARTICLE_VERT, fragmentShader: PARTICLE_FRAG,
-                    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
-                });
-
-                const cluster = new THREE.Points(clusterGeo, clusterMat);
-                const coreMat = new THREE.SpriteMaterial({
-                    map: this.particleTexture, color: userData.color,
-                    blending: THREE.AdditiveBlending, opacity: 0.5
-                });
-                const core = new THREE.Sprite(coreMat);
-                core.scale.set(40, 40, 1);
+                const numSystems = 8;
+                const particlesPerSystem = 25;
+                const cloudRadius = 12;
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ'.split('');
 
                 const userGroup = new THREE.Group();
-                userGroup.add(cluster);
-                userGroup.add(core);
+                const particleSystems = [];
+
+                for (let s = 0; s < numSystems; s++) {
+                    const cvs = document.createElement('canvas');
+                    cvs.width = 64; cvs.height = 64;
+                    const ctx = cvs.getContext('2d');
+                    const char = chars[Math.floor(Math.random() * chars.length)];
+                    ctx.fillStyle = userData.color;
+                    ctx.font = 'bold 48px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowColor = userData.color;
+                    ctx.shadowBlur = 10;
+                    ctx.fillText(char, 32, 32);
+
+                    const texture = new THREE.CanvasTexture(cvs);
+                    const baseOpacity = Math.random() * 0.4 + 0.4;
+                    const baseSize = 1.5 + Math.random() * 1.5;
+                    const material = new THREE.PointsMaterial({
+                        size: baseSize, map: texture,
+                        transparent: true, opacity: baseOpacity,
+                        blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+                    });
+
+                    const geometry = new THREE.BufferGeometry();
+                    const positions = new Float32Array(particlesPerSystem * 3);
+                    const baseData = new Float32Array(particlesPerSystem * 4);
+
+                    for (let j = 0; j < particlesPerSystem; j++) {
+                        const u = Math.random();
+                        const radius = cloudRadius * Math.pow(u, 0.4);
+                        const theta = Math.random() * 2 * Math.PI;
+                        const phi = Math.acos(2 * Math.random() - 1);
+                        const bx = radius * Math.sin(phi) * Math.cos(theta);
+                        const by = radius * Math.sin(phi) * Math.sin(theta);
+                        const bz = radius * Math.cos(phi);
+                        positions[j*3] = bx; positions[j*3+1] = by; positions[j*3+2] = bz;
+                        baseData[j*4] = bx; baseData[j*4+1] = by; baseData[j*4+2] = bz;
+                        baseData[j*4+3] = Math.random() * Math.PI * 2;
+                    }
+
+                    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                    const points = new THREE.Points(geometry, material);
+                    points.userData.baseData = baseData;
+                    points.userData.baseOpacity = baseOpacity;
+                    points.userData.baseSize = baseSize;
+                    userGroup.add(points);
+                    particleSystems.push(points);
+                }
+
                 userGroup.position.set((Math.random()-0.5)*200, (Math.random()-0.5)*100, (Math.random()-0.5)*200);
                 this.scene.add(userGroup);
 
                 const user = {
                     ...userData,
                     mesh: userGroup,
-                    clusterMat, clusterUniforms, coreMat,
+                    particleSystems,
                     baseParticleSize: 9,
+                    radius: 35 + Math.random() * 10, // collision radius
+                    mass: 1 + Math.random() * 0.5,
                     chatReact: null,
                     velocity: new THREE.Vector3((Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2),
                     baseMaxSpeed: 1.2 + Math.random() * 0.8,
@@ -804,9 +822,11 @@
                 user.chatReact = { startTime: Date.now(), duration: 1400 };
                 this.lastChatTime = Date.now();
 
-                // Flash the core sprite on chat
-                user.coreMat.opacity = 1.0;
-                setTimeout(() => { user.coreMat.opacity = 0.5; }, 300);
+                // Flash character particles on chat
+                if (user.particleSystems) {
+                    user.particleSystems.forEach(p => { p.material.opacity = 1.0; });
+                    setTimeout(() => { if (user.particleSystems) user.particleSystems.forEach(p => { p.material.opacity = p.userData.baseOpacity; }); }, 300);
+                }
 
                 if (this.activeBubbles.has(userId)) {
                     const oldBubble = this.activeBubbles.get(userId);
@@ -861,20 +881,84 @@
                 }
                 if (this.stars) this.stars.rotation.y = time * 0.004;
 
+                const usersArray = Array.from(state.users.values());
+
+                // --- PHYSICS COLLISION LOOP ---
+                for (let i = 0; i < usersArray.length; i++) {
+                    for (let j = i + 1; j < usersArray.length; j++) {
+                        const a = usersArray[i];
+                        const b = usersArray[j];
+                        const posA = a.mesh.position;
+                        const posB = b.mesh.position;
+                        const diff = new THREE.Vector3().subVectors(posB, posA);
+                        const dist = diff.length();
+                        const minDist = a.radius + b.radius;
+
+                        if (dist < minDist && dist > 0.001) {
+                            diff.normalize();
+                            const overlap = (minDist - dist);
+                            const force = overlap * 0.02;
+                            const pushA = diff.clone().multiplyScalar(-force * (b.mass / (a.mass + b.mass)));
+                            const pushB = diff.clone().multiplyScalar(force * (a.mass / (a.mass + b.mass)));
+                            a.velocity.add(pushA);
+                            b.velocity.add(pushB);
+
+                            const bounce = 0.15;
+                            const relativeVel = new THREE.Vector3().subVectors(a.velocity, b.velocity);
+                            const impact = relativeVel.dot(diff);
+                            if (impact < 0) {
+                                const impulse = diff.clone().multiplyScalar(impact * bounce);
+                                a.velocity.sub(impulse);
+                                b.velocity.add(impulse);
+                            }
+
+                            // Collision reaction visual boost
+                            a.clusterUniforms.baseSize.value *= 1.2;
+                            b.clusterUniforms.baseSize.value *= 1.2;
+                            setTimeout(() => {
+                                if (a && a.clusterUniforms) a.clusterUniforms.baseSize.value = a.baseParticleSize;
+                                if (b && b.clusterUniforms) b.clusterUniforms.baseSize.value = b.baseParticleSize;
+                            }, 120);
+                        }
+                    }
+                }
+
                 state.users.forEach((user) => {
-                    user.clusterUniforms.time.value = time;
+                    // Vortex orbital animation for matrix character cloud
+                    if (user.particleSystems) {
+                        for (const pts of user.particleSystems) {
+                            const positions = pts.geometry.attributes.position.array;
+                            const baseData = pts.userData.baseData;
+                            for (let i = 0; i < positions.length / 3; i++) {
+                                const idx3 = i * 3, idx4 = i * 4;
+                                const bx = baseData[idx4], by = baseData[idx4+1], bz = baseData[idx4+2], phase = baseData[idx4+3];
+                                const dist = Math.sqrt(bx*bx + by*by + bz*bz);
+                                const spinSpeed = 0.15 + (3.0 / (dist + 3));
+                                const angle = time * spinSpeed;
+                                const cosA = Math.cos(angle), sinA = Math.sin(angle);
+                                positions[idx3]   = bx * cosA - bz * sinA;
+                                positions[idx3+1] = by + Math.sin(time * 1.5 + phase) * 1.6;
+                                positions[idx3+2] = bx * sinA + bz * cosA;
+                            }
+                            pts.geometry.attributes.position.needsUpdate = true;
+                        }
+                    }
 
                     if (user.chatReact) {
                         const elapsed = now - user.chatReact.startTime;
                         const progress = elapsed / user.chatReact.duration;
                         if (progress >= 1) {
                             user.chatReact = null;
-                            user.clusterUniforms.baseSize.value = user.baseParticleSize;
-                            user.clusterUniforms.opacity.value = 0.8;
+                            if (user.particleSystems) user.particleSystems.forEach(p => {
+                                p.material.opacity = p.userData.baseOpacity;
+                                p.material.size = p.userData.baseSize;
+                            });
                         } else {
                             const burst = Math.sin(progress * Math.PI) * (1 - progress * 0.4);
-                            user.clusterUniforms.baseSize.value = user.baseParticleSize * (1 + burst * 3.0);
-                            user.clusterUniforms.opacity.value = Math.min(1.0, 0.8 + burst * 0.4);
+                            if (user.particleSystems) user.particleSystems.forEach(p => {
+                                p.material.size = p.userData.baseSize * (1 + burst * 3.0);
+                                p.material.opacity = Math.min(1.0, p.userData.baseOpacity + burst * 0.4);
+                            });
                         }
                     }
 
@@ -882,14 +966,6 @@
                         ? Math.sin(((now - user.chatReact.startTime) / user.chatReact.duration) * Math.PI) * 0.5 : 0;
                     const breathScale = (1 + Math.sin(time * 2 + user.phase) * 0.15) * (1 + chatReactBurst);
                     user.mesh.scale.set(breathScale, breathScale, breathScale);
-
-                    // Core sprite breathes independently at a faster frequency
-                    const corePulse = Math.sin(time * 4 + user.phase) * 0.2 + 1;
-                    user.mesh.children[1].scale.set(40 * corePulse, 40 * corePulse, 1);
-
-                    const reactSpin = user.chatReact ? 3.5 : 1;
-                    user.mesh.children[0].rotation.y += deltaTime * 0.8 * reactSpin;
-                    user.mesh.children[0].rotation.z += deltaTime * 0.4 * reactSpin;
 
                     let currentTarget, maxSpeed = user.baseMaxSpeed, maxForce = user.baseMaxForce;
                     if (user.presentExpires && now < user.presentExpires) {
@@ -913,7 +989,57 @@
                         steer.clampLength(0, maxForce * timeScale);
                         user.velocity.add(steer);
                     }
-                    user.velocity.multiplyScalar(0.96);
+
+                    // Cohesion + Flow (prevents chaos)
+                    let center = new THREE.Vector3();
+                    let count = 0;
+                    usersArray.forEach(other => {
+                        if (other === user) return;
+                        const dist = user.mesh.position.distanceTo(other.mesh.position);
+                        if (dist < 200) {
+                            center.add(other.mesh.position);
+                            count++;
+                        }
+                    });
+                    if (count > 0) {
+                        center.divideScalar(count);
+                        const cohesionForce = center.sub(user.mesh.position).multiplyScalar(0.002);
+                        user.velocity.add(cohesionForce);
+                    }
+
+                    // Separation (tight anti-clumping)
+                    usersArray.forEach(other => {
+                        if (other === user) return;
+                        const diff = new THREE.Vector3().subVectors(user.mesh.position, other.mesh.position);
+                        const dist = diff.length();
+                        if (dist < 80 && dist > 0.001) {
+                            diff.normalize();
+                            const strength = (80 - dist) / 80;
+                            user.velocity.add(diff.multiplyScalar(strength * 0.03));
+                        }
+                    });
+
+                    // Swirl Interaction (makes it look intelligent)
+                    usersArray.forEach(other => {
+                        if (other === user) return;
+                        const diff = new THREE.Vector3().subVectors(other.mesh.position, user.mesh.position);
+                        const dist = diff.length();
+                        if (dist < 150) {
+                            const tangent = new THREE.Vector3(-diff.z, 0, diff.x).normalize();
+                            user.velocity.add(tangent.multiplyScalar(0.01));
+                        }
+                    });
+
+                    // Boundary Physics (keep inside volume)
+                    const boundaryLimit = this.volumeRadius;
+                    if (user.mesh.position.length() > boundaryLimit) {
+                        const dir = user.mesh.position.clone().normalize();
+                        user.velocity.add(dir.multiplyScalar(-0.5));
+                    }
+
+                    user.velocity.multiplyScalar(0.92);
+                    user.velocity.clampLength(0, 6);
+
                     user.mesh.position.add(user.velocity.clone().multiplyScalar(timeScale));
 
                     if (user.velocity.lengthSq() > 0.01) {
