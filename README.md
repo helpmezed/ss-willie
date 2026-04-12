@@ -42,9 +42,12 @@ Then open **http://localhost:3000** in your browser.
 
 ### Step 1 — Push to GitHub
 ```bash
+git init
 git add .
-git commit -m "deploy"
-git push origin main
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/helpmezed/ss-willie.git
+git push -u origin main
 ```
 
 ### Step 2 — Connect to Vercel
