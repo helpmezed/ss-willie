@@ -7,25 +7,49 @@
     <link rel="stylesheet" href="shared.css">
     <style>
         body {
-            display: flex;
-            background: linear-gradient(180deg, #0a0f1a 0%, #050810 100%);
+            margin: 0;
+            padding: 0;
+            background: #010205;
+            overflow: hidden;
+            color: #f8fafc;
+        }
+
+        /* ==================== 3D CANVAS ==================== */
+        #canvas-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        .nexus-grid-horizon {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(255, 42, 109, 0.08) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: 2;
         }
 
         /* ==================== OUTER NEWS VIEW ==================== */
         .outer-news-layout {
+            position: relative;
             display: flex;
             width: 100%;
             height: 100vh;
+            z-index: 10;
+            pointer-events: none; /* Allow interaction with children only */
         }
 
         .outer-news-nav {
             width: 300px;
-            background: rgba(5, 8, 15, 0.95);
+            background: rgba(5, 8, 15, 0.6);
             border-right: 1px solid var(--border-glass);
-            padding: 40px 30px;
+            padding: 40px 24px;
             display: flex;
             flex-direction: column;
             gap: 30px;
+            backdrop-filter: blur(20px);
+            pointer-events: auto;
         }
 
         .outer-logo {
@@ -75,6 +99,7 @@
             align-items: center;
             gap: 12px;
             border: 1px solid transparent;
+            color: #8899aa;
         }
 
         .nav-item:hover {
@@ -103,6 +128,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            pointer-events: auto;
         }
 
         .outer-header {
@@ -111,7 +137,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
         }
 
         .outer-title { font-size: 28px; font-weight: 300; letter-spacing: 3px; }
@@ -156,7 +183,7 @@
         .outer-feed::-webkit-scrollbar-thumb { background: rgba(255, 42, 109, 0.3); border-radius: 4px; }
 
         .outer-card {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(15, 20, 30, 0.7);
             border: 1px solid rgba(255, 42, 109, 0.15);
             border-radius: 16px;
             overflow: hidden;
@@ -164,6 +191,7 @@
             animation: cardEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             flex-direction: column;
+            backdrop-filter: blur(12px);
         }
 
         @keyframes cardEnter {
@@ -285,6 +313,19 @@
     <!-- Toast notifications -->
     <div id="nexus-toasts"></div>
 
+    <!-- 3D BACKGROUND LAYER -->
+    <div id="canvas-container"></div>
+    <div class="nexus-grid-horizon"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
     <!-- OUTER NEWS VIEW -->
     <div class="outer-news-layout">
         <nav class="outer-news-nav">
@@ -354,6 +395,144 @@
     </div>
 
     <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ==================== PARTICLE SHADERS ====================
+        const PARTICLE_VERT = `
+            uniform float time;
+            uniform float baseSize;
+            attribute float aPhase;
+            void main() {
+                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                float pulse = 1.0 + 0.35 * sin(time * 2.0 + aPhase);
+                gl_PointSize = baseSize * pulse * (300.0 / -mvPosition.z);
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `;
+
+        const PARTICLE_FRAG = `
+            uniform vec3 color;
+            uniform float opacity;
+            void main() {
+                vec2 uv = gl_PointCoord - vec2(0.5);
+                float dist = length(uv);
+                if (dist > 0.5) discard;
+                float glow = pow(1.0 - smoothstep(0.0, 0.5, dist), 2.2);
+                float alpha = glow * opacity;
+                gl_FragColor = vec4(color, alpha);
+            }
+        `;
+
+        // ==================== 3D BACKGROUND ENGINE ====================
+        class NewsBackground {
+            constructor() {
+                this.container = document.getElementById('canvas-container');
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x010205);
+                this.scene.fog = new THREE.FogExp2(0x010205, 0.002);
+
+                this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+                this.camera.position.set(0, 100, 500);
+
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.container.appendChild(this.renderer.domElement);
+
+                this.targetColor = new THREE.Color(0xff2a6d);
+                this.pulseStartTime = null;
+                this.clock = new THREE.Clock();
+                this.init();
+            }
+
+            init() {
+                // Grid
+                const grid = new THREE.GridHelper(2000, 40, 0xff2a6d, 0x1a050d);
+                grid.position.y = -100;
+                grid.material.transparent = true;
+                grid.material.opacity = 0.15;
+                this.scene.add(grid);
+
+                // Floating Particles
+                const count = 1500;
+                const pos = new Float32Array(count * 3);
+                const phase = new Float32Array(count);
+                for(let i=0; i<count; i++) {
+                    pos[i*3] = (Math.random()-0.5)*1200;
+                    pos[i*3+1] = (Math.random()-0.5)*800;
+                    pos[i*3+2] = (Math.random()-0.5)*1200;
+                    phase[i] = Math.random() * Math.PI * 2;
+                }
+                const geo = new THREE.BufferGeometry();
+                geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+                geo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
+                
+                this.pMat = new THREE.ShaderMaterial({
+                    uniforms: {
+                        time: { value: 0 },
+                        baseSize: { value: 4 },
+                        color: { value: new THREE.Color(0xff2a6d) },
+                        opacity: { value: 0.4 }
+                    },
+                    vertexShader: PARTICLE_VERT,
+                    fragmentShader: PARTICLE_FRAG,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                
+                this.particles = new THREE.Points(geo, this.pMat);
+                this.scene.add(this.particles);
+
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                this.animate();
+            }
+
+            updateTheme(category) {
+                const themes = {
+                    '': 0xff2a6d,           // Top Stories (Alert Pink)
+                    'general': 0xff2a6d,
+                    'business': 0xfcee0a,    // Gold/Yellow
+                    'technology': 0x00e5ff,  // Cyan (Primary)
+                    'science': 0xb300ff,     // Purple (Secondary)
+                    'health': 0x00ff88,      // Green
+                    'entertainment': 0xff00ff, // Magenta
+                    'sports': 0xff8800       // Orange
+                };
+                this.targetColor = new THREE.Color(themes[category] || 0xff2a6d);
+                this.pulseStartTime = Date.now();
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                const time = this.clock.getElapsedTime();
+                this.pMat.uniforms.time.value = time;
+                this.particles.rotation.y = time * 0.05;
+
+                // Smooth color transition
+                this.pMat.uniforms.color.value.lerp(this.targetColor, 0.05);
+
+                // Pulse reaction effect on category change
+                if (this.pulseStartTime) {
+                    const elapsed = Date.now() - this.pulseStartTime;
+                    if (elapsed < 1000) {
+                        const burst = Math.sin((elapsed / 1000) * Math.PI);
+                        this.pMat.uniforms.baseSize.value = 4 + (burst * 8);
+                    } else {
+                        this.pMat.uniforms.baseSize.value = 4;
+                        this.pulseStartTime = null;
+                    }
+                }
+
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
 
         // ==================== AUTHENTICATION MANAGER ====================
         class AuthManager {
@@ -432,6 +611,7 @@
             }
 
             async fetchNews(category) {
+                window.newsBg?.updateTheme(category);
                 this.feedEl.innerHTML = '<div class="outer-feed-loading">Fetching live feed...</div>';
                 try {
                     const url = '/api/news' + (category ? `?category=${category}` : '');
@@ -491,6 +671,7 @@
             if (appInitialized) return;
             appInitialized = true;
             window.toastManager = new ToastManager();
+            window.newsBg = new NewsBackground();
             new OuterNewsController();
             window.toastManager.show(`Welcome, ${userData.username}`, 'success');
         }
