@@ -715,7 +715,7 @@
                 this.container = document.body;
                 this.scene = new THREE.Scene();
                 this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
                 this.clock = new THREE.Clock();
                 this.orb = null;
                 this.controls = null;
@@ -728,7 +728,8 @@
 
             init() {
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+                this.renderer.setClearColor(0x000000, 1);
                 this.container.insertBefore(this.renderer.domElement, this.container.firstChild);
                 
                 this.camera.position.set(0, 0, 4);
@@ -740,11 +741,15 @@
                 this.createOrb();
                 this.animate();
 
-                window.addEventListener('resize', () => this.onResize());
+                let _resizeTimer;
+                window.addEventListener('resize', () => {
+                    clearTimeout(_resizeTimer);
+                    _resizeTimer = setTimeout(() => this.onResize(), 150);
+                });
             }
 
             createOrb() {
-                const geometry = new THREE.IcosahedronGeometry(1.5, 64);
+                const geometry = new THREE.IcosahedronGeometry(1.5, 8);
 
                 const material = new THREE.ShaderMaterial({
                     uniforms: {
@@ -754,7 +759,6 @@
                         uColor2:     { value: new THREE.Color('#00ff41') },
                     },
                     vertexShader: `
-                        varying vec2 vUv;
                         varying float vDistortion;
                         uniform float uTime;
                         uniform float uSyncLevel;
@@ -808,7 +812,6 @@
                         }
 
                         void main() {
-                            vUv = uv;
                             float timeScale = 0.5 + uSyncLevel * 2.0;
                             float noiseAmp  = 0.25 + uSyncLevel * 0.75;
                             float noise = snoise(normal + uTime * timeScale);
@@ -818,7 +821,6 @@
                         }
                     `,
                     fragmentShader: `
-                        varying vec2 vUv;
                         varying float vDistortion;
                         uniform float uTime;
                         uniform float uSyncLevel;
