@@ -91,6 +91,30 @@
             box-shadow: inset 0 0 10px rgba(0, 255, 65, 0.1);
         }
 
+        /* ── Skull variables ── */
+        :root {
+            --skull-fill:    #c8ffd8;
+            --skull-outline: #00aa28;
+            --socket-color:  #000804;
+            --bubble-bg:     rgba(22, 30, 22, 0.95);
+            --bubble-border: rgba(0, 255, 65, 0.12);
+        }
+
+        @keyframes avatarFloat {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50%       { transform: translateY(-4px) rotate(2deg); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.35; transform: scale(0.75); }
+        }
+
+        .skull-path, .eye-path {
+            transition: d 0.9s cubic-bezier(0.45, 0, 0.55, 1);
+        }
+        .skull-avatar { animation: avatarFloat 3s ease-in-out infinite; }
+
+        /* ── Panel ── */
         #chat-panel {
             position: fixed;
             right: 0; top: 56px;
@@ -99,156 +123,205 @@
             z-index: 20;
             display: flex;
             flex-direction: column;
-            background: var(--panel-bg);
+            background: rgba(10, 14, 10, 0.96);
             border-left: 1px solid var(--border);
             backdrop-filter: blur(30px) saturate(180%);
-            box-shadow: -20px 0 60px rgba(0,0,0,0.8);
+            box-shadow: -20px 0 60px rgba(0,0,0,0.85);
         }
 
+        /* ── Header ── */
         .chat-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(0,255,65,0.08);
             display: flex;
             align-items: center;
-            gap: 12px;
-            background: rgba(0, 15, 0, 0.4);
+            gap: 14px;
+            background: rgba(0, 10, 0, 0.5);
             flex-shrink: 0;
         }
 
-        .status-dot {
-            width: 8px; height: 8px;
-            background: var(--green);
+        .header-skull-wrap {
+            width: 42px; height: 42px;
             border-radius: 50%;
-            box-shadow: 0 0 10px var(--green);
-            animation: pulse 2.5s infinite ease-in-out;
+            background: rgba(0,255,65,0.08);
+            border: 1px solid rgba(0,255,65,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); filter: brightness(1); }
-            50%       { opacity: 0.3; transform: scale(0.8); filter: brightness(1.5); }
-        }
+
+        .chat-header-info { display: flex; flex-direction: column; gap: 2px; }
 
         .chat-title {
             font-family: 'Orbitron', monospace;
-            font-size: 12px;
-            letter-spacing: 2px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #e8ffe8;
+        }
+
+        .chat-status {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: var(--green);
             text-shadow: 0 0 8px var(--green);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        /* ── Skull variables ── */
-        :root {
-            --skull-fill:    #b8ffcc;
-            --skull-outline: #00aa28;
-            --socket-color:  #000804;
+        .status-dot {
+            width: 6px; height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--green);
+            animation: pulse 2.5s infinite ease-in-out;
         }
 
-        @keyframes avatarFloat {
-            0%, 100% { transform: translateY(0) rotate(-2deg); }
-            50%       { transform: translateY(-4px) rotate(2deg); }
-        }
-
-        /* CSS `d` property transition for SVG path morphing */
-        .skull-path, .eye-path {
-            transition: d 0.9s cubic-bezier(0.45, 0, 0.55, 1);
-        }
-
-        .skull-avatar { animation: avatarFloat 3s ease-in-out infinite; }
-
+        /* ── Messages ── */
         #messages {
             flex: 1;
             overflow-y: auto;
-            padding: 16px 20px;
+            padding: 20px 16px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 18px;
             scroll-behavior: smooth;
         }
         #messages::-webkit-scrollbar { width: 3px; }
-        #messages::-webkit-scrollbar-thumb { background: var(--border-mid); }
+        #messages::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.15); border-radius: 2px; }
 
         @keyframes msgIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to   { opacity: 1; transform: translateX(0); }
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         .msg-row {
             display: flex;
             align-items: flex-end;
-            gap: 10px;
-            animation: msgIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            gap: 12px;
+            animation: msgIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .skull-circle {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: rgba(0,255,65,0.06);
+            border: 1px solid rgba(0,255,65,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-bottom: 2px;
+            overflow: hidden;
         }
 
         .msg-bubble {
             flex: 1;
             font-size: 13px;
-            line-height: 1.5;
-            padding: 10px 14px;
-            background: rgba(0, 255, 65, 0.04);
-            border: 1px solid var(--border);
-            border-bottom-left-radius: 0;
+            line-height: 1.55;
+            padding: 11px 16px;
+            background: var(--bubble-bg);
+            border: 1px solid var(--bubble-border);
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            color: #d4f0d4;
+            transition: background 0.2s;
         }
-        .msg-bubble:hover { background: rgba(0, 255, 65, 0.08); }
+        .msg-bubble:hover { background: rgba(28, 40, 28, 0.95); }
 
-        .msg-bubble .timestamp { color: rgba(0,255,65,0.25); font-size: 10px; display: block; margin-bottom: 3px; }
-        .msg-bubble .username  { color: #fff; font-weight: 700; margin-right: 6px; }
-
-        .msg-row.system {
-            justify-content: center;
+        .msg-bubble .timestamp {
+            color: rgba(0,255,65,0.2);
+            font-size: 10px;
+            display: block;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
         }
+        .msg-bubble .username {
+            color: var(--green);
+            font-weight: 700;
+            margin-right: 6px;
+            text-shadow: 0 0 6px rgba(0,255,65,0.4);
+        }
+        .msg-bubble .text { color: #c8e8c8; }
+
+        /* System messages */
+        .msg-row.system { justify-content: center; }
         .msg-row.system .msg-bubble {
+            flex: none;
             font-style: italic;
-            color: var(--text-dim);
+            color: rgba(0,255,65,0.3);
             background: transparent;
             border: none;
-            border-top: 1px solid rgba(0,255,65,0.1);
+            border-top: 1px solid rgba(0,255,65,0.07);
             border-radius: 0;
             text-align: center;
             font-size: 11px;
-            padding: 6px 0;
+            padding: 4px 12px;
         }
 
+        /* ── Input ── */
         .input-area {
-            padding: 24px;
-            background: rgba(0, 8, 0, 0.6);
-            border-top: 1px solid var(--border);
+            padding: 16px 20px 20px;
+            background: rgba(0, 8, 0, 0.7);
+            border-top: 1px solid rgba(0,255,65,0.08);
+            flex-shrink: 0;
         }
 
         .input-wrapper {
             display: flex;
-            background: #000;
-            border: 1px solid var(--border);
+            align-items: center;
+            gap: 10px;
+            background: rgba(20, 30, 20, 0.9);
+            border: 1px solid rgba(0,255,65,0.18);
+            border-radius: 50px;
+            padding: 6px 6px 6px 18px;
             transition: all 0.3s;
         }
         .input-wrapper:focus-within {
-            border-color: var(--green);
-            box-shadow: 0 0 20px rgba(0,255,65,0.15);
+            border-color: rgba(0,255,65,0.45);
+            box-shadow: 0 0 0 3px rgba(0,255,65,0.06);
         }
 
         #message-input {
             flex: 1;
             background: transparent;
             border: none;
-            color: var(--green);
-            padding: 14px;
+            color: #c8e8c8;
             font-family: inherit;
+            font-size: 13px;
             outline: none;
+            min-width: 0;
         }
+        #message-input::placeholder { color: rgba(0,255,65,0.25); }
 
         #send-btn {
-            background: var(--green-dim);
+            background: var(--green);
             border: none;
-            border-left: 1px solid var(--border);
-            color: var(--green);
-            padding: 0 24px;
+            border-radius: 50px;
+            color: #000;
+            padding: 9px 22px;
             cursor: pointer;
-            text-transform: uppercase;
-            font-size: 11px;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 700;
             letter-spacing: 1px;
-            transition: 0.2s;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            flex-shrink: 0;
         }
-        #send-btn:hover { background: var(--green); color: #000; }
+        #send-btn:hover {
+            background: #fff;
+            box-shadow: 0 0 16px rgba(0,255,65,0.4);
+        }
+        #send-btn:active { transform: scale(0.97); }
 
         @media (max-width: 768px) {
-            #chat-panel { width: 100%; height: 50vh; top: auto; bottom: 0; }
+            #chat-panel { width: 100%; height: 55vh; top: auto; bottom: 0; }
             #site-nav { padding: 0 16px; }
         }
     </style>
@@ -268,15 +341,21 @@
 
     <div id="chat-panel">
         <div class="chat-header">
-            <div class="status-dot"></div>
-            <div class="chat-title">LOCAL_NODE // CORE_ORB</div>
+            <div class="header-skull-wrap" id="header-skull"></div>
+            <div class="chat-header-info">
+                <div class="chat-title">The Crypt Chat</div>
+                <div class="chat-status">
+                    <div class="status-dot"></div>
+                    Online
+                </div>
+            </div>
         </div>
 
         <div id="messages"></div>
 
         <div class="input-area">
             <div class="input-wrapper">
-                <input type="text" id="message-input" placeholder="Initiate handshake..." maxlength="255" autocomplete="off">
+                <input type="text" id="message-input" placeholder="Type a message..." maxlength="255" autocomplete="off">
                 <button id="send-btn">Send</button>
             </div>
         </div>
@@ -589,9 +668,9 @@
                 } else {
                     row.className = 'msg-row';
 
-                    // Skull avatar
+                    // Skull avatar in circle
                     const avatarWrap = document.createElement('div');
-                    avatarWrap.style.cssText = 'flex-shrink:0;margin-bottom:2px;';
+                    avatarWrap.className = 'skull-circle';
                     avatarWrap.appendChild(createSkullSVG());
 
                     // Bubble
@@ -606,7 +685,9 @@
                     const uname = document.createElement('span');
                     uname.className = 'username';
                     uname.textContent = lastMsg.user + ':';
-                    const txt = document.createTextNode(' ' + lastMsg.text);
+                    const txt = document.createElement('span');
+                    txt.className = 'text';
+                    txt.textContent = ' ' + lastMsg.text;
                     body.appendChild(uname);
                     body.appendChild(txt);
 
@@ -622,6 +703,11 @@
         }
 
         window.onload = () => {
+            // Mount animated skull in header
+            const headerSkull = createSkullSVG();
+            headerSkull.style.cssText = 'width:30px;height:30px;';
+            document.getElementById('header-skull').appendChild(headerSkull);
+
             const state = new NexusState();
             const engine = new MatrixEngine();
             const terminal = new TerminalController(state, engine);
