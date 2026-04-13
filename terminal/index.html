@@ -129,49 +129,78 @@
             box-shadow: -20px 0 60px rgba(0,0,0,0.85);
         }
 
-        /* ── Header ── */
+        /* ── Header / User Profile ── */
         .chat-header {
-            padding: 16px 20px;
+            padding: 14px 16px;
             border-bottom: 1px solid rgba(0,255,65,0.08);
             display: flex;
             align-items: center;
-            gap: 14px;
-            background: rgba(0, 10, 0, 0.5);
+            gap: 13px;
+            background: rgba(0, 10, 0, 0.6);
             flex-shrink: 0;
+            position: relative;
         }
 
         .header-skull-wrap {
-            width: 42px; height: 42px;
+            width: 46px; height: 46px;
             border-radius: 50%;
-            background: rgba(0,255,65,0.08);
-            border: 1px solid rgba(0,255,65,0.2);
+            background: rgba(0,255,65,0.07);
+            border: 2px solid rgba(0,255,65,0.25);
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
             overflow: hidden;
+            position: relative;
+            transition: border-color 0.3s;
         }
 
-        .chat-header-info { display: flex; flex-direction: column; gap: 2px; }
+        /* Colored ring tinted to user color — set via JS */
+        .header-skull-wrap::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 2px solid var(--user-color, var(--green));
+            opacity: 0.5;
+            pointer-events: none;
+        }
 
-        .chat-title {
+        .chat-header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .profile-username {
             font-family: 'Orbitron', monospace;
             font-size: 13px;
             font-weight: 700;
             letter-spacing: 1px;
             color: #e8ffe8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .chat-status {
             font-size: 10px;
             font-weight: 700;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             color: var(--green);
             text-shadow: 0 0 8px var(--green);
             text-transform: uppercase;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
 
         .status-dot {
@@ -180,6 +209,44 @@
             border-radius: 50%;
             box-shadow: 0 0 8px var(--green);
             animation: pulse 2.5s infinite ease-in-out;
+        }
+
+        .profile-id {
+            font-size: 9px;
+            color: rgba(0,255,65,0.2);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-color-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 6px currentColor;
+        }
+
+        /* Logout button */
+        .logout-btn {
+            background: none;
+            border: 1px solid rgba(0,255,65,0.15);
+            color: rgba(0,255,65,0.35);
+            font-family: inherit;
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .logout-btn:hover {
+            border-color: rgba(255,50,50,0.5);
+            color: rgba(255,80,80,0.8);
+            background: rgba(255,0,0,0.05);
         }
 
         /* ── Messages ── */
@@ -502,12 +569,17 @@
         <div class="chat-header">
             <div class="header-skull-wrap" id="header-skull"></div>
             <div class="chat-header-info">
-                <div class="chat-title">The Crypt Chat</div>
-                <div class="chat-status">
-                    <div class="status-dot"></div>
-                    Online
+                <div class="profile-username" id="profile-username">———</div>
+                <div class="profile-meta">
+                    <div class="chat-status">
+                        <div class="status-dot"></div>
+                        Online
+                    </div>
+                    <div class="profile-color-dot" id="profile-color-dot"></div>
+                    <div class="profile-id" id="profile-id"></div>
                 </div>
             </div>
+            <button class="logout-btn" id="logout-btn">Logout</button>
         </div>
 
         <div id="messages"></div>
@@ -899,9 +971,27 @@
             if (appInitialized) return;
             appInitialized = true;
 
+            // Skull avatar
             const headerSkull = createSkullSVG();
             headerSkull.style.cssText = 'width:30px;height:30px;';
             document.getElementById('header-skull').appendChild(headerSkull);
+
+            // User profile fields
+            document.getElementById('profile-username').textContent = userData.username;
+            document.getElementById('profile-id').textContent = userData.id;
+
+            const colorDot = document.getElementById('profile-color-dot');
+            colorDot.style.background = userData.color;
+            colorDot.style.boxShadow  = `0 0 6px ${userData.color}`;
+
+            // Tint the skull ring to user color
+            document.getElementById('header-skull').style.setProperty('--user-color', userData.color);
+
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                localStorage.removeItem('nexus_user');
+                location.reload();
+            });
 
             const state    = new NexusState(userData.username);
             const engine   = new MatrixEngine();
