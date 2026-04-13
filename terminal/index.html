@@ -593,6 +593,9 @@
         </div>
     </div>
 
+    <!-- Pusher (presence channel for online count) -->
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+
     <!-- Use ESM for clean module imports in a single file -->
     <script type="importmap">
         {
@@ -634,7 +637,9 @@
                 this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
                 this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
                 this.clock = new THREE.Clock();
-                this.orb = null;
+                this.orbs = [];
+                this.material = null;
+                this.geometry = null;
                 this.controls = null;
                 this._prevTime = 0;
                 this.init();
@@ -646,13 +651,14 @@
                 this.renderer.setClearColor(0x000000, 1);
                 this.container.insertBefore(this.renderer.domElement, this.container.firstChild);
                 
-                this.camera.position.set(0, 0, 4);
+                this.camera.position.set(0, 0, 5);
                 this.controls = new OrbitControls(this.camera, this.renderer.domElement);
                 this.controls.enableDamping = true;
                 this.controls.dampingFactor = 0.05;
                 this.controls.enableZoom = false;
 
                 this.createOrb();
+                this.setOrbCount(1);
                 this.animate();
 
                 let _resizeTimer;
@@ -745,11 +751,46 @@
                     side: THREE.DoubleSide
                 });
 
-                this.orb = new THREE.Mesh(geometry, material);
-                this.scene.add(this.orb);
+                // Store shared geometry + material; meshes are created in setOrbCount
+                this.geometry = geometry;
+                this.material = material;
             }
 
-            triggerTransmission() { /* Neural Sync handles effects now */ }
+            setOrbCount(count) {
+                // Remove old orbs
+                this.orbs.forEach(o => this.scene.remove(o));
+                this.orbs = [];
+
+                count = Math.max(1, Math.min(count, 30));
+
+                const cols = Math.ceil(Math.sqrt(count));
+                const rows = Math.ceil(count / cols);
+                const maxDim = Math.max(cols, rows);
+
+                // Scale so all orbs fit within the visible frustum
+                const orbRadius = 1.5 / maxDim;
+                const spacing   = orbRadius * 2.5;
+                const totalH    = (rows - 1) * spacing;
+
+                let i = 0;
+                for (let r = 0; r < rows && i < count; r++) {
+                    const colsInRow = Math.min(cols, count - i);
+                    const rowWidth  = (colsInRow - 1) * spacing;
+
+                    for (let c = 0; c < colsInRow; c++, i++) {
+                        const orb = new THREE.Mesh(this.geometry, this.material);
+                        orb.scale.setScalar(orbRadius);
+                        orb.position.x = c * spacing - rowWidth / 2;
+                        orb.position.y = -(r * spacing - totalH / 2);
+                        // Each orb gets a unique rotation speed + random initial orientation
+                        orb._speed = 0.06 + Math.random() * 0.08;
+                        orb.rotation.y = Math.random() * Math.PI * 2;
+                        orb.rotation.z = Math.random() * Math.PI * 2;
+                        this.scene.add(orb);
+                        this.orbs.push(orb);
+                    }
+                }
+            }
 
             onResize() {
                 this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -759,15 +800,17 @@
 
             animate() {
                 requestAnimationFrame(() => this.animate());
-                const time = this.clock.getElapsedTime();
+                const time  = this.clock.getElapsedTime();
                 const delta = time - this._prevTime;
                 this._prevTime = time;
 
-                if (this.orb) {
-                    this.orb.material.uniforms.uTime.value = time;
-                    this.orb.rotation.y += 0.1 * delta;
-                    this.orb.rotation.z += 0.05 * delta;
-                }
+                if (this.material) this.material.uniforms.uTime.value = time;
+
+                this.orbs.forEach(orb => {
+                    orb.rotation.y += orb._speed * delta;
+                    orb.rotation.z += orb._speed * 0.5 * delta;
+                });
+
                 if (this.controls) this.controls.update();
                 this.renderer.render(this.scene, this.camera);
             }
@@ -972,6 +1015,29 @@
             const engine   = new MatrixEngine();
             const terminal = new TerminalController(state, engine);
             document.getElementById('message-input').focus();
+
+            // ── Presence: orb count = people online ──────────────────────────
+            fetch('/api/config').then(r => r.json()).then(cfg => {
+                const pusherClient = new Pusher(cfg.pusherKey, {
+                    cluster: cfg.pusherCluster,
+                    authEndpoint: '/api/pusher/auth',
+                    auth: { params: {
+                        user_id:   userData.id,
+                        user_name: userData.username,
+                        user_color: userData.color,
+                    }},
+                });
+                const ch = pusherClient.subscribe('presence-chat-room');
+                ch.bind('pusher:subscription_succeeded', (members) => {
+                    engine.setOrbCount(members.count);
+                });
+                ch.bind('pusher:member_added', () => {
+                    engine.setOrbCount(ch.members.count);
+                });
+                ch.bind('pusher:member_removed', () => {
+                    engine.setOrbCount(ch.members.count);
+                });
+            }).catch(() => { /* no server — stay at 1 orb */ });
         }
 
         window.addEventListener('DOMContentLoaded', () => new AuthManager());
