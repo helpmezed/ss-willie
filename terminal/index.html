@@ -662,8 +662,8 @@
                     uniforms: {
                         uTime:      { value: 0 },
                         uWireframe: { value: 0.0 },
-                        uColor1:    { value: new THREE.Color('#4c1d95') },
-                        uColor2:    { value: new THREE.Color('#ec4899') },
+                        uColor1:    { value: new THREE.Color('#003300') },
+                        uColor2:    { value: new THREE.Color('#00ff41') },
                     },
                     vertexShader: `
                         varying vec2 vUv;
@@ -759,15 +759,7 @@
             }
 
             triggerTransmission() {
-                // Force wireframe flash on transmission
-                if (this.orb) {
-                    this.orb.material.uniforms.uWireframe.value = 1.0;
-                    this.orb.material.wireframe = true;
-                    setTimeout(() => {
-                        this.orb.material.uniforms.uWireframe.value = 0.0;
-                        this.orb.material.wireframe = false;
-                    }, 300);
-                }
+                // no-op — wireframe pulse removed
             }
 
             onResize() {
@@ -785,11 +777,6 @@
                     this.orb.rotation.y = time * 0.1;
                     this.orb.rotation.z = time * 0.05;
 
-                    // Pulse wireframe on and off at the peak of each cycle
-                    const pulse = Math.sin(time * 3.0) * 0.5 + 0.5;
-                    const wireOn = pulse > 0.8;
-                    this.orb.material.uniforms.uWireframe.value = wireOn ? 1.0 : 0.0;
-                    this.orb.material.wireframe = wireOn;
                 }
 
                 if (this.controls) this.controls.update();
