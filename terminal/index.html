@@ -526,80 +526,6 @@
             .auth-morph.state-box  { width: 90vw; height: 500px; }
         }
 
-        /* ── Neural Sync HUD ── */
-        #neural-sync-hud {
-            position: fixed;
-            bottom: 36px;
-            left: 36px;
-            z-index: 50;
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.8s ease;
-        }
-        #neural-sync-hud.hud-visible { opacity: 1; }
-
-        #sync-label {
-            font-family: 'Orbitron', monospace;
-            font-size: 9px;
-            letter-spacing: 4px;
-            color: rgba(0,255,65,0.45);
-            text-transform: uppercase;
-            transition: color 0.6s, text-shadow 0.6s;
-        }
-        #sync-label.hibernating {
-            color: rgba(0,255,65,0.2);
-            text-shadow: none;
-        }
-        #sync-label.syncing {
-            color: var(--green);
-            text-shadow: 0 0 10px var(--green);
-        }
-
-        .sync-bar-track {
-            width: 160px;
-            height: 2px;
-            background: rgba(0,255,65,0.08);
-            border-radius: 2px;
-            overflow: visible;
-            position: relative;
-        }
-        #sync-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--green);
-            box-shadow: 0 0 8px var(--green), 0 0 20px rgba(0,255,65,0.3);
-            border-radius: 2px;
-            transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-        #sync-bar-fill.hibernating {
-            background: rgba(0,255,65,0.2);
-            box-shadow: none;
-        }
-
-        #sync-percent {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 11px;
-            color: rgba(0,255,65,0.3);
-            letter-spacing: 1px;
-            transition: color 0.6s;
-        }
-        #sync-percent.syncing { color: rgba(0,255,65,0.7); }
-
-        @keyframes syncPing {
-            0%   { opacity: 1; transform: scaleX(1); }
-            100% { opacity: 0; transform: scaleX(1.4); }
-        }
-        .sync-ping {
-            position: absolute;
-            inset: -1px 0;
-            background: var(--green);
-            border-radius: 2px;
-            animation: syncPing 0.5s ease-out forwards;
-            pointer-events: none;
-        }
     </style>
 </head>
 <body>
@@ -639,15 +565,6 @@
             <a class="site-nav-link" href="outer-news.html">News</a>
         </div>
     </nav>
-
-    <!-- Neural Sync HUD -->
-    <div id="neural-sync-hud">
-        <div id="sync-label" class="hibernating">HIBERNATING</div>
-        <div class="sync-bar-track">
-            <div id="sync-bar-fill" class="hibernating"></div>
-        </div>
-        <div id="sync-percent">0%</div>
-    </div>
 
     <div id="chat-panel">
         <div class="chat-header">
@@ -719,9 +636,6 @@
                 this.clock = new THREE.Clock();
                 this.orb = null;
                 this.controls = null;
-                this.syncLevel = 0.0;
-                this.hibernating = true;
-                this.neuralSync = null;
                 this._prevTime = 0;
                 this.init();
             }
@@ -753,15 +667,13 @@
 
                 const material = new THREE.ShaderMaterial({
                     uniforms: {
-                        uTime:       { value: 0 },
-                        uSyncLevel:  { value: 0.0 },
-                        uColor1:     { value: new THREE.Color('#005500') },
-                        uColor2:     { value: new THREE.Color('#00ff41') },
+                        uTime:   { value: 0 },
+                        uColor1: { value: new THREE.Color('#005500') },
+                        uColor2: { value: new THREE.Color('#00ff41') },
                     },
                     vertexShader: `
                         varying float vDistortion;
                         uniform float uTime;
-                        uniform float uSyncLevel;
 
                         // Classic 3D Simplex Noise
                         vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -812,25 +724,20 @@
                         }
 
                         void main() {
-                            float timeScale = 0.5 + uSyncLevel * 2.0;
-                            float noiseAmp  = 0.25 + uSyncLevel * 0.75;
-                            float noise = snoise(normal + uTime * timeScale);
-                            vDistortion = noise * noiseAmp;
+                            float noise = snoise(normal + uTime * 0.5);
+                            vDistortion = noise * 0.35;
                             vec3 newPosition = position + normal * vDistortion;
                             gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
                         }
                     `,
                     fragmentShader: `
                         varying float vDistortion;
-                        uniform float uTime;
-                        uniform float uSyncLevel;
                         uniform vec3 uColor1;
                         uniform vec3 uColor2;
 
                         void main() {
                             float mixFactor = (vDistortion + 1.0) * 0.5;
                             vec3 color = mix(uColor1, uColor2, mixFactor);
-                            color = mix(color, uColor2, uSyncLevel * 0.4);
                             gl_FragColor = vec4(color, 1.0);
                         }
                     `,
@@ -858,16 +765,9 @@
 
                 if (this.orb) {
                     this.orb.material.uniforms.uTime.value = time;
-                    this.orb.material.uniforms.uSyncLevel.value = this.syncLevel;
-
-                    // Rotation: slow in hibernation, fast at high sync
-                    const rotBase = this.hibernating ? 0.02 : 0.08;
-                    const rotSpeed = rotBase + this.syncLevel * 0.45;
-                    this.orb.rotation.y += rotSpeed * delta;
-                    this.orb.rotation.z += rotSpeed * 0.5 * delta;
+                    this.orb.rotation.y += 0.1 * delta;
+                    this.orb.rotation.z += 0.05 * delta;
                 }
-
-                if (this.neuralSync) this.neuralSync.update(delta);
                 if (this.controls) this.controls.update();
                 this.renderer.render(this.scene, this.camera);
             }
@@ -933,10 +833,9 @@
         }
 
         class TerminalController {
-            constructor(state, engine, neuralSync) {
+            constructor(state, engine) {
                 this.state = state;
                 this.engine = engine;
-                this.neuralSync = neuralSync;
                 this.input = document.getElementById('message-input');
                 this.btn = document.getElementById('send-btn');
                 this.display = document.getElementById('messages');
@@ -955,7 +854,6 @@
                 const val = this.input.value.trim();
                 if (!val) return;
                 this.state.addMessage(val);
-                if (this.neuralSync) this.neuralSync.onMessage();
                 this.input.value = '';
                 this.input.focus();
             }
@@ -1007,71 +905,6 @@
 
                 this.display.appendChild(row);
                 this.display.scrollTop = this.display.scrollHeight;
-            }
-        }
-
-        // ── Neural Sync ─────────────────────────────────────────────────────────
-        class NeuralSync {
-            constructor(engine) {
-                this.engine = engine;
-                this.syncLevel   = 0.0;
-                this.hibernating = true;
-                this.lastMsgTime = 0;
-                this.HIBERNATE_AFTER = 10000; // ms of silence before hibernation
-
-                this.hud      = document.getElementById('neural-sync-hud');
-                this.label    = document.getElementById('sync-label');
-                this.barFill  = document.getElementById('sync-bar-fill');
-                this.barTrack = document.querySelector('.sync-bar-track');
-                this.pct      = document.getElementById('sync-percent');
-
-                // Show HUD once engine starts
-                setTimeout(() => this.hud?.classList.add('hud-visible'), 1500);
-            }
-
-            onMessage() {
-                this.syncLevel   = Math.min(1.0, this.syncLevel + 0.35);
-                this.hibernating = false;
-                this.lastMsgTime = Date.now();
-                this._ping();
-            }
-
-            _ping() {
-                if (!this.barTrack) return;
-                const p = document.createElement('div');
-                p.className = 'sync-ping';
-                this.barTrack.appendChild(p);
-                setTimeout(() => p.remove(), 600);
-            }
-
-            update(delta) {
-                const now = Date.now();
-
-                // Decay sync level over time
-                this.syncLevel = Math.max(0.0, this.syncLevel - delta * 0.025);
-
-                // Decide hibernation state
-                const silentTooLong = now - this.lastMsgTime > this.HIBERNATE_AFTER;
-                if (silentTooLong && this.syncLevel < 0.05) this.hibernating = true;
-
-                // Push values into engine
-                this.engine.syncLevel   = this.syncLevel;
-                this.engine.hibernating = this.hibernating;
-
-                // Update HUD
-                const pct = Math.round(this.syncLevel * 100);
-                if (this.barFill) {
-                    this.barFill.style.width = pct + '%';
-                    this.barFill.classList.toggle('hibernating', this.hibernating);
-                }
-                if (this.label) {
-                    this.label.textContent = this.hibernating ? 'HIBERNATING' : 'NEURAL SYNC';
-                    this.label.className   = this.hibernating ? 'hibernating' : 'syncing';
-                }
-                if (this.pct) {
-                    this.pct.textContent = pct + '%';
-                    this.pct.className   = this.hibernating ? '' : 'syncing';
-                }
             }
         }
 
@@ -1135,11 +968,9 @@
                 location.reload();
             });
 
-            const state      = new NexusState(userData.username);
-            const engine     = new MatrixEngine();
-            const neuralSync = new NeuralSync(engine);
-            engine.neuralSync = neuralSync;
-            const terminal   = new TerminalController(state, engine, neuralSync);
+            const state    = new NexusState(userData.username);
+            const engine   = new MatrixEngine();
+            const terminal = new TerminalController(state, engine);
             document.getElementById('message-input').focus();
         }
 
