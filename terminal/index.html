@@ -750,8 +750,8 @@
                     uniforms: {
                         uTime:       { value: 0 },
                         uSyncLevel:  { value: 0.0 },
-                        uBrightness: { value: 0.3 },
-                        uColor1:     { value: new THREE.Color('#003300') },
+                        uBrightness: { value: 0.7 },
+                        uColor1:     { value: new THREE.Color('#005500') },
                         uColor2:     { value: new THREE.Color('#00ff41') },
                     },
                     vertexShader: `
@@ -1057,7 +1057,7 @@
                 if (silentTooLong && this.syncLevel < 0.05) this.hibernating = true;
 
                 // Smooth brightness toward target
-                const targetBrightness = this.hibernating ? 0.25 : 0.55 + this.syncLevel * 0.45;
+                const targetBrightness = this.hibernating ? 0.55 : 0.75 + this.syncLevel * 0.25;
                 this.brightness += (targetBrightness - this.brightness) * Math.min(1, delta * 1.5);
 
                 // Push values into engine
