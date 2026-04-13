@@ -324,9 +324,168 @@
             #chat-panel { width: 100%; height: 55vh; top: auto; bottom: 0; }
             #site-nav { padding: 0 16px; }
         }
+
+        /* ── Auth Overlay ── */
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            background: #000400;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Share Tech Mono', monospace;
+            transition: opacity 0.5s, visibility 0.5s;
+            overflow: hidden;
+        }
+        .auth-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        .auth-crt {
+            position: absolute; inset: 0;
+            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.2) 50%),
+                        linear-gradient(90deg, rgba(0,255,0,0.03), transparent, rgba(0,255,0,0.03));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none; z-index: 10;
+        }
+        .auth-vignette {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle, transparent 45%, rgba(0,0,0,0.9) 100%);
+            pointer-events: none; z-index: 9;
+        }
+        .auth-boot-seq {
+            position: absolute; top: 20px; left: 20px;
+            font-size: 13px; line-height: 1.8;
+            color: var(--green); text-shadow: 0 0 5px var(--green);
+            z-index: 15; transition: opacity 0.3s;
+        }
+        .auth-boot-line { opacity: 0; animation: authTypeLine 0.1s forwards; }
+        @keyframes authTypeLine { to { opacity: 1; } }
+
+        .auth-boot-glitch {
+            animation: authSevereGlitch 0.5s infinite;
+            filter: drop-shadow(2px 0 #ff004190) drop-shadow(-2px 0 rgba(0,255,65,0.5));
+        }
+        @keyframes authSevereGlitch {
+            0%   { transform: translate(0); clip-path: inset(0 0 0 0); }
+            20%  { transform: translate(-5px, 2px); clip-path: inset(20% 0 80% 0); }
+            40%  { transform: translate(5px, -2px); clip-path: inset(80% 0 5% 0); }
+            60%  { transform: translate(-2px, 5px); clip-path: inset(40% 0 40% 0); }
+            80%  { transform: translate(2px, -5px); clip-path: inset(10% 0 60% 0); }
+            100% { transform: translate(0); clip-path: inset(0 0 0 0); }
+        }
+
+        .auth-morph {
+            position: relative; z-index: 20;
+            display: flex; justify-content: center; align-items: center;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .auth-morph.state-hidden { width: 0; height: 0; opacity: 0; }
+        .auth-morph.state-dot    { width: 4px; height: 4px; background: var(--green); box-shadow: 0 0 20px 5px var(--green); opacity: 1; }
+        .auth-morph.state-line   { width: 400px; height: 2px; background: var(--green); box-shadow: 0 0 15px var(--green); opacity: 1; }
+        .auth-morph.state-box {
+            width: 400px; height: 460px;
+            background: rgba(0, 6, 0, 0.97);
+            border: 1px solid var(--border-mid);
+            box-shadow: 0 0 40px rgba(0,255,65,0.12), inset 0 0 30px rgba(0,255,65,0.04);
+            clip-path: polygon(0 20px, 20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+            opacity: 1;
+        }
+        .auth-morph.state-box::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: var(--green); box-shadow: 0 0 10px var(--green);
+            transform: scaleX(0); transform-origin: left;
+            animation: authExpandBar 0.5s ease forwards 4.2s;
+        }
+        @keyframes authExpandBar { to { transform: scaleX(1); } }
+
+        .auth-card {
+            width: 100%; height: 100%; padding: 36px 40px;
+            display: flex; flex-direction: column;
+            opacity: 0; pointer-events: none;
+        }
+        .auth-card.content-visible { animation: authGlitchIn 0.6s forwards; pointer-events: all; }
+        @keyframes authGlitchIn {
+            0%   { opacity: 0; transform: scale(0.98); filter: blur(4px); }
+            50%  { opacity: 0.5; }
+            55%  { opacity: 1; transform: translate(2px,0); }
+            60%  { opacity: 0; transform: translate(-2px,0); }
+            65%  { opacity: 1; }
+            100% { opacity: 1; transform: scale(1); filter: none; }
+        }
+
+        .auth-card h2 {
+            font-family: 'Orbitron', monospace; font-size: 20px; font-weight: 700;
+            color: var(--green); text-shadow: 0 0 20px var(--green);
+            letter-spacing: 4px; text-transform: uppercase; margin-bottom: 4px;
+        }
+        .auth-subtitle {
+            font-size: 10px; color: var(--text-dim); letter-spacing: 2px;
+            text-transform: uppercase; margin-bottom: 32px;
+        }
+        .auth-form { display: flex; flex-direction: column; }
+        .auth-input-group { margin-bottom: 20px; }
+        .auth-input-label {
+            display: block; font-size: 10px; color: rgba(0,255,65,0.55);
+            margin-bottom: 7px; text-transform: uppercase; letter-spacing: 2px;
+        }
+        .auth-input {
+            width: 100%;
+            background: rgba(0,255,65,0.03);
+            border: 1px solid rgba(0,255,65,0.2);
+            color: var(--green); font-family: inherit; font-size: 14px;
+            padding: 11px 14px; outline: none; transition: all 0.2s;
+        }
+        .auth-input:focus {
+            border-color: var(--green);
+            background: rgba(0,255,65,0.07);
+            box-shadow: inset 0 0 12px rgba(0,255,65,0.08);
+        }
+        .auth-input::placeholder { color: rgba(0,255,65,0.18); }
+
+        .auth-submit {
+            width: 100%; margin-top: 8px; padding: 14px;
+            background: var(--green); color: #000;
+            font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700;
+            border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+            transition: all 0.2s; position: relative;
+        }
+        .auth-submit:hover { background: #fff; box-shadow: 0 0 20px rgba(0,255,65,0.5); }
+        .auth-submit::after { content: '>>'; position: absolute; right: 14px; transition: right 0.2s; }
+        .auth-submit:hover::after { right: 9px; }
+
+        @media (max-width: 500px) {
+            .auth-morph.state-line { width: 90vw; }
+            .auth-morph.state-box  { width: 90vw; height: 500px; }
+        }
     </style>
 </head>
 <body>
+
+    <!-- Auth Overlay -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-vignette"></div>
+        <div class="auth-crt"></div>
+        <div class="auth-boot-seq" id="authBootSeq"></div>
+        <div class="auth-morph state-hidden" id="authMorph">
+            <div class="auth-card" id="authCard">
+                <h2>CORE_ORB</h2>
+                <div class="auth-subtitle">Neural Link Authentication v4.1</div>
+                <form id="authForm" class="auth-form">
+                    <div class="auth-input-group">
+                        <label class="auth-input-label">Operator ID</label>
+                        <input type="text" id="authUsername" class="auth-input" placeholder="Enter designation..." autocomplete="username" required>
+                    </div>
+                    <div class="auth-input-group">
+                        <label class="auth-input-label">Neural Passkey</label>
+                        <input type="password" id="authPassword" class="auth-input" placeholder="••••••••" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="auth-submit">Link</button>
+                </form>
+                <div id="authError" style="color:#ff4141;font-size:11px;text-align:center;margin-top:14px;letter-spacing:1px;"></div>
+            </div>
+        </div>
+    </div>
 
     <div id="crt-overlay"></div>
 
@@ -376,10 +535,10 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
         class NexusState {
-            constructor() {
+            constructor(username) {
                 this.messages = [];
                 this.listeners = [];
-                this.currentUser = 'User_' + Math.floor(Math.random() * 9999);
+                this.currentUser = username || 'User_' + Math.floor(Math.random() * 9999);
             }
             subscribe(callback) { this.listeners.push(callback); }
             notify() { this.listeners.forEach(cb => cb(this.messages)); }
@@ -702,17 +861,93 @@
             }
         }
 
-        window.onload = () => {
-            // Mount animated skull in header
+        // ── Auth Manager ────────────────────────────────────────────────────────
+        class AuthManager {
+            constructor() {
+                this.overlay = document.getElementById('authOverlay');
+                this.form    = document.getElementById('authForm');
+                this.error   = document.getElementById('authError');
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                // Auto-login if already authenticated
+                const saved = localStorage.getItem('nexus_user');
+                if (saved) {
+                    try { this.finishAuth(JSON.parse(saved)); return; }
+                    catch { localStorage.removeItem('nexus_user'); }
+                }
+            }
+            handleSubmit(e) {
+                e.preventDefault();
+                this.error.textContent = '';
+                const username = document.getElementById('authUsername').value.trim();
+                const password = document.getElementById('authPassword').value;
+                if (!username)          { this.error.textContent = 'Operator ID required'; return; }
+                if (password.length < 4){ this.error.textContent = 'Passkey too short';    return; }
+                const color = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+                const user  = { id: 'u_' + Date.now(), username, color };
+                localStorage.setItem('nexus_user', JSON.stringify(user));
+                this.finishAuth(user);
+            }
+            finishAuth(user) {
+                this.overlay.classList.add('hidden');
+                initApp(user);
+            }
+        }
+
+        // ── App init (called by AuthManager after login) ─────────────────────
+        let appInitialized = false;
+        function initApp(userData) {
+            if (appInitialized) return;
+            appInitialized = true;
+
             const headerSkull = createSkullSVG();
             headerSkull.style.cssText = 'width:30px;height:30px;';
             document.getElementById('header-skull').appendChild(headerSkull);
 
-            const state = new NexusState();
-            const engine = new MatrixEngine();
+            const state    = new NexusState(userData.username);
+            const engine   = new MatrixEngine();
             const terminal = new TerminalController(state, engine);
             document.getElementById('message-input').focus();
-        };
+        }
+
+        window.addEventListener('DOMContentLoaded', () => new AuthManager());
+    </script>
+
+    <!-- Boot sequence runs as soon as DOM is ready, before Three.js loads -->
+    <script>
+        (function() {
+            const bootLines = [
+                "INIT KERNEL... OK",
+                "MOUNTING NEURAL DRIVES... OK",
+                "CHECKING FIREWALL STATUS... WARNING: BREACH DETECTED",
+                "REROUTING MAINFRAME POWER...",
+                "DECRYPTING PROTOCOLS: [████████░░]",
+                "DECRYPTING PROTOCOLS: [██████████] DONE",
+                "ESTABLISHING SECURE HANDSHAKE...",
+                "ALLOCATING MEMORY BLOCKS...",
+                "SYSTEM READY."
+            ];
+            const bootSeq = document.getElementById('authBootSeq');
+            const morph   = document.getElementById('authMorph');
+            const card    = document.getElementById('authCard');
+            if (!bootSeq || !morph || !card) return;
+
+            // Skip boot sequence if already logged in
+            if (localStorage.getItem('nexus_user')) return;
+
+            bootLines.forEach((line, i) => {
+                setTimeout(() => {
+                    const p = document.createElement('div');
+                    p.className = 'auth-boot-line';
+                    p.textContent = '> ' + line;
+                    bootSeq.appendChild(p);
+                }, i * 200);
+            });
+            setTimeout(() => bootSeq.classList.add('auth-boot-glitch'), 2200);
+            setTimeout(() => { bootSeq.style.opacity = '0'; morph.className = 'auth-morph state-dot'; }, 2600);
+            setTimeout(() => { morph.className = 'auth-morph state-line'; }, 3000);
+            setTimeout(() => { morph.className = 'auth-morph state-box'; }, 3600);
+            setTimeout(() => { card.classList.add('content-visible'); }, 4200);
+        })();
     </script>
 </body>
 </html>
