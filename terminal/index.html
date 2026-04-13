@@ -16,29 +16,33 @@
             --border:      rgba(0, 255, 65, 0.2);
             --border-mid:  rgba(0, 255, 65, 0.35);
             --text-dim:    rgba(0, 255, 65, 0.45);
+            --black-depth: rgba(0, 4, 0, 0.96);
         }
 
-        /* Page transition */
         @keyframes pageIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(10px); filter: blur(5px); }
+            to   { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
+
         body {
             overflow: hidden;
             background: #000;
             font-family: 'Share Tech Mono', monospace;
-            animation: pageIn 0.35s ease forwards;
+            animation: pageIn 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
             color: var(--green);
-        }
-        body.page-exit {
-            animation: none !important;
-            transition: opacity 0.25s ease, transform 0.25s ease !important;
-            opacity: 0 !important;
-            transform: translateY(-8px) !important;
-            pointer-events: none;
+            height: 100vh;
         }
 
-        /* Canvas sits behind everything */
+        #crt-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
         canvas {
             display: block;
             position: fixed;
@@ -46,7 +50,6 @@
             z-index: 1;
         }
 
-        /* ── Site navbar ── */
         #site-nav {
             position: fixed;
             top: 0; left: 0; right: 0;
@@ -55,7 +58,7 @@
             display: flex;
             align-items: center;
             padding: 0 32px;
-            background: rgba(0, 4, 0, 0.94);
+            background: var(--black-depth);
             border-bottom: 1px solid var(--border);
             backdrop-filter: blur(20px);
             gap: 24px;
@@ -66,222 +69,161 @@
             font-weight: 700;
             letter-spacing: 4px;
             color: var(--green);
-            text-shadow: 0 0 16px rgba(0,255,65,0.5);
+            text-shadow: 0 0 16px var(--green);
             text-decoration: none;
         }
-        .site-nav-links { display: flex; gap: 4px; margin-left: auto; }
+        .site-nav-links { display: flex; gap: 8px; margin-left: auto; }
         .site-nav-link {
-            color: rgba(0,255,65,0.35);
+            color: var(--text-dim);
             text-decoration: none;
             font-size: 11px;
             font-weight: 700;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             text-transform: uppercase;
-            padding: 7px 18px;
-            border-radius: 20px;
-            border: 1px solid transparent;
-            transition: all 0.2s;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: all 0.3s;
         }
         .site-nav-link:hover { color: var(--green); background: var(--green-glow); }
         .site-nav-link.active {
             color: var(--green);
             background: var(--green-dim);
-            border-color: rgba(0,255,65,0.3);
+            box-shadow: inset 0 0 10px rgba(0, 255, 65, 0.1);
         }
 
-        /* ── Full-height chat panel on the right ── */
         #chat-panel {
             position: fixed;
             right: 0; top: 56px;
-            width: 380px;
+            width: 400px;
             height: calc(100vh - 56px);
             z-index: 20;
             display: flex;
             flex-direction: column;
             background: var(--panel-bg);
             border-left: 1px solid var(--border);
-            backdrop-filter: blur(24px) saturate(160%);
-            box-shadow: -16px 0 48px rgba(0,0,0,0.7);
+            backdrop-filter: blur(30px) saturate(180%);
+            box-shadow: -20px 0 60px rgba(0,0,0,0.8);
         }
-
-        /* Subtle scanline texture */
-        #chat-panel::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(0,255,65,0.015) 2px,
-                rgba(0,255,65,0.015) 4px
-            );
-            pointer-events: none;
-            z-index: 0;
-        }
-        #chat-panel > * { position: relative; z-index: 1; }
 
         .chat-header {
-            padding: 24px 28px;
+            padding: 20px 24px;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             gap: 12px;
-            background: rgba(0, 20, 0, 0.6);
+            background: rgba(0, 15, 0, 0.4);
             flex-shrink: 0;
         }
 
         .status-dot {
-            width: 9px; height: 9px;
+            width: 8px; height: 8px;
             background: var(--green);
             border-radius: 50%;
-            box-shadow: 0 0 8px var(--green);
-            flex-shrink: 0;
-            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px var(--green);
+            animation: pulse 2.5s infinite ease-in-out;
         }
         @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50%       { opacity: 0.4; transform: scale(0.75); }
+            0%, 100% { opacity: 1; transform: scale(1); filter: brightness(1); }
+            50%       { opacity: 0.3; transform: scale(0.8); filter: brightness(1.5); }
         }
 
         .chat-title {
             font-family: 'Orbitron', monospace;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            text-shadow: 0 0 12px var(--green);
-        }
-        .chat-subtitle {
-            margin-left: auto;
-            font-size: 10px;
-            color: var(--text-dim);
-            letter-spacing: 1px;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px var(--green);
         }
 
-        /* Messages */
         #messages {
             flex: 1;
             overflow-y: auto;
-            padding: 24px 28px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
             scroll-behavior: smooth;
         }
-        #messages::-webkit-scrollbar { width: 4px; }
-        #messages::-webkit-scrollbar-track { background: transparent; }
-        #messages::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 4px; }
+        #messages::-webkit-scrollbar { width: 3px; }
+        #messages::-webkit-scrollbar-thumb { background: var(--border-mid); }
 
         .message {
             font-size: 13px;
-            line-height: 1.55;
-            padding: 10px 14px;
-            background: rgba(0, 40, 0, 0.25);
+            line-height: 1.5;
+            padding: 12px 16px;
+            background: rgba(0, 255, 65, 0.03);
+            border: 1px solid transparent;
             border-left: 2px solid var(--border-mid);
-            border-radius: 0 6px 6px 0;
-            animation: msgIn 0.28s ease-out forwards;
-            opacity: 0;
+            transition: background 0.3s;
+            animation: msgIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
+        .message:hover { background: rgba(0, 255, 65, 0.06); }
+        
         @keyframes msgIn {
-            from { opacity: 0; transform: translateX(16px); }
+            from { opacity: 0; transform: translateX(20px); }
             to   { opacity: 1; transform: translateX(0); }
         }
 
         .message.system {
-            background: transparent;
-            border-left-color: var(--text-dim);
+            border-left-color: #555;
             color: var(--text-dim);
             font-style: italic;
-            font-size: 12px;
+            background: transparent;
         }
 
-        .message .timestamp {
-            color: rgba(0,255,65,0.3);
-            font-size: 10px;
-            margin-right: 8px;
-        }
-        .message .username {
-            color: #fff;
-            font-weight: bold;
-            margin-right: 6px;
-            text-shadow: 0 0 8px rgba(0,255,65,0.4);
-        }
+        .timestamp { color: rgba(0,255,65,0.25); font-size: 10px; margin-right: 8px; }
+        .username { color: #fff; font-weight: 700; margin-right: 8px; }
 
-        /* Divider line */
-        .chat-divider {
-            height: 1px;
-            background: var(--border);
-            margin: 0;
-            flex-shrink: 0;
-        }
-
-        /* Input area */
         .input-area {
-            padding: 20px 28px;
-            background: rgba(0, 12, 0, 0.8);
-            flex-shrink: 0;
+            padding: 24px;
+            background: rgba(0, 8, 0, 0.6);
+            border-top: 1px solid var(--border);
         }
 
         .input-wrapper {
             display: flex;
+            background: #000;
             border: 1px solid var(--border);
-            border-radius: 4px;
-            overflow: hidden;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: all 0.3s;
         }
         .input-wrapper:focus-within {
             border-color: var(--green);
-            box-shadow: 0 0 0 3px rgba(0,255,65,0.1), 0 0 16px rgba(0,255,65,0.12);
+            box-shadow: 0 0 20px rgba(0,255,65,0.15);
         }
 
         #message-input {
             flex: 1;
-            background: rgba(0, 0, 0, 0.5);
+            background: transparent;
             border: none;
             color: var(--green);
-            padding: 12px 16px;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 13px;
+            padding: 14px;
+            font-family: inherit;
             outline: none;
-            caret-color: var(--green);
         }
-        #message-input::placeholder { color: rgba(0,255,65,0.2); }
 
         #send-btn {
-            background: rgba(0, 30, 0, 0.8);
+            background: var(--green-dim);
             border: none;
             border-left: 1px solid var(--border);
             color: var(--green);
-            padding: 12px 20px;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 12px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
+            padding: 0 24px;
             cursor: pointer;
-            transition: background 0.2s, box-shadow 0.2s;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1px;
+            transition: 0.2s;
         }
-        #send-btn:hover {
-            background: var(--green-dim);
-            box-shadow: inset 0 0 12px rgba(0,255,65,0.15);
-        }
-        #send-btn:active { opacity: 0.7; }
+        #send-btn:hover { background: var(--green); color: #000; }
 
         @media (max-width: 768px) {
-            #chat-panel {
-                width: 100%;
-                height: 45vh;
-                top: auto; bottom: 0;
-                border-left: none;
-                border-top: 1px solid var(--border);
-            }
+            #chat-panel { width: 100%; height: 50vh; top: auto; bottom: 0; }
+            #site-nav { padding: 0 16px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Nav top-left, well clear of the chat panel -->
-    <!-- Site Navbar -->
+    <div id="crt-overlay"></div>
+
     <nav id="site-nav">
         <a class="site-nav-logo" href="standard.html">ETHER NEXUS</a>
         <div class="site-nav-links">
@@ -291,289 +233,274 @@
         </div>
     </nav>
 
-    <!-- Full-height chat panel -->
     <div id="chat-panel">
         <div class="chat-header">
             <div class="status-dot"></div>
-            <div class="chat-title">Backroom</div>
-            <span class="chat-subtitle">LOCAL_NODE</span>
+            <div class="chat-title">LOCAL_NODE // CORE_ORB</div>
         </div>
 
-        <div id="messages">
-            <div class="message system">
-                <span class="timestamp">[SYS]</span> Connection established...
-            </div>
-        </div>
+        <div id="messages"></div>
 
-        <div class="chat-divider"></div>
         <div class="input-area">
             <div class="input-wrapper">
-                <input type="text" id="message-input" placeholder="Transmit sequence..." maxlength="200" autocomplete="off">
+                <input type="text" id="message-input" placeholder="Initiate handshake..." maxlength="255" autocomplete="off">
                 <button id="send-btn">Send</button>
             </div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-    <script>
-        // ── 3D Scene ──
-        const scene    = new THREE.Scene();
-        scene.background = new THREE.Color(0x000000);
-        scene.fog        = new THREE.FogExp2(0x000000, 0.02);
-
-        const camera   = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 10;
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        document.body.insertBefore(renderer.domElement, document.body.firstChild);
-
-        // Sprite group
-        const spriteGroup = new THREE.Group();
-        scene.add(spriteGroup);
-
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ';
-
-        for (let i = 0; i < 60; i++) {
-            const cvs = document.createElement('canvas');
-            cvs.width = cvs.height = 64;
-            const ctx = cvs.getContext('2d');
-            const char = chars[Math.floor(Math.random() * chars.length)];
-            ctx.fillStyle = `hsl(120, 100%, ${Math.floor(Math.random() * 30 + 40)}%)`;
-            ctx.font = 'bold 48px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.shadowColor = '#00FF41';
-            ctx.shadowBlur = 15;
-            ctx.fillText(char, 32, 32);
-
-            const geo = new THREE.BufferGeometry();
-            const positions = new Float32Array(25 * 3);
-            const baseData  = new Float32Array(25 * 4);
-
-            for (let j = 0; j < 25; j++) {
-                const radius = 2.0 * Math.pow(Math.random(), 0.4);
-                const theta  = Math.random() * 2 * Math.PI;
-                const phi    = Math.acos(2 * Math.random() - 1);
-                const bx = radius * Math.sin(phi) * Math.cos(theta);
-                const by = radius * Math.sin(phi) * Math.sin(theta);
-                const bz = radius * Math.cos(phi);
-                positions[j*3]=bx; positions[j*3+1]=by; positions[j*3+2]=bz;
-                baseData[j*4]=bx;  baseData[j*4+1]=by;  baseData[j*4+2]=bz;
-                baseData[j*4+3] = Math.random() * Math.PI * 2;
+    <!-- Use ESM for clean module imports in a single file -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
             }
-            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        }
+    </script>
 
-            const pts = new THREE.Points(geo, new THREE.PointsMaterial({
-                size: 0.25 + Math.random() * 0.2,
-                map: new THREE.CanvasTexture(cvs),
-                transparent: true,
-                opacity: Math.random() * 0.5 + 0.3,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-            }));
-            pts.userData.baseData = baseData;
-            spriteGroup.add(pts);
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        class NexusState {
+            constructor() {
+                this.messages = [];
+                this.listeners = [];
+                this.currentUser = 'User_' + Math.floor(Math.random() * 9999);
+            }
+            subscribe(callback) { this.listeners.push(callback); }
+            notify() { this.listeners.forEach(cb => cb(this.messages)); }
+            addMessage(text, type = 'user', user = this.currentUser) {
+                const message = {
+                    id: Date.now(),
+                    text, type, user,
+                    timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+                };
+                this.messages.push(message);
+                if (this.messages.length > 50) this.messages.shift();
+                this.notify();
+            }
         }
 
-            // --- Nexus Core: Shader Implementation ---
-            // Adding a central pulsing core that utilizes the requested displacement and wireframe logic
-            const coreMat = new THREE.ShaderMaterial({
-                uniforms: {
-                    uTime: { value: 0 },
-                    uWireframe: { value: 0.0 }, // 0.0 = off, 1.0 = on
-                    uColor1: { value: new THREE.Color('#4c1d95') }, // Deep Purple
-                    uColor2: { value: new THREE.Color('#ec4899') }  // Neon Pink
-                },
-                vertexShader: `
-                    uniform float uTime;
-                    varying float vDistortion;
-                    void main() {
-                        // Displacement logic: creates an oscillating wave interference pattern
-                        float d = sin(position.x * 2.5 + uTime) * cos(position.y * 2.5 + uTime);
-                        vDistortion = d;
-                        vec3 newPosition = position + normal * (d * 0.45);
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
-                    }
-                `,
-                fragmentShader: `
-                    uniform float uWireframe;
-                    uniform vec3 uColor1;
-                    uniform vec3 uColor2;
-                    varying float vDistortion;
-                    void main() {
-                        // Base color mixing based on vertex displacement
-                        float mixFactor = (vDistortion + 1.0) * 0.5;
-                        vec3 color = mix(uColor1, uColor2, mixFactor);
-                        
-                        // Wireframe mode: tint cyan and add transparency as requested
-                        if (uWireframe > 0.5) {
-                            color = mix(color, vec3(0.0, 1.0, 1.0), 0.3);
-                            gl_FragColor = vec4(color, 0.6);
-                        } else {
-                            gl_FragColor = vec4(color, 1.0);
+        class MatrixEngine {
+            constructor() {
+                this.container = document.body;
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.clock = new THREE.Clock();
+                this.orb = null;
+                this.controls = null;
+                this.init();
+            }
+
+            init() {
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.container.insertBefore(this.renderer.domElement, this.container.firstChild);
+                
+                this.camera.position.set(0, 0, 4);
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.enableZoom = false;
+
+                this.createOrb();
+                this.animate();
+
+                window.addEventListener('resize', () => this.onResize());
+            }
+
+            createOrb() {
+                const geometry = new THREE.IcosahedronGeometry(1.5, 64);
+                
+                // Shader implementation combining Wobble Displacement + Matrix Aesthetic
+                const material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        uTime: { value: 0 },
+                        uIntensity: { value: 0.15 }
+                    },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        varying float vDisplacement;
+                        uniform float uTime;
+
+                        // Classic 3D Noise for wobble
+                        vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                        vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                        vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+                        vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+                        float snoise(vec3 v) {
+                            const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+                            const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+                            vec3 i  = floor(v + dot(v, C.yyy));
+                            vec3 x0 = v - i + dot(i, C.xxx);
+                            vec3 g = step(x0.yzx, x0.xyz);
+                            vec3 l = 1.0 - g;
+                            vec3 i1 = min( g.xyz, l.zxy );
+                            vec3 i2 = max( g.xyz, l.zxy );
+                            vec3 x1 = x0 - i1 + C.xxx;
+                            vec3 x2 = x0 - i2 + C.yyy;
+                            vec3 x3 = x0 - D.yyy;
+                            i = mod289(i);
+                            vec4 p = permute( permute( permute( 
+                                        i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
+                                    + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) 
+                                    + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+                            float n_ = 0.142857142857;
+                            vec3 ns = n_ * D.wyz - D.xzx;
+                            vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                            vec4 x_ = floor(j * ns.z);
+                            vec4 y_ = floor(j - 7.0 * x_ );
+                            vec4 x = x_ *ns.x + ns.yyyy;
+                            vec4 y = y_ *ns.x + ns.yyyy;
+                            vec4 h = 1.0 - abs(x) - abs(y);
+                            vec4 b0 = vec4( x.xy, y.xy );
+                            vec4 b1 = vec4( x.zw, y.zw );
+                            vec4 s0 = floor(b0)*2.0 + 1.0;
+                            vec4 s1 = floor(b1)*2.0 + 1.0;
+                            vec4 sh = -step(h, vec4(0.0));
+                            vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
+                            vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+                            vec3 p0 = vec3(a0.xy,h.x);
+                            vec3 p1 = vec3(a0.zw,h.y);
+                            vec3 p2 = vec3(a1.xy,h.z);
+                            vec3 p3 = vec3(a1.zw,h.w);
+                            vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+                            p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+                            vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                            m = m * m;
+                            return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
                         }
-                    }
-                `,
-                transparent: true
-            });
-            const coreMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1.4, 15), coreMat);
-            spriteGroup.add(coreMesh);
 
-        // Flyer
-        const flyer = {
-            pos: new THREE.Vector3(-3, 0, 0),
-            vel: new THREE.Vector3(2.0, 1.5, 0.8),
-            bounds: { x: [-5, 4], y: [-3, 3], z: [-2, 2] },
-        };
+                        void main() {
+                            vUv = uv;
+                            float noise = snoise(normal + uTime * 0.5);
+                            vDisplacement = noise * 0.35;
+                            vec3 newPosition = position + normal * vDisplacement;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        varying vec2 vUv;
+                        varying float vDisplacement;
+                        uniform float uTime;
 
-        function updateFlight(delta, time) {
-            flyer.vel.x += (Math.sin(time * 0.5) * 0.3 + Math.sin(time * 1.3) * 0.2) * delta;
-            flyer.vel.y += (Math.cos(time * 0.7) * 0.3 + Math.sin(time * 2.0) * 0.15) * delta;
-            flyer.vel.z += Math.sin(time * 0.4) * 0.2 * delta;
-            flyer.vel.multiplyScalar(0.995);
-            if (flyer.vel.length() < 1.0) flyer.vel.normalize().multiplyScalar(1.0);
-            flyer.pos.add(flyer.vel.clone().multiplyScalar(delta));
+                        // Digital Code Procedural Pattern
+                        float digitalPattern(vec2 uv) {
+                            vec2 grid = floor(uv * vec2(20.0, 40.0));
+                            float t = uTime * 2.0 + grid.y * 0.5;
+                            float noise = fract(sin(dot(grid, vec2(12.9898, 78.233))) * 43758.5453);
+                            float glyph = step(0.85, fract(uv.y * 40.0 + noise + t));
+                            return glyph;
+                        }
 
-            ['x','y','z'].forEach(ax => {
-                const [lo, hi] = flyer.bounds[ax];
-                if (flyer.pos[ax] > hi) { flyer.pos[ax] = hi; flyer.vel[ax] *= -0.8; }
-                if (flyer.pos[ax] < lo) { flyer.pos[ax] = lo; flyer.vel[ax] *= -0.8; }
-            });
+                        void main() {
+                            float pattern = digitalPattern(vUv);
+                            
+                            // Matrix Green Tones
+                            vec3 baseColor = vec3(0.0, 0.05, 0.0);
+                            vec3 coreColor = vec3(0.0, 1.0, 0.25);
+                            vec3 edgeColor = vec3(0.0, 0.4, 0.1);
 
-            spriteGroup.position.copy(flyer.pos);
-            if (flyer.vel.length() > 0.1) spriteGroup.lookAt(flyer.pos.clone().add(flyer.vel));
-            spriteGroup.rotateX(0.02);
-            spriteGroup.rotateY(0.015);
-            spriteGroup.scale.setScalar(1 + Math.sin(time * 3) * 0.08);
-        }
+                            // Blend based on pattern and displacement highlights
+                            vec3 finalColor = mix(baseColor, edgeColor, pattern);
+                            finalColor += coreColor * pattern * (vDisplacement + 0.5);
 
-        // Transmission particles
-        const transmissionParticles = [];
-        const codeChars = '01<>[]{}//;';
+                            // Glow effect
+                            float alpha = 0.8 + 0.2 * sin(uTime + vUv.y * 10.0);
+                            gl_FragColor = vec4(finalColor, alpha);
+                        }
+                    `,
+                    transparent: true,
+                    side: THREE.DoubleSide
+                });
 
-        function createTransmissionParticle() {
-            const cvs = document.createElement('canvas');
-            cvs.width = cvs.height = 32;
-            const ctx = cvs.getContext('2d');
-            ctx.fillStyle = '#00ff41';
-            ctx.font = 'bold 24px monospace';
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.shadowColor = '#00ff41'; ctx.shadowBlur = 10;
-            ctx.fillText(codeChars[Math.floor(Math.random() * codeChars.length)], 16, 16);
+                this.orb = new THREE.Mesh(geometry, material);
+                this.scene.add(this.orb);
+            }
 
-            const mat  = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cvs), transparent: true, opacity: 1, blending: THREE.AdditiveBlending });
-            const startY = (Math.random() - 0.5) * 4;
-            const sprite = new THREE.Sprite(mat);
-            sprite.position.set(4, startY, 0);
-            sprite.scale.set(0.3, 0.3, 0.3);
-            scene.add(sprite);
-            transmissionParticles.push({ sprite, start: new THREE.Vector3(4, startY, 0), speed: 0.03 + Math.random() * 0.02, progress: 0 });
-        }
-
-        // Animate
-        const clock = new THREE.Clock();
-        function animate() {
-            requestAnimationFrame(animate);
-            const delta = Math.min(clock.getDelta(), 0.05);
-            const time  = clock.getElapsedTime();
-
-            updateFlight(delta, time);
-
-                // Handle Nexus Core Pulsing & Wireframe peak logic
-                const pulse = Math.sin(time * 3.0) * 0.5 + 0.5;
-                coreMat.uniforms.uWireframe.value = pulse > 0.8 ? 1.0 : 0.0;
-                coreMat.wireframe = pulse > 0.8;
-                coreMat.uniforms.uTime.value = time;
-
-            camera.position.x += (flyer.pos.x * 0.3 - camera.position.x) * 0.05;
-            camera.position.y += (flyer.pos.y * 0.3 - camera.position.y) * 0.05;
-            camera.lookAt(flyer.pos);
-
-            spriteGroup.children.forEach(pts => {
-                const pos  = pts.geometry.attributes.position.array;
-                const base = pts.userData.baseData;
-                for (let i = 0; i < 25; i++) {
-                    const i3 = i*3, i4 = i*4;
-                    const bx = base[i4], by = base[i4+1], bz = base[i4+2], ph = base[i4+3];
-                    const a = time * 0.5 + ph;
-                    pos[i3]   = bx * Math.cos(a) - bz * Math.sin(a);
-                    pos[i3+1] = by + Math.sin(time * 2 + ph) * 0.2;
-                    pos[i3+2] = bx * Math.sin(a) + bz * Math.cos(a);
+            triggerTransmission() {
+                // Intense wobble and bright flash on transmission
+                if (this.orb) {
+                    this.orb.material.uniforms.uIntensity.value = 1.0;
+                    setTimeout(() => {
+                        this.orb.material.uniforms.uIntensity.value = 0.15;
+                    }, 200);
                 }
-                pts.geometry.attributes.position.needsUpdate = true;
-            });
-
-            for (let i = transmissionParticles.length - 1; i >= 0; i--) {
-                const tp = transmissionParticles[i];
-                tp.progress += tp.speed;
-                if (tp.progress >= 1) { scene.remove(tp.sprite); transmissionParticles.splice(i, 1); continue; }
-                tp.sprite.position.lerpVectors(tp.start, spriteGroup.position, tp.progress);
-                tp.sprite.material.opacity = 1 - tp.progress;
             }
 
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // ── Chat ──
-        const messageInput     = document.getElementById('message-input');
-        const sendBtn          = document.getElementById('send-btn');
-        const messagesContainer = document.getElementById('messages');
-        const username = 'User_' + Math.floor(Math.random() * 999);
-
-        function addMessage(type, text, user) {
-            const div  = document.createElement('div');
-            div.className = `message ${type}`;
-            const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-
-            const ts = document.createElement('span');
-            ts.className = 'timestamp';
-            ts.textContent = `[${time}]`;
-            div.appendChild(ts);
-            div.appendChild(document.createTextNode(' '));
-
-            if (type !== 'system') {
-                const u = document.createElement('span');
-                u.className = 'username';
-                u.textContent = `${user}:`;
-                div.appendChild(u);
-                div.appendChild(document.createTextNode(' '));
+            onResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
             }
-            div.appendChild(document.createTextNode(text));
-            messagesContainer.appendChild(div);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                const time = this.clock.getElapsedTime();
+
+                if (this.orb) {
+                    this.orb.material.uniforms.uTime.value = time;
+                    this.orb.rotation.y = time * 0.1;
+                    this.orb.rotation.z = time * 0.05;
+                }
+
+                if (this.controls) this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
         }
 
-        sendBtn.addEventListener('click', () => {
-            const text = messageInput.value.trim();
-            if (!text) return;
-            messageInput.value = '';
-            for (let i = 0; i < 12; i++) setTimeout(() => createTransmissionParticle(), i * 50);
-            setTimeout(() => addMessage('user', text, username), 300);
-        });
+        class TerminalController {
+            constructor(state, engine) {
+                this.state = state;
+                this.engine = engine;
+                this.input = document.getElementById('message-input');
+                this.btn = document.getElementById('send-btn');
+                this.display = document.getElementById('messages');
 
-        messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
-        messageInput.focus();
+                this.setupListeners();
+                this.state.addMessage("CORE_ORB ONLINE. NEURAL_SYNC ACTIVE.", "system");
+            }
 
-        // ── Page transitions ──
-        document.querySelectorAll('a[href]').forEach(a => {
-            const href = a.getAttribute('href');
-            if (!href || href.startsWith('http') || href.startsWith('#') || a.target === '_blank') return;
-            a.addEventListener('click', e => {
-                e.preventDefault();
-                document.body.classList.add('page-exit');
-                setTimeout(() => { window.location.href = href; }, 260);
-            });
-        });
+            setupListeners() {
+                this.btn.addEventListener('click', () => this.handleSend());
+                this.input.addEventListener('keypress', (e) => e.key === 'Enter' && this.handleSend());
+                this.state.subscribe((messages) => this.render(messages));
+            }
+
+            handleSend() {
+                const val = this.input.value.trim();
+                if (!val) return;
+                this.state.addMessage(val);
+                this.engine.triggerTransmission();
+                this.input.value = '';
+                this.input.focus();
+            }
+
+            render(messages) {
+                const lastMsg = messages[messages.length - 1];
+                if (!lastMsg) return;
+                const esc = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                const div = document.createElement('div');
+                div.className = `message ${lastMsg.type}`;
+                div.innerHTML = `
+                    <span class="timestamp">[${esc(lastMsg.timestamp)}]</span>
+                    ${lastMsg.type !== 'system' ? `<span class="username">${esc(lastMsg.user)}:</span>` : ''}
+                    <span class="text">${esc(lastMsg.text)}</span>
+                `;
+                this.display.appendChild(div);
+                this.display.scrollTop = this.display.scrollHeight;
+            }
+        }
+
+        window.onload = () => {
+            const state = new NexusState();
+            const engine = new MatrixEngine();
+            const terminal = new TerminalController(state, engine);
+            document.getElementById('message-input').focus();
+        };
     </script>
 </body>
 </html>
