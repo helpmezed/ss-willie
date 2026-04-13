@@ -378,6 +378,50 @@
             spriteGroup.add(pts);
         }
 
+            // --- Nexus Core: Shader Implementation ---
+            // Adding a central pulsing core that utilizes the requested displacement and wireframe logic
+            const coreMat = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uWireframe: { value: 0.0 }, // 0.0 = off, 1.0 = on
+                    uColor1: { value: new THREE.Color('#4c1d95') }, // Deep Purple
+                    uColor2: { value: new THREE.Color('#ec4899') }  // Neon Pink
+                },
+                vertexShader: `
+                    uniform float uTime;
+                    varying float vDistortion;
+                    void main() {
+                        // Displacement logic: creates an oscillating wave interference pattern
+                        float d = sin(position.x * 2.5 + uTime) * cos(position.y * 2.5 + uTime);
+                        vDistortion = d;
+                        vec3 newPosition = position + normal * (d * 0.45);
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uWireframe;
+                    uniform vec3 uColor1;
+                    uniform vec3 uColor2;
+                    varying float vDistortion;
+                    void main() {
+                        // Base color mixing based on vertex displacement
+                        float mixFactor = (vDistortion + 1.0) * 0.5;
+                        vec3 color = mix(uColor1, uColor2, mixFactor);
+                        
+                        // Wireframe mode: tint cyan and add transparency as requested
+                        if (uWireframe > 0.5) {
+                            color = mix(color, vec3(0.0, 1.0, 1.0), 0.3);
+                            gl_FragColor = vec4(color, 0.6);
+                        } else {
+                            gl_FragColor = vec4(color, 1.0);
+                        }
+                    }
+                `,
+                transparent: true
+            });
+            const coreMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1.4, 15), coreMat);
+            spriteGroup.add(coreMesh);
+
         // Flyer
         const flyer = {
             pos: new THREE.Vector3(-3, 0, 0),
@@ -437,6 +481,12 @@
             const time  = clock.getElapsedTime();
 
             updateFlight(delta, time);
+
+                // Handle Nexus Core Pulsing & Wireframe peak logic
+                const pulse = Math.sin(time * 3.0) * 0.5 + 0.5;
+                coreMat.uniforms.uWireframe.value = pulse > 0.8 ? 1.0 : 0.0;
+                coreMat.wireframe = pulse > 0.8;
+                coreMat.uniforms.uTime.value = time;
 
             camera.position.x += (flyer.pos.x * 0.3 - camera.position.x) * 0.05;
             camera.position.y += (flyer.pos.y * 0.3 - camera.position.y) * 0.05;
