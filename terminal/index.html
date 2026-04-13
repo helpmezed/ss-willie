@@ -750,7 +750,6 @@
                     uniforms: {
                         uTime:       { value: 0 },
                         uSyncLevel:  { value: 0.0 },
-                        uBrightness: { value: 0.7 },
                         uColor1:     { value: new THREE.Color('#005500') },
                         uColor2:     { value: new THREE.Color('#00ff41') },
                     },
@@ -823,16 +822,14 @@
                         varying float vDistortion;
                         uniform float uTime;
                         uniform float uSyncLevel;
-                        uniform float uBrightness;
                         uniform vec3 uColor1;
                         uniform vec3 uColor2;
 
                         void main() {
                             float mixFactor = (vDistortion + 1.0) * 0.5;
                             vec3 color = mix(uColor1, uColor2, mixFactor);
-                            // Boost brightness and saturation with sync
                             color = mix(color, uColor2, uSyncLevel * 0.4);
-                            gl_FragColor = vec4(color * uBrightness, 1.0);
+                            gl_FragColor = vec4(color, 1.0);
                         }
                     `,
                     transparent: true,
@@ -1016,7 +1013,6 @@
             constructor(engine) {
                 this.engine = engine;
                 this.syncLevel   = 0.0;
-                this.brightness  = 0.3;
                 this.hibernating = true;
                 this.lastMsgTime = 0;
                 this.HIBERNATE_AFTER = 10000; // ms of silence before hibernation
@@ -1056,16 +1052,9 @@
                 const silentTooLong = now - this.lastMsgTime > this.HIBERNATE_AFTER;
                 if (silentTooLong && this.syncLevel < 0.05) this.hibernating = true;
 
-                // Smooth brightness toward target
-                const targetBrightness = this.hibernating ? 0.55 : 0.75 + this.syncLevel * 0.25;
-                this.brightness += (targetBrightness - this.brightness) * Math.min(1, delta * 1.5);
-
                 // Push values into engine
                 this.engine.syncLevel   = this.syncLevel;
                 this.engine.hibernating = this.hibernating;
-                if (this.engine.orb) {
-                    this.engine.orb.material.uniforms.uBrightness.value = this.brightness;
-                }
 
                 // Update HUD
                 const pct = Math.round(this.syncLevel * 100);
