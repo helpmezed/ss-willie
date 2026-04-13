@@ -3,40 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Backroom Chat - Matrix Core</title>
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <title>Ether Nexus | Backroom</title>
+    <link rel="stylesheet" href="shared.css">
     <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        /* ── Page-specific overrides ── */
+        body { font-family: var(--font-mono); height: 100vh; }
 
+        /* ── Skull variables ── */
         :root {
-            --green:       #00ff41;
-            --green-dim:   rgba(0, 255, 65, 0.15);
-            --green-glow:  rgba(0, 255, 65, 0.08);
-            --panel-bg:    rgba(2, 8, 2, 0.92);
-            --border:      rgba(0, 255, 65, 0.2);
-            --border-mid:  rgba(0, 255, 65, 0.35);
-            --text-dim:    rgba(0, 255, 65, 0.45);
-            --black-depth: rgba(0, 4, 0, 0.96);
+            --skull-fill:    #c8f8ff;
+            --skull-outline: #0099bb;
+            --socket-color:  #000408;
+            --bubble-bg:     rgba(6, 18, 30, 0.95);
+            --bubble-border: rgba(0, 229, 255, 0.12);
         }
 
-        @keyframes pageIn {
-            from { opacity: 0; transform: translateY(10px); filter: blur(5px); }
-            to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+        @keyframes avatarFloat {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50%       { transform: translateY(-4px) rotate(2deg); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.35; transform: scale(0.75); }
+        }
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        body {
-            overflow: hidden;
-            background: #000;
-            font-family: 'Share Tech Mono', monospace;
-            animation: pageIn 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-            color: var(--green);
-            height: 100vh;
+        .skull-path, .eye-path {
+            transition: d 0.9s cubic-bezier(0.45, 0, 0.55, 1);
         }
+        .skull-avatar { animation: avatarFloat 3s ease-in-out infinite; }
 
+        /* ── CRT overlay ── */
         #crt-overlay {
             position: fixed;
             inset: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
                         linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
             background-size: 100% 3px, 3px 100%;
             pointer-events: none;
@@ -50,71 +54,7 @@
             z-index: 1;
         }
 
-        #site-nav {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            height: 56px;
-            z-index: 200;
-            display: flex;
-            align-items: center;
-            padding: 0 32px;
-            background: var(--black-depth);
-            border-bottom: 1px solid var(--border);
-            backdrop-filter: blur(20px);
-            gap: 24px;
-        }
-        .site-nav-logo {
-            font-family: 'Orbitron', monospace;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 4px;
-            color: var(--green);
-            text-shadow: 0 0 16px var(--green);
-            text-decoration: none;
-        }
-        .site-nav-links { display: flex; gap: 8px; margin-left: auto; }
-        .site-nav-link {
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            padding: 8px 16px;
-            border-radius: 4px;
-            transition: all 0.3s;
-        }
-        .site-nav-link:hover { color: var(--green); background: var(--green-glow); }
-        .site-nav-link.active {
-            color: var(--green);
-            background: var(--green-dim);
-            box-shadow: inset 0 0 10px rgba(0, 255, 65, 0.1);
-        }
-
-        /* ── Skull variables ── */
-        :root {
-            --skull-fill:    #c8ffd8;
-            --skull-outline: #00aa28;
-            --socket-color:  #000804;
-            --bubble-bg:     rgba(22, 30, 22, 0.95);
-            --bubble-border: rgba(0, 255, 65, 0.12);
-        }
-
-        @keyframes avatarFloat {
-            0%, 100% { transform: translateY(0) rotate(-2deg); }
-            50%       { transform: translateY(-4px) rotate(2deg); }
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50%       { opacity: 0.35; transform: scale(0.75); }
-        }
-
-        .skull-path, .eye-path {
-            transition: d 0.9s cubic-bezier(0.45, 0, 0.55, 1);
-        }
-        .skull-avatar { animation: avatarFloat 3s ease-in-out infinite; }
-
-        /* ── Panel ── */
+        /* ── Chat Panel ── */
         #chat-panel {
             position: fixed;
             right: 0; top: 56px;
@@ -123,8 +63,8 @@
             z-index: 20;
             display: flex;
             flex-direction: column;
-            background: rgba(10, 14, 10, 0.96);
-            border-left: 1px solid var(--border);
+            background: rgba(2, 8, 18, 0.96);
+            border-left: 1px solid rgba(0, 229, 255, 0.2);
             backdrop-filter: blur(30px) saturate(180%);
             box-shadow: -20px 0 60px rgba(0,0,0,0.85);
         }
@@ -132,11 +72,11 @@
         /* ── Header / User Profile ── */
         .chat-header {
             padding: 14px 16px;
-            border-bottom: 1px solid rgba(0,255,65,0.08);
+            border-bottom: 1px solid rgba(0, 229, 255, 0.08);
             display: flex;
             align-items: center;
             gap: 13px;
-            background: rgba(0, 10, 0, 0.6);
+            background: rgba(0, 8, 18, 0.6);
             flex-shrink: 0;
             position: relative;
         }
@@ -144,8 +84,8 @@
         .header-skull-wrap {
             width: 46px; height: 46px;
             border-radius: 50%;
-            background: rgba(0,255,65,0.07);
-            border: 2px solid rgba(0,255,65,0.25);
+            background: rgba(0, 229, 255, 0.07);
+            border: 2px solid rgba(0, 229, 255, 0.25);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -155,13 +95,12 @@
             transition: border-color 0.3s;
         }
 
-        /* Colored ring tinted to user color — set via JS */
         .header-skull-wrap::after {
             content: '';
             position: absolute;
             inset: -3px;
             border-radius: 50%;
-            border: 2px solid var(--user-color, var(--green));
+            border: 2px solid var(--user-color, var(--primary));
             opacity: 0.5;
             pointer-events: none;
         }
@@ -175,11 +114,11 @@
         }
 
         .profile-username {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Orbitron', sans-serif;
             font-size: 15px;
             font-weight: 700;
             letter-spacing: 1px;
-            color: #e8ffe8;
+            color: #e8f8ff;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -195,8 +134,8 @@
             font-size: 12px;
             font-weight: 700;
             letter-spacing: 2px;
-            color: var(--green);
-            text-shadow: 0 0 8px var(--green);
+            color: var(--primary);
+            text-shadow: 0 0 8px var(--accent-glow);
             text-transform: uppercase;
             display: flex;
             align-items: center;
@@ -205,15 +144,15 @@
 
         .status-dot {
             width: 6px; height: 6px;
-            background: var(--green);
+            background: var(--primary);
             border-radius: 50%;
-            box-shadow: 0 0 8px var(--green);
+            box-shadow: 0 0 8px var(--primary);
             animation: pulse 2.5s infinite ease-in-out;
         }
 
         .profile-id {
             font-size: 10px;
-            color: rgba(0,255,65,0.2);
+            color: rgba(0, 229, 255, 0.2);
             letter-spacing: 1px;
             text-transform: uppercase;
             white-space: nowrap;
@@ -228,11 +167,10 @@
             box-shadow: 0 0 6px currentColor;
         }
 
-        /* Logout button */
         .logout-btn {
             background: none;
-            border: 1px solid rgba(0,255,65,0.15);
-            color: rgba(0,255,65,0.35);
+            border: 1px solid rgba(0, 229, 255, 0.15);
+            color: rgba(0, 229, 255, 0.35);
             font-family: inherit;
             font-size: 9px;
             letter-spacing: 2px;
@@ -244,9 +182,9 @@
             flex-shrink: 0;
         }
         .logout-btn:hover {
-            border-color: rgba(255,50,50,0.5);
-            color: rgba(255,80,80,0.8);
-            background: rgba(255,0,0,0.05);
+            border-color: rgba(255, 50, 50, 0.5);
+            color: rgba(255, 80, 80, 0.8);
+            background: rgba(255, 0, 0, 0.05);
         }
 
         /* ── Messages ── */
@@ -260,12 +198,7 @@
             scroll-behavior: smooth;
         }
         #messages::-webkit-scrollbar { width: 3px; }
-        #messages::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.15); border-radius: 2px; }
-
-        @keyframes msgIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
+        #messages::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.15); border-radius: 2px; }
 
         .msg-row {
             display: flex;
@@ -277,8 +210,8 @@
         .skull-circle {
             width: 38px; height: 38px;
             border-radius: 50%;
-            background: rgba(0,255,65,0.06);
-            border: 1px solid rgba(0,255,65,0.15);
+            background: rgba(0, 229, 255, 0.06);
+            border: 1px solid rgba(0, 229, 255, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -296,35 +229,34 @@
             border: 1px solid var(--bubble-border);
             border-radius: 18px;
             border-bottom-left-radius: 4px;
-            color: #d4f0d4;
+            color: #d4eef8;
             transition: background 0.2s;
         }
-        .msg-bubble:hover { background: rgba(28, 40, 28, 0.95); }
+        .msg-bubble:hover { background: rgba(10, 30, 50, 0.95); }
 
         .msg-bubble .timestamp {
-            color: rgba(0,255,65,0.2);
+            color: rgba(0, 229, 255, 0.2);
             font-size: 12px;
             display: block;
             margin-bottom: 4px;
             letter-spacing: 0.5px;
         }
         .msg-bubble .username {
-            color: var(--green);
+            color: var(--primary);
             font-weight: 700;
             margin-right: 6px;
-            text-shadow: 0 0 6px rgba(0,255,65,0.4);
+            text-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
         }
-        .msg-bubble .text { color: #c8e8c8; }
+        .msg-bubble .text { color: #b0d8f0; }
 
-        /* System messages */
         .msg-row.system { justify-content: center; }
         .msg-row.system .msg-bubble {
             flex: none;
             font-style: italic;
-            color: rgba(0,255,65,0.3);
+            color: rgba(0, 229, 255, 0.3);
             background: transparent;
             border: none;
-            border-top: 1px solid rgba(0,255,65,0.07);
+            border-top: 1px solid rgba(0, 229, 255, 0.07);
             border-radius: 0;
             text-align: center;
             font-size: 13px;
@@ -334,8 +266,8 @@
         /* ── Input ── */
         .input-area {
             padding: 16px 20px 20px;
-            background: rgba(0, 8, 0, 0.7);
-            border-top: 1px solid rgba(0,255,65,0.08);
+            background: rgba(0, 8, 18, 0.7);
+            border-top: 1px solid rgba(0, 229, 255, 0.08);
             flex-shrink: 0;
         }
 
@@ -343,31 +275,31 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            background: rgba(20, 30, 20, 0.9);
-            border: 1px solid rgba(0,255,65,0.18);
+            background: rgba(6, 20, 38, 0.9);
+            border: 1px solid rgba(0, 229, 255, 0.18);
             border-radius: 50px;
             padding: 6px 6px 6px 18px;
             transition: all 0.3s;
         }
         .input-wrapper:focus-within {
-            border-color: rgba(0,255,65,0.45);
-            box-shadow: 0 0 0 3px rgba(0,255,65,0.06);
+            border-color: rgba(0, 229, 255, 0.45);
+            box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.06);
         }
 
         #message-input {
             flex: 1;
             background: transparent;
             border: none;
-            color: #c8e8c8;
+            color: #c8e8f8;
             font-family: inherit;
             font-size: 15px;
             outline: none;
             min-width: 0;
         }
-        #message-input::placeholder { color: rgba(0,255,65,0.25); }
+        #message-input::placeholder { color: rgba(0, 229, 255, 0.25); }
 
         #send-btn {
-            background: var(--green);
+            background: var(--primary);
             border: none;
             border-radius: 50px;
             color: #000;
@@ -383,154 +315,18 @@
         }
         #send-btn:hover {
             background: #fff;
-            box-shadow: 0 0 16px rgba(0,255,65,0.4);
+            box-shadow: 0 0 16px rgba(0, 229, 255, 0.4);
         }
         #send-btn:active { transform: scale(0.97); }
 
         @media (max-width: 768px) {
             #chat-panel { width: 100%; height: 55vh; top: auto; bottom: 0; }
-            #site-nav { padding: 0 16px; }
         }
-
-        /* ── Auth Overlay ── */
-        .auth-overlay {
-            position: fixed;
-            inset: 0;
-            background: #000400;
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Share Tech Mono', monospace;
-            transition: opacity 0.5s, visibility 0.5s;
-            overflow: hidden;
-        }
-        .auth-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-
-        .auth-crt {
-            position: absolute; inset: 0;
-            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.2) 50%),
-                        linear-gradient(90deg, rgba(0,255,0,0.03), transparent, rgba(0,255,0,0.03));
-            background-size: 100% 4px, 3px 100%;
-            pointer-events: none; z-index: 10;
-        }
-        .auth-vignette {
-            position: absolute; inset: 0;
-            background: radial-gradient(circle, transparent 45%, rgba(0,0,0,0.9) 100%);
-            pointer-events: none; z-index: 9;
-        }
-        .auth-boot-seq {
-            position: absolute; top: 20px; left: 20px;
-            font-size: 13px; line-height: 1.8;
-            color: var(--green); text-shadow: 0 0 5px var(--green);
-            z-index: 15; transition: opacity 0.3s;
-        }
-        .auth-boot-line { opacity: 0; animation: authTypeLine 0.1s forwards; }
-        @keyframes authTypeLine { to { opacity: 1; } }
-
-        .auth-boot-glitch {
-            animation: authSevereGlitch 0.5s infinite;
-            filter: drop-shadow(2px 0 #ff004190) drop-shadow(-2px 0 rgba(0,255,65,0.5));
-        }
-        @keyframes authSevereGlitch {
-            0%   { transform: translate(0); clip-path: inset(0 0 0 0); }
-            20%  { transform: translate(-5px, 2px); clip-path: inset(20% 0 80% 0); }
-            40%  { transform: translate(5px, -2px); clip-path: inset(80% 0 5% 0); }
-            60%  { transform: translate(-2px, 5px); clip-path: inset(40% 0 40% 0); }
-            80%  { transform: translate(2px, -5px); clip-path: inset(10% 0 60% 0); }
-            100% { transform: translate(0); clip-path: inset(0 0 0 0); }
-        }
-
-        .auth-morph {
-            position: relative; z-index: 20;
-            display: flex; justify-content: center; align-items: center;
-            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-        .auth-morph.state-hidden { width: 0; height: 0; opacity: 0; }
-        .auth-morph.state-dot    { width: 4px; height: 4px; background: var(--green); box-shadow: 0 0 20px 5px var(--green); opacity: 1; }
-        .auth-morph.state-line   { width: 400px; height: 2px; background: var(--green); box-shadow: 0 0 15px var(--green); opacity: 1; }
-        .auth-morph.state-box {
-            width: 400px; height: 460px;
-            background: rgba(0, 6, 0, 0.97);
-            border: 1px solid var(--border-mid);
-            box-shadow: 0 0 40px rgba(0,255,65,0.12), inset 0 0 30px rgba(0,255,65,0.04);
-            clip-path: polygon(0 20px, 20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
-            opacity: 1;
-        }
-        .auth-morph.state-box::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-            background: var(--green); box-shadow: 0 0 10px var(--green);
-            transform: scaleX(0); transform-origin: left;
-            animation: authExpandBar 0.5s ease forwards 4.2s;
-        }
-        @keyframes authExpandBar { to { transform: scaleX(1); } }
-
-        .auth-card {
-            width: 100%; height: 100%; padding: 36px 40px;
-            display: flex; flex-direction: column;
-            opacity: 0; pointer-events: none;
-        }
-        .auth-card.content-visible { animation: authGlitchIn 0.6s forwards; pointer-events: all; }
-        @keyframes authGlitchIn {
-            0%   { opacity: 0; transform: scale(0.98); filter: blur(4px); }
-            50%  { opacity: 0.5; }
-            55%  { opacity: 1; transform: translate(2px,0); }
-            60%  { opacity: 0; transform: translate(-2px,0); }
-            65%  { opacity: 1; }
-            100% { opacity: 1; transform: scale(1); filter: none; }
-        }
-
-        .auth-card h2 {
-            font-family: 'Orbitron', monospace; font-size: 20px; font-weight: 700;
-            color: var(--green); text-shadow: 0 0 20px var(--green);
-            letter-spacing: 4px; text-transform: uppercase; margin-bottom: 4px;
-        }
-        .auth-subtitle {
-            font-size: 10px; color: var(--text-dim); letter-spacing: 2px;
-            text-transform: uppercase; margin-bottom: 32px;
-        }
-        .auth-form { display: flex; flex-direction: column; }
-        .auth-input-group { margin-bottom: 20px; }
-        .auth-input-label {
-            display: block; font-size: 10px; color: rgba(0,255,65,0.55);
-            margin-bottom: 7px; text-transform: uppercase; letter-spacing: 2px;
-        }
-        .auth-input {
-            width: 100%;
-            background: rgba(0,255,65,0.03);
-            border: 1px solid rgba(0,255,65,0.2);
-            color: var(--green); font-family: inherit; font-size: 14px;
-            padding: 11px 14px; outline: none; transition: all 0.2s;
-        }
-        .auth-input:focus {
-            border-color: var(--green);
-            background: rgba(0,255,65,0.07);
-            box-shadow: inset 0 0 12px rgba(0,255,65,0.08);
-        }
-        .auth-input::placeholder { color: rgba(0,255,65,0.18); }
-
-        .auth-submit {
-            width: 100%; margin-top: 8px; padding: 14px;
-            background: var(--green); color: #000;
-            font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700;
-            border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-            transition: all 0.2s; position: relative;
-        }
-        .auth-submit:hover { background: #fff; box-shadow: 0 0 20px rgba(0,255,65,0.5); }
-        .auth-submit::after { content: '>>'; position: absolute; right: 14px; transition: right 0.2s; }
-        .auth-submit:hover::after { right: 9px; }
-
-        @media (max-width: 500px) {
-            .auth-morph.state-line { width: 90vw; }
-            .auth-morph.state-box  { width: 90vw; height: 500px; }
-        }
-
     </style>
 </head>
 <body>
 
-    <!-- Auth Overlay -->
+    <!-- Auth Overlay (uses shared.css styles) -->
     <div id="authOverlay" class="auth-overlay">
         <div class="auth-vignette"></div>
         <div class="auth-crt"></div>
@@ -538,7 +334,7 @@
         <div class="auth-morph state-hidden" id="authMorph">
             <div class="auth-card" id="authCard">
                 <h2>CORE_ORB</h2>
-                <div class="auth-subtitle">Neural Link Authentication v4.1</div>
+                <div class="auth-subtitle">BACKROOM AUTHENTICATION v4.1</div>
                 <form id="authForm" class="auth-form">
                     <div class="auth-input-group">
                         <label class="auth-input-label">Operator ID</label>
@@ -550,7 +346,7 @@
                     </div>
                     <button type="submit" class="auth-submit">Link</button>
                 </form>
-                <div id="authError" style="color:#ff4141;font-size:11px;text-align:center;margin-top:14px;letter-spacing:1px;"></div>
+                <div id="authError" style="color:var(--cp-red);font-family:var(--font-mono-cp);font-size:12px;text-align:center;margin-top:16px;"></div>
             </div>
         </div>
     </div>
@@ -648,9 +444,9 @@
             init() {
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
                 this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-                this.renderer.setClearColor(0x000000, 1);
+                this.renderer.setClearColor(0x010205, 1);
                 this.container.insertBefore(this.renderer.domElement, this.container.firstChild);
-                
+
                 this.camera.position.set(0, 0, 5);
                 this.controls = new OrbitControls(this.camera, this.renderer.domElement);
                 this.controls.enableDamping = true;
@@ -674,8 +470,8 @@
                 const material = new THREE.ShaderMaterial({
                     uniforms: {
                         uTime:   { value: 0 },
-                        uColor1: { value: new THREE.Color('#005500') },
-                        uColor2: { value: new THREE.Color('#00ff41') },
+                        uColor1: { value: new THREE.Color('#001133') },
+                        uColor2: { value: new THREE.Color('#00e5ff') },
                     },
                     vertexShader: `
                         varying float vDistortion;
@@ -1079,6 +875,19 @@
             setTimeout(() => { morph.className = 'auth-morph state-box'; }, 3600);
             setTimeout(() => { card.classList.add('content-visible'); }, 4200);
         })();
+    </script>
+
+    <script>
+        // Page transition: fade out before navigating
+        document.querySelectorAll('a[href]').forEach(a => {
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('http') || href.startsWith('#') || a.target === '_blank') return;
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                document.body.classList.add('page-exit');
+                setTimeout(() => { window.location.href = href; }, 260);
+            });
+        });
     </script>
 </body>
 </html>
