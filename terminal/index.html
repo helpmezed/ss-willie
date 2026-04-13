@@ -118,7 +118,7 @@
         #chat-panel {
             position: fixed;
             right: 0; top: 56px;
-            width: 400px;
+            width: 440px;
             height: calc(100vh - 56px);
             z-index: 20;
             display: flex;
@@ -176,7 +176,7 @@
 
         .profile-username {
             font-family: 'Orbitron', monospace;
-            font-size: 13px;
+            font-size: 15px;
             font-weight: 700;
             letter-spacing: 1px;
             color: #e8ffe8;
@@ -192,7 +192,7 @@
         }
 
         .chat-status {
-            font-size: 10px;
+            font-size: 12px;
             font-weight: 700;
             letter-spacing: 2px;
             color: var(--green);
@@ -212,7 +212,7 @@
         }
 
         .profile-id {
-            font-size: 9px;
+            font-size: 10px;
             color: rgba(0,255,65,0.2);
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -289,7 +289,7 @@
 
         .msg-bubble {
             flex: 1;
-            font-size: 13px;
+            font-size: 15px;
             line-height: 1.55;
             padding: 11px 16px;
             background: var(--bubble-bg);
@@ -303,7 +303,7 @@
 
         .msg-bubble .timestamp {
             color: rgba(0,255,65,0.2);
-            font-size: 10px;
+            font-size: 12px;
             display: block;
             margin-bottom: 4px;
             letter-spacing: 0.5px;
@@ -327,7 +327,7 @@
             border-top: 1px solid rgba(0,255,65,0.07);
             border-radius: 0;
             text-align: center;
-            font-size: 11px;
+            font-size: 13px;
             padding: 4px 12px;
         }
 
@@ -360,7 +360,7 @@
             border: none;
             color: #c8e8c8;
             font-family: inherit;
-            font-size: 13px;
+            font-size: 15px;
             outline: none;
             min-width: 0;
         }
@@ -374,7 +374,7 @@
             padding: 9px 22px;
             cursor: pointer;
             font-family: inherit;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -525,6 +525,81 @@
             .auth-morph.state-line { width: 90vw; }
             .auth-morph.state-box  { width: 90vw; height: 500px; }
         }
+
+        /* ── Neural Sync HUD ── */
+        #neural-sync-hud {
+            position: fixed;
+            bottom: 36px;
+            left: 36px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        #neural-sync-hud.hud-visible { opacity: 1; }
+
+        #sync-label {
+            font-family: 'Orbitron', monospace;
+            font-size: 9px;
+            letter-spacing: 4px;
+            color: rgba(0,255,65,0.45);
+            text-transform: uppercase;
+            transition: color 0.6s, text-shadow 0.6s;
+        }
+        #sync-label.hibernating {
+            color: rgba(0,255,65,0.2);
+            text-shadow: none;
+        }
+        #sync-label.syncing {
+            color: var(--green);
+            text-shadow: 0 0 10px var(--green);
+        }
+
+        .sync-bar-track {
+            width: 160px;
+            height: 2px;
+            background: rgba(0,255,65,0.08);
+            border-radius: 2px;
+            overflow: visible;
+            position: relative;
+        }
+        #sync-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green), 0 0 20px rgba(0,255,65,0.3);
+            border-radius: 2px;
+            transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        #sync-bar-fill.hibernating {
+            background: rgba(0,255,65,0.2);
+            box-shadow: none;
+        }
+
+        #sync-percent {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            color: rgba(0,255,65,0.3);
+            letter-spacing: 1px;
+            transition: color 0.6s;
+        }
+        #sync-percent.syncing { color: rgba(0,255,65,0.7); }
+
+        @keyframes syncPing {
+            0%   { opacity: 1; transform: scaleX(1); }
+            100% { opacity: 0; transform: scaleX(1.4); }
+        }
+        .sync-ping {
+            position: absolute;
+            inset: -1px 0;
+            background: var(--green);
+            border-radius: 2px;
+            animation: syncPing 0.5s ease-out forwards;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -564,6 +639,15 @@
             <a class="site-nav-link" href="outer-news.html">News</a>
         </div>
     </nav>
+
+    <!-- Neural Sync HUD -->
+    <div id="neural-sync-hud">
+        <div id="sync-label" class="hibernating">HIBERNATING</div>
+        <div class="sync-bar-track">
+            <div id="sync-bar-fill" class="hibernating"></div>
+        </div>
+        <div id="sync-percent">0%</div>
+    </div>
 
     <div id="chat-panel">
         <div class="chat-header">
@@ -635,6 +719,10 @@
                 this.clock = new THREE.Clock();
                 this.orb = null;
                 this.controls = null;
+                this.syncLevel = 0.0;
+                this.hibernating = true;
+                this.neuralSync = null;
+                this._prevTime = 0;
                 this.init();
             }
 
@@ -660,16 +748,17 @@
 
                 const material = new THREE.ShaderMaterial({
                     uniforms: {
-                        uTime:      { value: 0 },
-                        uWireframe: { value: 0.0 },
-                        uColor1:    { value: new THREE.Color('#003300') },
-                        uColor2:    { value: new THREE.Color('#00ff41') },
+                        uTime:       { value: 0 },
+                        uSyncLevel:  { value: 0.0 },
+                        uBrightness: { value: 0.3 },
+                        uColor1:     { value: new THREE.Color('#003300') },
+                        uColor2:     { value: new THREE.Color('#00ff41') },
                     },
                     vertexShader: `
                         varying vec2 vUv;
                         varying float vDistortion;
                         uniform float uTime;
-                        uniform float uWireframe;
+                        uniform float uSyncLevel;
 
                         // Classic 3D Simplex Noise
                         vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -721,8 +810,10 @@
 
                         void main() {
                             vUv = uv;
-                            float noise = snoise(normal + uTime * 0.5);
-                            vDistortion = noise * 0.35;
+                            float timeScale = 0.5 + uSyncLevel * 2.0;
+                            float noiseAmp  = 0.25 + uSyncLevel * 0.75;
+                            float noise = snoise(normal + uTime * timeScale);
+                            vDistortion = noise * noiseAmp;
                             vec3 newPosition = position + normal * vDistortion;
                             gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
                         }
@@ -731,25 +822,19 @@
                         varying vec2 vUv;
                         varying float vDistortion;
                         uniform float uTime;
-                        uniform float uWireframe;
+                        uniform float uSyncLevel;
+                        uniform float uBrightness;
                         uniform vec3 uColor1;
                         uniform vec3 uColor2;
 
                         void main() {
-                            // Mix between the two colors based on distortion
                             float mixFactor = (vDistortion + 1.0) * 0.5;
                             vec3 color = mix(uColor1, uColor2, mixFactor);
-
-                            // Wireframe mode: cyan tint + transparency
-                            if (uWireframe > 0.5) {
-                                color = mix(color, vec3(0.0, 1.0, 1.0), 0.3);
-                                gl_FragColor = vec4(color, 0.6);
-                            } else {
-                                gl_FragColor = vec4(color, 1.0);
-                            }
+                            // Boost brightness and saturation with sync
+                            color = mix(color, uColor2, uSyncLevel * 0.4);
+                            gl_FragColor = vec4(color * uBrightness, 1.0);
                         }
                     `,
-                    wireframe: false,
                     transparent: true,
                     side: THREE.DoubleSide
                 });
@@ -758,9 +843,7 @@
                 this.scene.add(this.orb);
             }
 
-            triggerTransmission() {
-                // no-op — wireframe pulse removed
-            }
+            triggerTransmission() { /* Neural Sync handles effects now */ }
 
             onResize() {
                 this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -771,14 +854,21 @@
             animate() {
                 requestAnimationFrame(() => this.animate());
                 const time = this.clock.getElapsedTime();
+                const delta = time - this._prevTime;
+                this._prevTime = time;
 
                 if (this.orb) {
                     this.orb.material.uniforms.uTime.value = time;
-                    this.orb.rotation.y = time * 0.1;
-                    this.orb.rotation.z = time * 0.05;
+                    this.orb.material.uniforms.uSyncLevel.value = this.syncLevel;
 
+                    // Rotation: slow in hibernation, fast at high sync
+                    const rotBase = this.hibernating ? 0.02 : 0.08;
+                    const rotSpeed = rotBase + this.syncLevel * 0.45;
+                    this.orb.rotation.y += rotSpeed * delta;
+                    this.orb.rotation.z += rotSpeed * 0.5 * delta;
                 }
 
+                if (this.neuralSync) this.neuralSync.update(delta);
                 if (this.controls) this.controls.update();
                 this.renderer.render(this.scene, this.camera);
             }
@@ -844,9 +934,10 @@
         }
 
         class TerminalController {
-            constructor(state, engine) {
+            constructor(state, engine, neuralSync) {
                 this.state = state;
                 this.engine = engine;
+                this.neuralSync = neuralSync;
                 this.input = document.getElementById('message-input');
                 this.btn = document.getElementById('send-btn');
                 this.display = document.getElementById('messages');
@@ -865,7 +956,7 @@
                 const val = this.input.value.trim();
                 if (!val) return;
                 this.state.addMessage(val);
-                this.engine.triggerTransmission();
+                if (this.neuralSync) this.neuralSync.onMessage();
                 this.input.value = '';
                 this.input.focus();
             }
@@ -917,6 +1008,79 @@
 
                 this.display.appendChild(row);
                 this.display.scrollTop = this.display.scrollHeight;
+            }
+        }
+
+        // ── Neural Sync ─────────────────────────────────────────────────────────
+        class NeuralSync {
+            constructor(engine) {
+                this.engine = engine;
+                this.syncLevel   = 0.0;
+                this.brightness  = 0.3;
+                this.hibernating = true;
+                this.lastMsgTime = 0;
+                this.HIBERNATE_AFTER = 10000; // ms of silence before hibernation
+
+                this.hud      = document.getElementById('neural-sync-hud');
+                this.label    = document.getElementById('sync-label');
+                this.barFill  = document.getElementById('sync-bar-fill');
+                this.barTrack = document.querySelector('.sync-bar-track');
+                this.pct      = document.getElementById('sync-percent');
+
+                // Show HUD once engine starts
+                setTimeout(() => this.hud?.classList.add('hud-visible'), 1500);
+            }
+
+            onMessage() {
+                this.syncLevel   = Math.min(1.0, this.syncLevel + 0.35);
+                this.hibernating = false;
+                this.lastMsgTime = Date.now();
+                this._ping();
+            }
+
+            _ping() {
+                if (!this.barTrack) return;
+                const p = document.createElement('div');
+                p.className = 'sync-ping';
+                this.barTrack.appendChild(p);
+                setTimeout(() => p.remove(), 600);
+            }
+
+            update(delta) {
+                const now = Date.now();
+
+                // Decay sync level over time
+                this.syncLevel = Math.max(0.0, this.syncLevel - delta * 0.025);
+
+                // Decide hibernation state
+                const silentTooLong = now - this.lastMsgTime > this.HIBERNATE_AFTER;
+                if (silentTooLong && this.syncLevel < 0.05) this.hibernating = true;
+
+                // Smooth brightness toward target
+                const targetBrightness = this.hibernating ? 0.25 : 0.55 + this.syncLevel * 0.45;
+                this.brightness += (targetBrightness - this.brightness) * Math.min(1, delta * 1.5);
+
+                // Push values into engine
+                this.engine.syncLevel   = this.syncLevel;
+                this.engine.hibernating = this.hibernating;
+                if (this.engine.orb) {
+                    this.engine.orb.material.uniforms.uBrightness.value = this.brightness;
+                }
+
+                // Update HUD
+                const pct = Math.round(this.syncLevel * 100);
+                if (this.barFill) {
+                    this.barFill.style.width = pct + '%';
+                    this.barFill.classList.toggle('hibernating', this.hibernating);
+                }
+                if (this.label) {
+                    this.label.textContent = this.hibernating ? 'HIBERNATING' : 'NEURAL SYNC';
+                    this.label.className   = this.hibernating ? 'hibernating' : 'syncing';
+                }
+                if (this.pct) {
+                    this.pct.textContent = pct + '%';
+                    this.pct.className   = this.hibernating ? '' : 'syncing';
+                }
             }
         }
 
@@ -980,9 +1144,11 @@
                 location.reload();
             });
 
-            const state    = new NexusState(userData.username);
-            const engine   = new MatrixEngine();
-            const terminal = new TerminalController(state, engine);
+            const state      = new NexusState(userData.username);
+            const engine     = new MatrixEngine();
+            const neuralSync = new NeuralSync(engine);
+            engine.neuralSync = neuralSync;
+            const terminal   = new TerminalController(state, engine, neuralSync);
             document.getElementById('message-input').focus();
         }
 
